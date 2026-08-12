@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoStride · US Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Design tokens — matched to the InfoStride Meeting Board ──────────
+     Day/night is kept as a colour cue, redrawn in the board's palette:
+     amber = daytime, indigo = night.                                    */
+  :root{
+    --bg-0:#090d15;
+    --bg-1:#131924;
+    --glow-1:rgba(99,102,241,0.13);
+    --glow-2:rgba(20,184,166,0.07);
+
+    --text:#e9edf6;
+    --text-2:#c3cbdb;
+    --muted:#939cb2;
+    --faint:#626c82;
+
+    --brand:#818cf8;            /* board accent — brand chrome */
+    --accent:#fbbf24;           /* warm  / day  */
+    --accent-soft:#fcd34d;
+    --cool:#818cf8;             /* cool  / night */
+
+    --line:#27303f;
+    --panel:#1a2130;
+
+    --clock-size:clamp(132px,18vw,196px);
+    --time-size:clamp(32px,5vw,52px);
+
+    --face-fill:rgba(255,255,255,0.02);
+    --tick:rgba(255,255,255,0.30);
+    --ring-day:rgba(251,191,36,0.34);
+    --ring-night:rgba(129,140,248,0.34);
+    --feature-fg:var(--accent);
+    --time-glow:0 0 36px rgba(251,191,36,.26);
+    --time-glow-night:0 0 36px rgba(129,140,248,.30);
+    --halo-day:rgba(251,191,36,.16);
+    --halo-night:rgba(129,140,248,.18);
+    --badge-bg:rgba(251,191,36,.13);
+    --badge-border:rgba(251,191,36,.30);
+    --badge-bg-night:rgba(129,140,248,.15);
+    --badge-border-night:rgba(129,140,248,.38);
+    --brand-bg:rgba(129,140,248,.15);
+    --brand-border:rgba(129,140,248,.38);
+    color-scheme:dark;
+  }
+  body.light{
+    --bg-0:#f1f4fa;
+    --bg-1:#e9edf6;
+    --glow-1:rgba(99,102,241,0.11);
+    --glow-2:rgba(13,148,136,0.06);
+
+    --text:#111726;
+    --text-2:#33405a;
+    --muted:#5c6579;
+    --faint:#8d97ab;
+
+    --brand:#4f46e5;
+    --accent:#b45309;
+    --accent-soft:#92400e;
+    --cool:#4f46e5;
+
+    --line:#dce2ee;
+    --panel:#f5f7fc;
+
+    --face-fill:rgba(17,23,38,0.015);
+    --tick:rgba(17,23,38,0.34);
+    --ring-day:rgba(180,83,9,0.40);
+    --ring-night:rgba(79,70,229,0.34);
+    --feature-fg:#b45309;
+    --time-glow:none;
+    --time-glow-night:none;
+    --halo-day:rgba(180,83,9,.14);
+    --halo-night:rgba(79,70,229,.14);
+    --badge-bg:rgba(180,83,9,.11);
+    --badge-border:rgba(180,83,9,.32);
+    --badge-bg-night:rgba(79,70,229,.09);
+    --badge-border-night:rgba(79,70,229,.30);
+    --brand-bg:rgba(79,70,229,.09);
+    --brand-border:rgba(79,70,229,.30);
+    color-scheme:light;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{
+    min-height:100vh;
+    font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(900px 520px at 88% -12%, var(--glow-1), transparent 70%),
+      radial-gradient(700px 460px at 4% 4%, var(--glow-2), transparent 70%),
+      linear-gradient(160deg, var(--bg-0), var(--bg-1));
+    background-attachment:fixed;
+    display:flex;justify-content:center;
+    padding:clamp(18px,4vw,56px);
+    -webkit-font-smoothing:antialiased;
+    transition:color .3s ease;
+  }
+  body,.feature-time,.badge,.cl-face,.tick,.cl-s,.cl-cap,.cl-h,.cl-m,.theme-toggle{
+    transition:color .3s ease,fill .3s ease,stroke .3s ease,
+               background-color .3s ease,border-color .3s ease;
+  }
+
+  .stage{width:100%;max-width:1200px;}
+
+  /* ---- masthead ---- */
+  .masthead{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;
+    padding-bottom:24px;border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex;align-items:center;gap:11px;
+    font-weight:500;letter-spacing:.34em;font-size:13px;text-transform:uppercase;
+    color:inherit;text-decoration:none;transition:opacity .18s ease;
+  }
+  .brand:hover{opacity:.75;}
+  .brand .mark{font-size:19px;line-height:1;color:var(--brand);transform:translateY(1px);}
+  .sync{
+    display:flex;align-items:center;gap:8px;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  }
+  .sync .dot{
+    width:7px;height:7px;border-radius:50%;background:var(--brand);
+    box-shadow:0 0 0 0 rgba(99,102,241,.55);
+    animation:pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(99,102,241,.5);}
+    70%{box-shadow:0 0 0 8px rgba(99,102,241,0);}
+    100%{box-shadow:0 0 0 0 rgba(99,102,241,0);}
+  }
+  .topright{display:flex;align-items:center;gap:16px;}
+  .theme-toggle{
+    width:40px;height:40px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;
+    color:var(--brand);
+    background:var(--brand-bg);border:1px solid var(--brand-border);
+  }
+  .theme-toggle:hover{filter:brightness(1.12);}
+  .theme-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+  .theme-toggle svg{width:18px;height:18px;display:block;}
+  .theme-toggle .i-sun{display:block;}
+  .theme-toggle .i-moon{display:none;}
+  body.light .theme-toggle .i-sun{display:none;}
+  body.light .theme-toggle .i-moon{display:block;}
+
+  /* ---- shared digital + badge ---- */
+  .t-time{
+    font-family:"JetBrains Mono",monospace;font-weight:500;
+    line-height:1;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .t-time .sec{color:var(--faint);font-size:.62em;}
+  .t-time .ap{color:var(--muted);font-size:.5em;margin-left:.18em;letter-spacing:.04em;}
+
+  .badge{
+    display:inline-block;
+    font-family:"JetBrains Mono",monospace;font-weight:700;
+    font-size:12px;letter-spacing:.06em;
+    padding:5px 12px;border-radius:7px;
+    color:var(--accent-soft);background:var(--badge-bg);
+    border:1px solid var(--badge-border);
+  }
+  .is-night .badge{
+    color:var(--cool);background:var(--badge-bg-night);
+    border-color:var(--badge-border-night);
+  }
+
+  /* ---- analog clock ---- */
+  .clock-svg{width:100%;height:100%;display:block;overflow:visible;}
+  .cl-face{fill:var(--face-fill);stroke:var(--ring-day);stroke-width:1.4;}
+  .tick{stroke:var(--tick);}
+  .cl-h{stroke:var(--text);stroke-width:3.2;}
+  .cl-m{stroke:var(--text);stroke-width:2.2;}
+  .cl-s{stroke:var(--accent);stroke-width:1.1;}
+  .cl-s-tail{fill:var(--accent);}
+  .cl-gear{fill:none;stroke:var(--accent);stroke-width:0.9;opacity:.5;stroke-linejoin:round;}
+  .cl-gear-hole{fill:var(--face-fill);stroke:var(--accent);stroke-width:0.7;opacity:.5;}
+  .cl-cap{fill:var(--accent);}
+  .is-night .cl-face{stroke:var(--ring-night);}
+  .is-night .cl-s,.is-night .cl-s-tail{stroke:var(--cool);fill:var(--cool);}
+  .is-night .cl-gear,.is-night .cl-gear-hole{stroke:var(--cool);}
+  .is-night .cl-cap{fill:var(--cool);}
+
+  /* ---- featured (IST) ---- */
+  .feature{
+    text-align:center;padding:34px 4px 32px;
+    border-bottom:1px solid var(--line);
+  }
+  .feature .eyebrow{
+    font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:20px;
+  }
+  .feature-clock{
+    width:var(--clock-size);aspect-ratio:1;margin:0 auto 22px;
+    filter:drop-shadow(0 0 26px var(--halo-day));
+  }
+  .feature.is-night .feature-clock{filter:drop-shadow(0 0 26px var(--halo-night));}
+  .feature-time{
+    font-size:var(--time-size);
+    color:var(--feature-fg);text-shadow:var(--time-glow);
+  }
+  .feature-time .sec{color:var(--accent-soft);opacity:.72;}
+  /* At night the featured digits follow the clock's cool colour, so the
+     day/night cue stays consistent between the dial and the readout. */
+  .feature.is-night .feature-time{color:var(--cool);text-shadow:var(--time-glow-night);}
+  .feature.is-night .feature-time .sec{color:var(--cool);opacity:.62;}
+  .feature-city{font-size:18px;font-weight:500;margin:18px 0 10px;}
+  .feature-meta{
+    font-size:12.5px;color:var(--muted);letter-spacing:.05em;
+    display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center;
+  }
+  .feature-meta .dotsep{color:var(--faint);}
+
+  /* ---- 4-zone row ---- */
+  .grid{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:clamp(10px,2.4vw,26px);
+    padding-top:34px;
+  }
+  .card{text-align:center;}
+  .card-clock{
+    width:var(--clock-size);aspect-ratio:1;margin:0 auto 16px;
+  }
+  .card-time{font-size:var(--time-size);}
+  .card .badge{margin-top:12px;}
+  .card-city{font-size:13px;color:var(--text);margin-top:8px;letter-spacing:.01em;}
+  .card-sub{
+    font-size:11px;color:var(--faint);margin-top:6px;
+    letter-spacing:.06em;text-transform:uppercase;font-variant-numeric:tabular-nums;
+  }
+  .card-sub .next{color:var(--brand);}
+
+  @media (max-width:1100px){
+    .grid{grid-template-columns:repeat(2,1fr);gap:42px 18px;}
+  }
+  @media (max-width:560px){
+    .grid{grid-template-columns:1fr;gap:40px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sync .dot{animation:none;}
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <header class="masthead">
+      <a class="brand" href="index.html" title="Back to Workspace"><span class="mark">&#9719;</span> US Timer</a>
+      <div class="topright">
+        <div class="sync"><span class="dot"></span> <span id="syncNote">Synced to this computer</span></div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="4.2"/>
+            <line x1="12" y1="2.4" x2="12" y2="4.8"/><line x1="12" y1="19.2" x2="12" y2="21.6"/>
+            <line x1="2.4" y1="12" x2="4.8" y2="12"/><line x1="19.2" y1="12" x2="21.6" y2="12"/>
+            <line x1="5.2" y1="5.2" x2="6.9" y2="6.9"/><line x1="17.1" y1="17.1" x2="18.8" y2="18.8"/>
+            <line x1="18.8" y1="5.2" x2="17.1" y2="6.9"/><line x1="6.9" y1="17.1" x2="5.2" y2="18.8"/>
+          </svg>
+          <svg class="i-moon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.5 14.8A8.2 8.2 0 0 1 9.2 3.5 7.3 7.3 0 1 0 20.5 14.8Z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Featured: IST -->
+    <section class="feature" id="feature">
+      <div class="eyebrow">India Standard Time</div>
+      <div class="feature-clock" id="featClock"></div>
+      <div class="t-time feature-time" id="featTime">--:--:--</div>
+      <div class="feature-city">New Delhi</div>
+      <div class="feature-meta">
+        <span class="badge">IST</span>
+        <span class="dotsep">&middot;</span>
+        <span id="featOff">UTC+5:30</span>
+        <span class="dotsep">&middot;</span>
+        <span id="featDate">&mdash;</span>
+      </div>
+    </section>
+
+    <!-- 4 US zones in a horizontal row -->
+    <section class="grid" id="grid"></section>
+
+  </div>
+
+<script>
+  const FEATURE = { label:'IST', city:'New Delhi', tz:'Asia/Kolkata' };
+  const ROW = [
+    { label:'EST', city:'New York',    tz:'America/New_York'    },
+    { label:'CST', city:'Chicago',     tz:'America/Chicago'     },
+    { label:'PST', city:'Los Angeles', tz:'America/Los_Angeles' },
+    { label:'MST', city:'Denver',      tz:'America/Denver'      },
+  ];
+
+  const MINUS = '\u2212';
+  const localTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  function offsetMinutes(date, tz){
+    const f = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour12:false,
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+    const p = {};
+    for (const part of f.formatToParts(date)) p[part.type] = part.value;
+    let hour = +p.hour === 24 ? 0 : +p.hour;
+    const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, hour, +p.minute, +p.second);
+    return Math.round((asUTC - date.getTime()) / 60000);
+  }
+
+  function partsFor(date, tz){
+    const f = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour12:false,
+      weekday:'short', day:'2-digit', month:'short',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+    const p = {};
+    for (const part of f.formatToParts(date)) p[part.type] = part.value;
+    let h = +p.hour === 24 ? 0 : +p.hour;
+    return { h, m:+p.minute, s:+p.second, weekday:p.weekday, day:p.day, month:p.month };
+  }
+
+  function utcText(min){
+    const sign = min < 0 ? MINUS : '+';
+    const a = Math.abs(min), hh = Math.floor(a/60), mm = a % 60;
+    return 'UTC' + sign + hh + (mm ? ':' + String(mm).padStart(2,'0') : '');
+  }
+
+  const pad = n => String(n).padStart(2,'0');
+  const to12 = h => (h % 12) === 0 ? 12 : (h % 12);
+  const ampm = h => h < 12 ? 'AM' : 'PM';
+  const isDay = h => h >= 6 && h < 18;
+
+  function timeHTML(h, m, s){
+    return `${pad(to12(h))}:${pad(m)}<span class="sec">:${pad(s)}</span>`
+         + `<span class="ap">${ampm(h)}</span>`;
+  }
+
+  // ---- analog clock ----
+  function ticksMarkup(){
+    let s = '';
+    for (let i = 0; i < 12; i++){
+      const a = i * 30 * Math.PI / 180;
+      const outer = 45, inner = (i % 3 === 0) ? 37 : 41;
+      const x1 = 50 + outer * Math.sin(a), y1 = 50 - outer * Math.cos(a);
+      const x2 = 50 + inner * Math.sin(a), y2 = 50 - inner * Math.cos(a);
+      const w = (i % 3 === 0) ? 2 : 1;
+      s += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${w}" class="tick"/>`;
+    }
+    return s;
+  }
+
+  // Trapezoidal-tooth cog outline centred at 50,50.
+  function gearPath(teeth, rOut, rIn){
+    const step = Math.PI * 2 / teeth;
+    const tw = step * 0.28;   // half-width of a tooth top
+    const gw = step * 0.30;   // half-width of a valley
+    let d = '';
+    for (let i = 0; i < teeth; i++){
+      const a = i * step - Math.PI / 2;
+      const pt = (ang, r) => `${(50 + r*Math.cos(ang)).toFixed(2)} ${(50 + r*Math.sin(ang)).toFixed(2)}`;
+      d += (i === 0 ? 'M' : 'L') + pt(a - tw, rOut)
+         + ' L' + pt(a + tw, rOut)
+         + ' L' + pt(a + step/2 - gw, rIn)
+         + ' L' + pt(a + step/2 + gw, rIn);
+    }
+    return d + ' Z';
+  }
+  const GEAR_D = gearPath(10, 6.3, 4.4);
+
+  function clockSVG(){
+    return `<svg viewBox="0 0 100 100" class="clock-svg" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" class="cl-face"/>
+      <g>${ticksMarkup()}</g>
+      <line x1="50" y1="50" x2="50" y2="30" class="cl-h" stroke-linecap="round"/>
+      <line x1="50" y1="50" x2="50" y2="21" class="cl-m" stroke-linecap="round"/>
+      <g class="cl-s-grp">
+        <path d="${GEAR_D}" class="cl-gear"/>
+        <circle cx="50" cy="50" r="2.5" class="cl-gear-hole"/>
+        <line x1="50" y1="61" x2="50" y2="14" class="cl-s" stroke-linecap="round"/>
+        <circle cx="50" cy="61" r="1.9" class="cl-s-tail"/>
+      </g>
+      <circle cx="50" cy="50" r="1.7" class="cl-cap"/>
+    </svg>`;
+  }
+  function clockRefs(container){
+    container.innerHTML = clockSVG();
+    return {
+      hh:   container.querySelector('.cl-h'),
+      mm:   container.querySelector('.cl-m'),
+      sGrp: container.querySelector('.cl-s-grp'),
+    };
+  }
+  function setHourMin(c, h, m, s){
+    const hA = ((h % 12) + m / 60 + s / 3600) / 12 * 360;
+    const mA = (m + s / 60) / 60 * 360;
+    c.hh.setAttribute('transform', `rotate(${hA.toFixed(2)} 50 50)`);
+    c.mm.setAttribute('transform', `rotate(${mA.toFixed(2)} 50 50)`);
+  }
+  function setSeconds(c, angle){
+    c.sGrp.setAttribute('transform', `rotate(${angle.toFixed(2)} 50 50)`);
+  }
+
+  // ---- build DOM ----
+  const featSection = document.getElementById('feature');
+  const featClock   = clockRefs(document.getElementById('featClock'));
+  const featTime    = document.getElementById('featTime');
+  const featOff     = document.getElementById('featOff');
+  const featDate    = document.getElementById('featDate');
+
+  const gridEl = document.getElementById('grid');
+  const cards = ROW.map(z => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+      <div class="card-clock"></div>
+      <div class="t-time card-time"></div>
+      <div><span class="badge">${z.label}</span></div>
+      <div class="card-city">${z.city}</div>
+      <div class="card-sub"></div>`;
+    gridEl.appendChild(el);
+    return {
+      z, el,
+      time: el.querySelector('.card-time'),
+      sub:  el.querySelector('.card-sub'),
+      clock: clockRefs(el.querySelector('.card-clock')),
+    };
+  });
+
+  // ---- per-second update (everything except the sweeping seconds) ----
+  function updatePerSecond(now){
+    const F = partsFor(now, FEATURE.tz);
+    featTime.innerHTML = timeHTML(F.h, F.m, F.s);
+    featOff.textContent = utcText(offsetMinutes(now, FEATURE.tz));
+    featDate.textContent = `${F.weekday} ${F.day} ${F.month}`;
+    setHourMin(featClock, F.h, F.m, F.s);
+    featSection.classList.toggle('is-night', !isDay(F.h));
+
+    for (const c of cards){
+      const P = partsFor(now, c.z.tz);
+      c.time.innerHTML = timeHTML(P.h, P.m, P.s);
+      const sameDay = (P.day === F.day && P.month === F.month);
+      c.sub.innerHTML = `${P.weekday} ${P.day} ${P.month}`.toUpperCase()
+        + ` &middot; ${utcText(offsetMinutes(now, c.z.tz))}`
+        + (sameDay ? '' : ` <span class="next">&middot; ${MINUS}1d</span>`);
+      setHourMin(c.clock, P.h, P.m, P.s);
+      c.el.classList.toggle('is-night', !isDay(P.h));
+    }
+
+    document.getElementById('syncNote').textContent =
+      `Synced to this computer \u00b7 ${localTZ.replace(/_/g,' ')}`;
+  }
+
+  const allClocks = [featClock, ...cards.map(c => c.clock)];
+  // Seconds (and therefore the geared sweep) are identical across every zone.
+  function setAllSeconds(angle){
+    for (const c of allClocks) setSeconds(c, angle);
+  }
+
+  const reduceMotion = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let lastSec = -1;
+  if (reduceMotion){
+    // No sweep: step the geared arm once per second.
+    function step(){
+      const now = new Date();
+      setAllSeconds(now.getSeconds() / 60 * 360);
+      updatePerSecond(now);
+    }
+    step();
+    setInterval(step, 1000);
+  } else {
+    function loop(){
+      const now = new Date();
+      const sFloat = now.getSeconds() + now.getMilliseconds() / 1000;
+      setAllSeconds(sFloat / 60 * 360);          // smooth geared sweep
+      if (now.getSeconds() !== lastSec){
+        lastSec = now.getSeconds();
+        updatePerSecond(now);
+      }
+      requestAnimationFrame(loop);
+    }
+    updatePerSecond(new Date());
+    requestAnimationFrame(loop);
+  }
+
+  // ---- light / dark toggle ----
+  // Follows the OS preference on first load and remembers your choice after,
+  // matching the Meeting Board's behaviour.
+  const THEME_KEY = 'infostride-theme';   // shared across all InfoStride pages
+  const themeBtn = document.getElementById('themeToggle');
+
+  function safeGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function safeSet(k,v){ try { localStorage.setItem(k,v); } catch (e) {} }
+
+  function applyTheme(theme){
+    const isLight = theme === 'light';
+    document.body.classList.toggle('light', isLight);
+    const label = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+    themeBtn.setAttribute('aria-label', label);
+    themeBtn.setAttribute('title', label);
+    themeBtn.setAttribute('aria-pressed', String(isLight));
+  }
+
+  let saved = safeGet(THEME_KEY);
+  if (saved !== 'light' && saved !== 'dark'){
+    saved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+      ? 'light' : 'dark';
+  }
+  applyTheme(saved);
+
+  themeBtn.addEventListener('click', () => {
+    const next = document.body.classList.contains('light') ? 'dark' : 'light';
+    applyTheme(next);
+    safeSet(THEME_KEY, next);
+  });
+
+  // Theme changed on another InfoStride page / tab
+  window.addEventListener('storage', e => {
+    if (e.key === THEME_KEY && (e.newValue === 'light' || e.newValue === 'dark')) applyTheme(e.newValue);
+  });
+</script>
+</body>
+</html>

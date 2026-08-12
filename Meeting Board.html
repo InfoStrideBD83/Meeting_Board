@@ -1,0 +1,2995 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e17" />
+  <title>InfoStride · Meeting Board</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ══════════════════════════════════════════════════════════════
+       DESIGN TOKENS — Indigo / Slate, tuned for both colour modes
+       ══════════════════════════════════════════════════════════════ */
+    :root {
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+      --r-xl: 18px;
+      --r-lg: 14px;
+      --r-md: 10px;
+      --r-sm: 8px;
+      --r-pill: 999px;
+
+      --sp: 16px;
+      --header-h: 62px;
+
+      --ease: cubic-bezier(.4, 0, .2, 1);
+    }
+
+    /* ── DARK (default) ─────────────────────────────────────────── */
+    html[data-theme="dark"] {
+      --bg:           #090d15;
+      --bg-glow-1:    rgba(99, 102, 241, .13);
+      --bg-glow-2:    rgba(20, 184, 166, .07);
+
+      --panel:        #131924;
+      --panel-2:      #1a2130;
+      --panel-3:      #222b3c;
+      --panel-glass:  rgba(19, 25, 36, .82);
+
+      --border:       #27303f;
+      --border-soft:  #1e2532;
+      --border-strong:#33405a;
+
+      --text:         #e9edf6;
+      --text-2:       #c3cbdb;
+      --muted:        #939cb2;
+      --faint:        #626c82;
+
+      --accent:       #818cf8;
+      --accent-2:     #6366f1;
+      --accent-ink:   #0b1020;
+      --accent-soft:  rgba(129, 140, 248, .15);
+      --accent-line:  rgba(129, 140, 248, .38);
+
+      --success:      #34d399;
+      --success-soft: rgba(52, 211, 153, .14);
+      --warn:         #fbbf24;
+      --warn-soft:    rgba(251, 191, 36, .14);
+      --danger:       #fb7185;
+      --danger-soft:  rgba(251, 113, 133, .13);
+      --danger-line:  rgba(251, 113, 133, .38);
+
+      --grid:         #1c2330;
+      --row-hover:    rgba(129, 140, 248, .07);
+      --col-line:     #232b3a;
+
+      --shadow-sm:    0 1px 2px rgba(0,0,0,.5);
+      --shadow:       0 8px 24px -6px rgba(0,0,0,.6);
+      --shadow-lg:    0 24px 60px -12px rgba(0,0,0,.75);
+
+      --select-arrow: %239aa3b8;
+      --scroll-thumb: #2d3748;
+      color-scheme: dark;
+    }
+
+    /* ── LIGHT ──────────────────────────────────────────────────── */
+    html[data-theme="light"] {
+      --bg:           #f1f4fa;
+      --bg-glow-1:    rgba(99, 102, 241, .11);
+      --bg-glow-2:    rgba(13, 148, 136, .06);
+
+      --panel:        #ffffff;
+      --panel-2:      #f5f7fc;
+      --panel-3:      #ebeff8;
+      --panel-glass:  rgba(255, 255, 255, .84);
+
+      --border:       #dce2ee;
+      --border-soft:  #e9edf6;
+      --border-strong:#c3ccdf;
+
+      --text:         #111726;
+      --text-2:       #33405a;
+      --muted:        #5c6579;
+      --faint:        #8d97ab;
+
+      --accent:       #4f46e5;
+      --accent-2:     #4338ca;
+      --accent-ink:   #ffffff;
+      --accent-soft:  rgba(79, 70, 229, .09);
+      --accent-line:  rgba(79, 70, 229, .30);
+
+      --success:      #059669;
+      --success-soft: rgba(5, 150, 105, .10);
+      --warn:         #b45309;
+      --warn-soft:    rgba(180, 83, 9, .10);
+      --danger:       #e11d48;
+      --danger-soft:  rgba(225, 29, 72, .07);
+      --danger-line:  rgba(225, 29, 72, .28);
+
+      --grid:         #edf1f8;
+      --row-hover:    rgba(79, 70, 229, .05);
+      --col-line:     #e5eaf3;
+
+      --shadow-sm:    0 1px 2px rgba(24, 39, 75, .06);
+      --shadow:       0 8px 24px -8px rgba(24, 39, 75, .14);
+      --shadow-lg:    0 24px 60px -14px rgba(24, 39, 75, .22);
+
+      --select-arrow: %235c6579;
+      --scroll-thumb: #c9d2e3;
+      color-scheme: light;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       BASE
+       ══════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-ui);
+      color: var(--text);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(900px 520px at 88% -12%, var(--bg-glow-1), transparent 70%),
+        radial-gradient(700px 460px at 4% 4%, var(--bg-glow-2), transparent 70%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      line-height: 1.45;
+      font-size: 14px;
+      transition: background-color .3s var(--ease), color .3s var(--ease);
+      padding-bottom: 40px;
+    }
+
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+    ::selection { background: var(--accent-soft); color: var(--text); }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* Scrollbars */
+    * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb {
+      background: var(--scroll-thumb);
+      border-radius: 99px;
+      border: 2.5px solid transparent;
+      background-clip: content-box;
+    }
+    *::-webkit-scrollbar-thumb:hover { background: var(--border-strong); background-clip: content-box; }
+
+    /* ══════════════════════════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════════════════════════ */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--panel-glass);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1760px;
+      margin: 0 auto;
+      min-height: var(--header-h);
+      padding: 10px clamp(12px, 2.2vw, 28px);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      flex-shrink: 0;
+      text-decoration: none;
+      color: inherit;
+      border-radius: var(--r-md);
+      transition: opacity .18s var(--ease);
+    }
+    .brand:hover { opacity: .78; }
+
+    /* Brand logo — colour artwork in light mode, white artwork in dark mode */
+    .brand-logo {
+      height: 27px;
+      width: auto;
+      display: block;
+      flex-shrink: 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    html[data-theme="light"] .brand-logo.on-dark  { display: none; }
+    html[data-theme="dark"]  .brand-logo.on-light { display: none; }
+
+    .brand-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .brand-label {
+      font-size: 13px;
+      font-weight: 650;
+      color: var(--muted);
+      letter-spacing: -.1px;
+      white-space: nowrap;
+    }
+
+    .header-spacer { flex: 1 1 auto; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Segmented view switch ──────────────────────────────────── */
+    .segmented {
+      display: inline-flex;
+      background: var(--panel-2);
+      padding: 3px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      gap: 2px;
+    }
+
+    .seg {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px;
+      font-size: 12.5px; font-weight: 600;
+      font-family: var(--font-ui);
+      border: none; background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 7px;
+      transition: color .18s var(--ease), background .18s var(--ease);
+      white-space: nowrap;
+    }
+    .seg:hover { color: var(--text); }
+    .seg[aria-selected="true"] {
+      background: var(--panel);
+      color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 8px 14px;
+      min-height: 36px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 12.5px; font-weight: 600;
+      font-family: var(--font-ui);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .18s var(--ease);
+    }
+    .btn:hover {
+      border-color: var(--border-strong);
+      background: var(--panel-3);
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 14px -4px var(--accent-line);
+    }
+    .btn-primary:hover { filter: brightness(1.08); background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; }
+
+    .btn-ghost { background: transparent; }
+    .btn-ghost:hover { background: var(--panel-2); }
+
+    .btn-icon { padding: 8px; width: 36px; }
+
+    .btn-danger-text { color: var(--danger); }
+    .btn-danger-text:hover { border-color: var(--danger-line); background: var(--danger-soft); }
+
+    /* ── Theme toggle (left of Export) ──────────────────────────── */
+    .theme-toggle {
+      position: relative;
+      width: 62px; height: 32px;
+      flex-shrink: 0;
+      border-radius: var(--r-pill);
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      cursor: pointer;
+      padding: 0;
+      transition: background .25s var(--ease), border-color .25s var(--ease);
+    }
+    .theme-toggle:hover { border-color: var(--accent-line); }
+
+    .theme-toggle-knob {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center;
+      color: #fff;
+      box-shadow: 0 2px 8px -1px var(--accent-line);
+      transition: transform .32s cubic-bezier(.34, 1.4, .64, 1);
+    }
+    html[data-theme="light"] .theme-toggle-knob { transform: translateX(30px); }
+
+    .theme-toggle-icons {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 8px;
+      color: var(--faint);
+      pointer-events: none;
+    }
+    .theme-toggle-icons svg { transition: opacity .25s var(--ease); }
+    html[data-theme="dark"]  .tt-moon { opacity: 0; }
+    html[data-theme="light"] .tt-sun  { opacity: 0; }
+
+    /* ══════════════════════════════════════════════════════════════
+       MAIN / LAYOUT
+       ══════════════════════════════════════════════════════════════ */
+    main {
+      max-width: 1760px;
+      margin: 0 auto;
+      padding: clamp(14px, 2vw, 24px) clamp(12px, 2.2vw, 28px) 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.6vw, 20px);
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow);
+    }
+
+    /* ── Page title row ─────────────────────────────────────────── */
+    .page-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .page-title { font-size: clamp(19px, 2.4vw, 25px); font-weight: 750; letter-spacing: -.6px; }
+    .page-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Stat tiles ─────────────────────────────────────────────── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: clamp(10px, 1.1vw, 14px);
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: transform .18s var(--ease), border-color .18s var(--ease);
+    }
+    .stat:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+
+    .stat-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border-radius: var(--r-md);
+      display: grid; place-items: center;
+    }
+    .stat-body { min-width: 0; }
+    .stat-val {
+      font-family: var(--font-mono);
+      font-size: 21px; font-weight: 600; line-height: 1.1;
+      letter-spacing: -.5px;
+    }
+    .stat-label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+
+    .t-accent  { background: var(--accent-soft);  color: var(--accent); }
+    .t-success { background: var(--success-soft); color: var(--success); }
+    .t-warn    { background: var(--warn-soft);    color: var(--warn); }
+    .t-danger  { background: var(--danger-soft);  color: var(--danger); }
+
+    /* ── Conflict banner ────────────────────────────────────────── */
+    .banner {
+      background: var(--danger-soft);
+      border: 1px solid var(--danger-line);
+      border-radius: var(--r-lg);
+      padding: 13px 15px;
+      display: flex; align-items: flex-start; gap: 12px;
+      animation: slideDown .25s var(--ease);
+    }
+    .banner > svg { color: var(--danger); flex-shrink: 0; margin-top: 1px; }
+    .banner-body { flex: 1; min-width: 0; }
+    .banner-title {
+      color: var(--danger); font-size: 13px; font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .banner-list { list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+    .banner-list li { color: var(--text-2); }
+    .banner-list b { font-weight: 650; }
+    .banner-list .date { color: var(--muted); font-size: 11.5px; }
+
+    /* ── Toolbar ────────────────────────────────────────────────── */
+    .toolbar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-sm);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-divider {
+      height: 1px;
+      background: var(--border-soft);
+      margin: 0 -14px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 220px;
+      min-width: 180px;
+      max-width: 380px;
+    }
+    .search-wrap svg {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: var(--faint); pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      height: 36px;
+      padding: 0 34px 0 33px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      transition: border-color .18s var(--ease), background .18s var(--ease);
+    }
+    .search-input::placeholder { color: var(--faint); }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--panel);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .search-clear {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 22px; height: 22px; border: none; border-radius: 50%;
+      background: var(--panel-3); color: var(--muted);
+      cursor: pointer; display: grid; place-items: center;
+      font-size: 14px; line-height: 1;
+    }
+    .search-clear:hover { color: var(--text); }
+
+    /* Month selector */
+    .month-wrap { position: relative; flex-shrink: 0; }
+    .month-bar {
+      display: inline-flex; align-items: center; gap: 2px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 3px;
+    }
+    .month-nav {
+      width: 28px; height: 28px;
+      border-radius: 7px; border: none;
+      background: transparent; color: var(--muted);
+      cursor: pointer; display: grid; place-items: center;
+      transition: all .15s var(--ease);
+    }
+    .month-nav:hover { background: var(--panel-3); color: var(--text); }
+
+    .month-trigger {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; border: none;
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 12.5px; font-weight: 650;
+      padding: 5px 10px; cursor: pointer; border-radius: 7px;
+      white-space: nowrap;
+    }
+    .month-trigger:hover { background: var(--panel-3); }
+
+    .month-dropdown {
+      position: absolute;
+      top: calc(100% + 8px); right: 0;
+      z-index: 130;
+      width: 268px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 13px;
+      animation: pop .16s var(--ease);
+    }
+    .year-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 11px; font-weight: 700; font-size: 13.5px;
+    }
+    .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 11px; }
+    .month-grid-btn {
+      padding: 8px 4px; border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      background: var(--panel-2); color: var(--text-2);
+      font-family: var(--font-ui);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all .15s var(--ease);
+    }
+    .month-grid-btn:hover { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
+    .month-grid-btn[aria-current="true"] {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent; color: #fff;
+    }
+
+    /* Member filter chips */
+    .filter-label {
+      font-size: 11px; font-weight: 700; color: var(--faint);
+      text-transform: uppercase; letter-spacing: .6px;
+      margin-right: 2px; white-space: nowrap;
+    }
+
+    .chip-scroller {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px 6px 8px;
+      border-radius: var(--r-pill);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      font-size: 12.5px; font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer; user-select: none;
+      transition: all .16s var(--ease);
+      font-family: var(--font-ui);
+    }
+    .chip:hover { border-color: var(--border-strong); color: var(--text); }
+    .chip[aria-pressed="false"] { opacity: .42; }
+    .chip-avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 9.5px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+      letter-spacing: -.2px;
+    }
+    .chip-count {
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 600;
+      background: var(--panel-3); color: var(--muted);
+      border-radius: var(--r-pill);
+      padding: 1px 6px;
+    }
+
+    .link-btn {
+      background: none; border: none;
+      color: var(--accent);
+      font-family: var(--font-ui);
+      font-size: 12px; font-weight: 650;
+      cursor: pointer; padding: 4px 6px; border-radius: 6px;
+      white-space: nowrap;
+    }
+    .link-btn:hover { background: var(--accent-soft); }
+
+    /* ══════════════════════════════════════════════════════════════
+       TABLE
+       ══════════════════════════════════════════════════════════════ */
+    .table-card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* Right-edge fade: tells the user the table scrolls sideways */
+    .table-card::after {
+      content: "";
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 46px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s var(--ease);
+      background: linear-gradient(to left, var(--panel), transparent);
+      border-top-right-radius: var(--r-xl);
+      border-bottom-right-radius: var(--r-xl);
+    }
+    .table-card.can-scroll-x::after { opacity: 1; }
+    .table-card.at-end::after { opacity: 0; }
+
+    .scroll-hint {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 650;
+      color: var(--muted);
+      padding: 7px 14px;
+      border-top: 1px solid var(--border-soft);
+      background: var(--panel-2);
+    }
+    .table-card.show-hint .scroll-hint { display: flex; }
+
+    .table-scroll {
+      overflow: auto;
+      max-height: calc(100dvh - 260px);
+      min-height: 220px;
+      overscroll-behavior-x: contain;
+    }
+
+    table.tbl {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      min-width: 1240px;
+    }
+
+    table.tbl thead th {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--panel);
+      text-align: left;
+      padding: 11px 9px;
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+      border-bottom: 2px solid var(--border);
+      box-shadow: inset 0 -2px 0 var(--border);
+    }
+    table.tbl thead th.c { text-align: center; }
+
+    /* Long headers wrap to two lines instead of stretching their column */
+    table.tbl thead th.th-wrap {
+      white-space: normal;
+      line-height: 1.25;
+      max-width: 96px;
+    }
+
+    /* ── Column partitions ──────────────────────────────────────
+       One uniform divider between every column, identical across
+       the header and every body row.                            */
+    table.tbl thead th,
+    table.tbl tbody td {
+      border-right: 1px solid var(--col-line);
+    }
+    table.tbl thead th:last-child,
+    table.tbl tbody td:last-child { border-right: none; }
+
+    /* Time-zone headers keep the mono type but no tinted background */
+    .th-group { letter-spacing: .7px; }
+
+    table.tbl tbody td {
+      padding: 10px 9px;
+      border-bottom: 1px solid var(--border-soft);
+      vertical-align: middle;
+    }
+    table.tbl tbody td.c { text-align: center; }
+
+    table.tbl tbody tr:hover { background: var(--row-hover); }
+    table.tbl tbody tr:last-child td { border-bottom: none; }
+
+    table.tbl tbody tr.is-conflict { background: var(--danger-soft); }
+    table.tbl tbody tr.is-conflict:hover { background: var(--danger-soft); filter: brightness(1.06); }
+
+    /* Sticky first column on desktop/tablet */
+    .col-person {
+      position: sticky; left: 0; z-index: 15;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      min-width: 150px;
+    }
+    thead .col-person { z-index: 25; }
+    /* The pinned column must stay opaque, so it mirrors the row it sits in */
+    tbody tr.is-conflict .col-person { background: color-mix(in srgb, var(--panel) 82%, var(--danger)); }
+    tbody tr:hover .col-person { background: color-mix(in srgb, var(--panel) 100%, var(--row-hover)); }
+
+    .person-cell { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+    .avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 10.5px; font-weight: 700; color: #fff;
+      flex-shrink: 0; letter-spacing: -.2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
+    }
+    .person-name { font-weight: 650; font-size: 13px; }
+
+    .topic-cell { display: flex; align-items: center; gap: 7px; min-width: 168px; }
+    .topic-text { font-weight: 550; }
+
+    .warn-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--danger-soft); color: var(--danger);
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+
+    .tz-cell {
+      text-align: center; white-space: nowrap;
+      font-size: 12.5px; color: var(--text-2);
+      padding-left: 5px !important;
+      padding-right: 5px !important;
+    }
+    table.tbl thead th.th-group { padding-left: 5px; padding-right: 5px; }
+    /* The meeting's own zone is marked with weight + colour, not a fill */
+    .tz-cell.is-home { color: var(--accent); font-weight: 700; }
+
+    .date-cell { white-space: nowrap; font-size: 12.5px; font-weight: 550; }
+    .dur-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11.5px; font-weight: 600;
+      background: var(--panel-2); color: var(--text-2);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-pill);
+      padding: 2px 9px;
+    }
+
+    /* Pill selects */
+    .pill-select {
+      height: 29px;
+      max-width: 100%;
+      font-size: 11.5px; font-weight: 650;
+      font-family: var(--font-ui);
+      padding: 0 26px 0 12px;
+      border-radius: var(--r-pill);
+      cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      border: 1px solid transparent;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 9px center;
+      text-align: center;
+      text-align-last: center;
+      transition: filter .15s var(--ease);
+    }
+    .pill-select:hover { filter: brightness(1.08); }
+
+    .s-scheduled { background-color: var(--accent-soft);  color: var(--accent);  border-color: var(--accent-line); }
+    .s-completed { background-color: var(--success-soft); color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+    .s-canceled  { background-color: var(--danger-soft);  color: var(--danger);  border-color: var(--danger-line); }
+    .s-neutral   { background-color: var(--panel-2);      color: var(--text-2);  border-color: var(--border); }
+
+    .o-positive { background-color: var(--success-soft); color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+    .o-neutral  { background-color: var(--warn-soft);    color: var(--warn);    border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+    .o-negative { background-color: var(--danger-soft);  color: var(--danger);  border-color: var(--danger-line); }
+    .o-empty    { background-color: var(--panel-2);      color: var(--faint);   border-color: var(--border); }
+
+    .poc-btn {
+      background: none; border: none;
+      color: var(--accent);
+      font-family: var(--font-ui);
+      font-size: 12.5px; font-weight: 650;
+      cursor: pointer; padding: 3px 0;
+      border-bottom: 1px dashed var(--accent-line);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .poc-btn:hover { border-bottom-style: solid; }
+    .poc-sub { font-size: 11.5px; color: var(--muted); }
+
+    .dash { color: var(--faint); }
+
+    .note-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      height: 27px; padding: 0 10px;
+      border-radius: var(--r-pill);
+      border: 1px solid var(--border);
+      background: var(--panel-2); color: var(--text-2);
+      font-family: var(--font-ui);
+      font-size: 11px; font-weight: 650;
+      cursor: pointer;
+      transition: all .16s var(--ease);
+      max-width: 100%;
+    }
+    .note-btn:hover { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
+    .note-btn.filled { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
+    .note-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    table.tbl .note-btn { max-width: 158px; }
+    table.tbl .note-btn svg { flex-shrink: 0; }
+
+    /* Outcome values are short, so this pill stays capped */
+    table.tbl .sel-narrow { max-width: 118px; }
+    /* Taken By must show the full member name — no cap */
+    table.tbl .sel-name { max-width: none; }
+
+    .actions-wrap { display: inline-flex; gap: 4px; }
+    .icon-btn {
+      width: 29px; height: 29px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--muted);
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: all .16s var(--ease);
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--border-strong); background: var(--panel-3); }
+    .icon-btn.edit:hover { color: var(--accent);  border-color: var(--accent-line);  background: var(--accent-soft); }
+    .icon-btn.dup:hover  { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); background: var(--success-soft); }
+    .icon-btn.del:hover  { color: var(--danger);  border-color: var(--danger-line);  background: var(--danger-soft); }
+
+    /* ══════════════════════════════════════════════════════════════
+       MOBILE CARDS
+       ══════════════════════════════════════════════════════════════ */
+    .card-list {
+      display: flex; flex-direction: column;
+      gap: 12px;
+    }
+
+    .m-card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 13px;
+      display: flex; flex-direction: column; gap: 11px;
+      border-left: 3px solid var(--mc, var(--accent));
+    }
+    .m-card.is-conflict {
+      background: var(--danger-soft);
+      border-color: var(--danger-line);
+    }
+
+    .mc-top { display: flex; align-items: flex-start; gap: 10px; }
+    .mc-top-body { flex: 1; min-width: 0; }
+    .mc-topic {
+      font-size: 14.5px; font-weight: 700; letter-spacing: -.2px;
+      line-height: 1.3;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mc-person {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted); font-weight: 600;
+      margin-top: 4px;
+    }
+    .mc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .mc-meta {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-size: 12px; color: var(--text-2);
+    }
+    .mc-meta-item {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-pill);
+      padding: 3px 10px;
+      font-weight: 600;
+    }
+    .mc-meta-item svg { color: var(--muted); }
+
+    .mc-zones {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--border-soft);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-md);
+      overflow: hidden;
+    }
+    .mc-zone {
+      background: var(--panel-2);
+      padding: 6px 2px;
+      text-align: center;
+    }
+    .mc-zone.is-home { background: var(--accent-soft); }
+    .mc-zone-label {
+      font-size: 9px; font-weight: 700; letter-spacing: .5px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .mc-zone.is-home .mc-zone-label { color: var(--accent); }
+    .mc-zone-time {
+      font-family: var(--font-mono);
+      font-size: 12px; font-weight: 600;
+      margin-top: 1px;
+    }
+    .mc-zone.is-home .mc-zone-time { color: var(--accent); }
+
+    .mc-field {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+      font-size: 12.5px;
+      padding-top: 9px;
+      border-top: 1px dashed var(--border-soft);
+    }
+    .mc-field-label {
+      font-size: 10.5px; font-weight: 700; color: var(--faint);
+      text-transform: uppercase; letter-spacing: .5px;
+      flex-shrink: 0;
+    }
+    .mc-field-val { text-align: right; min-width: 0; }
+
+    .mc-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       POPOVERS
+       ══════════════════════════════════════════════════════════════ */
+    .pop-anchor { position: relative; }
+
+    .popover {
+      position: absolute;
+      z-index: 160;
+      width: 288px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 13px;
+      animation: pop .16s var(--ease);
+      text-align: left;
+    }
+    .pop-head {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border-soft);
+      padding-bottom: 8px; margin-bottom: 10px;
+    }
+    .pop-head strong {
+      font-size: 11px; font-weight: 750; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px;
+    }
+    .pop-close {
+      background: none; border: none; color: var(--muted);
+      width: 22px; height: 22px; border-radius: 6px;
+      cursor: pointer; display: grid; place-items: center;
+      font-size: 17px; line-height: 1;
+    }
+    .pop-close:hover { background: var(--panel-2); color: var(--text); }
+
+    .pop-row {
+      display: flex; justify-content: space-between; gap: 12px;
+      font-size: 12.5px; padding: 5px 0;
+      border-bottom: 1px dashed var(--border-soft);
+    }
+    .pop-row:last-child { border-bottom: none; }
+    .pop-row .k { color: var(--muted); flex-shrink: 0; }
+    .pop-row .v { color: var(--text); font-weight: 600; text-align: right; word-break: break-word; }
+
+    .pop-textarea {
+      width: 100%; min-height: 100px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-family: inherit; font-size: 12.5px;
+      padding: 9px; margin-bottom: 10px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .pop-textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .pop-backdrop { display: none; }
+
+    /* ══════════════════════════════════════════════════════════════
+       CALENDAR
+       ══════════════════════════════════════════════════════════════ */
+    .cal-toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .week-label {
+      font-weight: 650; font-size: 13.5px;
+      padding: 0 4px;
+      white-space: nowrap;
+    }
+    .field-select {
+      height: 36px;
+      font-family: var(--font-ui);
+      font-size: 12.5px; font-weight: 600;
+      color: var(--text);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 0 30px 0 11px;
+      cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .field-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    .cal-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    /* Height is set from JS to exactly fill the space left on screen,
+       so the calendar never needs vertical scrolling. */
+    .cal-scroll {
+      height: var(--cal-h, 460px);
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: 52px repeat(var(--days, 7), minmax(96px, 1fr));
+      grid-template-rows: 52px 1fr;
+      height: 100%;
+      position: relative;
+    }
+
+    .cal-corner {
+      position: sticky; top: 0; left: 0; z-index: 40;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      height: 52px;
+    }
+    .cal-dayhead {
+      position: sticky; top: 0; z-index: 30;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border-soft);
+      height: 52px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .cal-dayhead.today { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
+    .dow { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .cal-dayhead.today .dow { color: var(--accent); }
+    .dom { font-family: var(--font-mono); font-size: 16px; font-weight: 600; line-height: 1.1; }
+    .cal-dayhead.today .dom { color: var(--accent); }
+
+    .cal-gutter {
+      grid-column: 1;
+      position: sticky; left: 0; z-index: 20;
+      background: var(--panel-2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .gutter-hour {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow: hidden;
+      border-bottom: 1px solid var(--grid);
+      font-size: 9.5px; color: var(--faint); font-weight: 600;
+      line-height: 1;
+      text-align: right;
+      padding: 2px 6px 0 0;
+    }
+
+    .cal-col {
+      position: relative;
+      border-right: 1px solid var(--border-soft);
+      height: 100%;
+    }
+    .cal-col.is-today { background: color-mix(in srgb, var(--accent) 3.5%, transparent); }
+    .hr-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--grid); pointer-events: none; }
+
+    .cal-event {
+      position: absolute;
+      left: 3px; right: 3px;
+      min-height: 0;
+      border-radius: 8px;
+      padding: 4px 7px;
+      overflow: hidden;
+      color: #fff;
+      font-size: 10.5px;
+      cursor: pointer;
+      border-left: 3px solid rgba(255,255,255,.65);
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.16);
+      transition: filter .15s var(--ease), transform .15s var(--ease);
+      text-align: left;
+      font-family: var(--font-ui);
+    }
+    .cal-event:hover { filter: brightness(1.12); transform: scale(1.015); z-index: 8; }
+    .cal-event.conflict { outline: 2px solid var(--danger); outline-offset: -2px; }
+    .ev-title { font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ev-sub { font-size: 9.5px; opacity: .92; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Short blocks drop the second line and tighten up so the title still reads */
+    .cal-event.compact { padding: 1px 6px; line-height: 1.15; font-size: 10px; }
+    .cal-event.compact .ev-sub { display: none; }
+
+    /* Calendar view reclaims the vertical space the table view needs */
+    body.cal-mode .stats,
+    body.cal-mode .page-head { display: none; }
+    body.cal-mode { padding-bottom: 0; }
+
+    .now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 9; pointer-events: none; }
+    .now-line::before {
+      content: ""; position: absolute; left: -3px; top: -3px;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--danger);
+      box-shadow: 0 0 0 3px var(--danger-soft);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       MODAL
+       ══════════════════════════════════════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(6, 9, 16, .62);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      animation: fade .2s var(--ease);
+    }
+    html[data-theme="light"] .overlay { background: rgba(24, 39, 75, .35); }
+
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 620px;
+      max-height: 92dvh;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      animation: pop .22s var(--ease);
+    }
+    .modal-head {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      background: var(--panel-2);
+    }
+    .modal-head h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -.2px; }
+    .modal-head p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    .modal-body {
+      padding: 18px;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 15px;
+    }
+
+    .fieldset-label {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 10.5px; font-weight: 750; color: var(--faint);
+      text-transform: uppercase; letter-spacing: .7px;
+    }
+    .fieldset-label::after {
+      content: ""; flex: 1; height: 1px; background: var(--border-soft);
+    }
+
+    .fgroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .fgroup > label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .control {
+      width: 100%;
+      min-height: 38px;
+      padding: 9px 12px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      transition: border-color .16s var(--ease), box-shadow .16s var(--ease);
+    }
+    .control::placeholder { color: var(--faint); }
+    .control:focus {
+      outline: none; border-color: var(--accent);
+      background: var(--panel);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    select.control {
+      cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      padding-right: 32px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 11px center;
+    }
+    textarea.control { resize: vertical; line-height: 1.55; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .modal-foot {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      background: var(--panel-2);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       EMPTY STATE
+       ══════════════════════════════════════════════════════════════ */
+    .empty {
+      text-align: center;
+      padding: clamp(40px, 8vw, 74px) 20px;
+      color: var(--muted);
+    }
+    .empty-art {
+      width: 62px; height: 62px; margin: 0 auto 16px;
+      border-radius: var(--r-lg);
+      background: var(--accent-soft); color: var(--accent);
+      display: grid; place-items: center;
+    }
+    .empty h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .empty p { font-size: 13px; max-width: 340px; margin: 0 auto 18px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       ANIMATIONS
+       ══════════════════════════════════════════════════════════════ */
+    @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Large desktop — let the table breathe, no inner scroll needed */
+    @media (min-width: 1500px) {
+      table.tbl { min-width: 100%; font-size: 13.5px; }
+      table.tbl tbody td { padding: 11px 14px; }
+    }
+
+    /* Laptop */
+    @media (max-width: 1499px) and (min-width: 1100px) {
+      table.tbl { min-width: 1240px; }
+    }
+
+    /* Tablet & down: header stacks */
+    @media (max-width: 1023px) {
+      :root { --header-h: auto; }
+      .header-inner { flex-wrap: wrap; row-gap: 10px; }
+      .header-spacer { display: none; }
+      .segmented { order: 3; flex: 1 1 100%; }
+      .seg { flex: 1; justify-content: center; }
+      .header-actions { margin-left: auto; }
+      .table-scroll { max-height: calc(100dvh - 300px); }
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+      body { font-size: 13.5px; }
+      main { gap: 12px; padding-left: 12px; padding-right: 12px; }
+
+      .brand-logo { height: 23px; }
+      .brand-divider, .brand-label { display: none; }
+
+      .page-head { align-items: flex-start; }
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+      .stat { padding: 11px; gap: 9px; }
+      .stat-icon { width: 30px; height: 30px; }
+      .stat-val { font-size: 18px; }
+      .stat-label { font-size: 10px; }
+
+      .toolbar { padding: 11px; border-radius: var(--r-lg); }
+      .search-wrap { flex: 1 1 100%; max-width: none; }
+      .month-wrap { flex: 1 1 100%; }
+      .month-bar { width: 100%; justify-content: space-between; }
+      .month-trigger { flex: 1; justify-content: center; }
+      .month-dropdown { left: 0; right: 0; width: auto; }
+      .filter-label { flex: 1 1 100%; }
+
+      /* Filter chips scroll horizontally instead of wrapping into a tall block */
+      .chip-scroller {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 3px;
+        margin: 0 -11px;
+        padding-left: 11px; padding-right: 11px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        mask-image: linear-gradient(to right, transparent 0, #000 11px, #000 calc(100% - 18px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 11px, #000 calc(100% - 18px), transparent 100%);
+      }
+      .chip-scroller::-webkit-scrollbar { height: 0; }
+      .chip { flex-shrink: 0; scroll-snap-align: start; }
+
+      .cal-toolbar > .week-label { flex: 1 1 100%; text-align: center; order: 3; }
+      .field-select { flex: 1 1 100%; }
+      .cal-grid { grid-template-columns: 44px repeat(var(--days, 3), minmax(88px, 1fr)); }
+      /* height comes from fitCalendar() — no fixed override here */
+      body.cal-mode .search-wrap { display: none; }
+
+      /* Popovers become centred sheets */
+      .popover {
+        position: fixed !important;
+        left: 50% !important; right: auto !important;
+        top: 50% !important; bottom: auto !important;
+        transform: translate(-50%, -50%);
+        width: min(340px, calc(100vw - 32px));
+        max-height: 80dvh; overflow-y: auto;
+        z-index: 190;
+      }
+      .pop-backdrop {
+        display: block;
+        position: fixed; inset: 0;
+        background: rgba(6, 9, 16, .55);
+        backdrop-filter: blur(3px);
+        z-index: 185;
+      }
+
+      .modal { max-height: 94dvh; border-radius: var(--r-lg); }
+      .modal-body { padding: 15px; gap: 13px; }
+      .modal-head, .modal-foot { padding: 13px 15px; }
+      .modal-foot .btn { flex: 1; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-3 > .fgroup:first-child { grid-column: span 2; }
+    }
+
+    @media (max-width: 420px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .grid-3 > .fgroup:first-child { grid-column: auto; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .mc-zone { padding: 5px 1px; }
+      .mc-zone-time { font-size: 11px; }
+      .theme-toggle { width: 54px; }
+      html[data-theme="light"] .theme-toggle-knob { transform: translateX(22px); }
+      .btn-label-sm { display: none; }
+    }
+
+    /* Print */
+    @media print {
+      .app-header, .toolbar, .actions-wrap, .theme-toggle { display: none !important; }
+      body { background: #fff !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app"></div>
+
+  <script>
+  /* ══════════════════════════════════════════════════════════════════
+     ICONS
+     ══════════════════════════════════════════════════════════════════ */
+  const ico = {
+    table: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h18M3 12h18M3 19h18"/></svg>`,
+    calendar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 10h18M8 2.5v4M16 2.5v4"/></svg>`,
+    download: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+    upload: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+    sun: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M3.5 12h-2M22.5 12h-2M18.4 5.6l-1.4 1.4M7 17l-1.4 1.4M18.4 18.4L17 17M7 7L5.6 5.6"/></svg>`,
+    moon: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
+    plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+    search: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>`,
+    warn: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>`,
+    warnSm: `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>`,
+    clock: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>`,
+    cal2: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 10h18M8 2.5v4M16 2.5v4"/></svg>`,
+    check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+    users: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 00-3-3.9"/><path d="M16 3.1a4 4 0 010 7.8"/></svg>`,
+    note: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5A2 2 0 004.5 4.5v15a2 2 0 002 2h11a2 2 0 002-2V8z"/><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h4"/></svg>`,
+    edit: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    copy: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`,
+    trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>`,
+    inbox: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>`,
+    chevL: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
+    chevR: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
+    globe: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>`,
+  };
+
+  /* ══════════════════════════════════════════════════════════════════
+     THEME
+     ══════════════════════════════════════════════════════════════════ */
+  const THEME_KEY = 'infostride-theme';   // shared across all InfoStride pages
+
+  function safeGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+  function safeSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* no-op */ } }
+
+  function initTheme() {
+    let t = safeGet(THEME_KEY);
+    if (t !== 'light' && t !== 'dark') {
+      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    }
+    applyTheme(t);
+  }
+
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', t === 'light' ? '#f1f4fa' : '#090d15');
+  }
+
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    safeSet(THEME_KEY, next);
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.setAttribute('aria-label', next === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     TIMEZONE & DATE UTILITIES
+     ══════════════════════════════════════════════════════════════════ */
+  const ZONES = [
+    { label: 'EST', iana: 'America/New_York' },
+    { label: 'CST', iana: 'America/Chicago' },
+    { label: 'MST', iana: 'America/Denver' },
+    { label: 'PST', iana: 'America/Los_Angeles' },
+    { label: 'IST', iana: 'Asia/Kolkata' },
+  ];
+
+  function getParts(date, ianaZone) {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: ianaZone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    });
+    const parts = Object.fromEntries(fmt.formatToParts(date).map(p => [p.type, p.value]));
+    return {
+      year: parseInt(parts.year),
+      month: parseInt(parts.month),
+      day: parseInt(parts.day),
+      hour: parseInt(parts.hour) % 24,
+      minute: parseInt(parts.minute),
+      second: parseInt(parts.second),
+    };
+  }
+
+  function toUTC(dateStr, timeStr, ianaZone) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute] = timeStr.split(':').map(Number);
+    const localDt = new Date(Date.UTC(year, month - 1, day, hour, minute));
+    const utcParts = getParts(localDt, 'UTC');
+    const zoneParts = getParts(localDt, ianaZone);
+    const offsetMs = ((utcParts.hour * 60 + utcParts.minute) - (zoneParts.hour * 60 + zoneParts.minute)) * 60000;
+    return new Date(localDt.getTime() + offsetMs);
+  }
+
+  function fromUTC(utcDate, ianaZone) {
+    const p = getParts(utcDate, ianaZone);
+    return `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
+  }
+
+  function fromUTCFull(utcDate, ianaZone) { return getParts(utcDate, ianaZone); }
+
+  function getMeetingUTCRange(meeting) {
+    const zone = ZONES[meeting.zone_index] || ZONES[0];
+    const startUTC = toUTC(meeting.date, meeting.time, zone.iana);
+    const endUTC = new Date(startUTC.getTime() + meeting.duration * 60000);
+    return { startUTC, endUTC };
+  }
+
+  function doMeetingsOverlap(a, b) {
+    const ra = getMeetingUTCRange(a);
+    const rb = getMeetingUTCRange(b);
+    return ra.startUTC < rb.endUTC && rb.startUTC < ra.endUTC;
+  }
+
+  function getConflictingIds(meetings) {
+    const conflicting = new Set();
+    for (let i = 0; i < meetings.length; i++) {
+      for (let j = i + 1; j < meetings.length; j++) {
+        if (doMeetingsOverlap(meetings[i], meetings[j])) {
+          conflicting.add(meetings[i].id);
+          conflicting.add(meetings[j].id);
+        }
+      }
+    }
+    return conflicting;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function toDateStr(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function getWeekStart(date) {
+    const d = new Date(date);
+    d.setDate(d.getDate() - d.getDay());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function initials(name) {
+    return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     DATA
+     ══════════════════════════════════════════════════════════════════ */
+  const MEMBERS = [
+    { id: '1', name: 'Ritu Mangla',   email: 'ritu@infostride.com',   color: '#6366f1' },
+    { id: '2', name: 'Vishal Mangla', email: 'vishal@infostride.com', color: '#0d9488' },
+    { id: '3', name: 'Deepak Sharma', email: 'deepak@infostride.com', color: '#d97706' },
+    { id: '4', name: 'Amit Kumar',    email: 'amit@infostride.com',   color: '#db2777' },
+    { id: '5', name: 'Priya Singh',   email: 'priya@infostride.com',  color: '#7c3aed' },
+  ];
+
+  const todayObj = new Date();
+
+  /* Board starts empty — add meetings with + New, or bring them in via Import. */
+  let meetingsData = [];
+
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  /* ══════════════════════════════════════════════════════════════════
+     STATE
+     ══════════════════════════════════════════════════════════════════ */
+  const BP = { mobile: 767, tablet: 1023 };
+
+  function currentBucket() {
+    const w = window.innerWidth;
+    if (w <= BP.mobile) return 'mobile';
+    if (w <= BP.tablet) return 'tablet';
+    return 'desktop';
+  }
+
+  let state = {
+    view: 'table',
+    bucket: currentBucket(),
+    search: '',
+    selectedMonth: { month: todayObj.getMonth(), year: todayObj.getFullYear() },
+    activeFilters: new Set(),   // empty == everyone shown (see toggleFilter)
+    calendarWeekStart: getWeekStart(todayObj),
+    calendarZoneIdx: 4,
+    activeModal: null,
+    importPreview: null,
+    popovers: { pocId: null, momId: null, actionsId: null, monthSelectorOpen: false },
+    dismissedConflictKey: '',
+  };
+
+  const isMobile = () => state.bucket === 'mobile';
+
+  /* ══════════════════════════════════════════════════════════════════
+     ACTIONS
+     ══════════════════════════════════════════════════════════════════ */
+  function setView(v) { state.view = v; render(); }
+
+  function toggleFilter(memberId) {
+    const all = new Set(MEMBERS.map(m => m.id));
+    const cur = state.activeFilters.size === 0 ? all : new Set(state.activeFilters);
+    if (cur.has(memberId)) cur.delete(memberId); else cur.add(memberId);
+    state.activeFilters = (cur.size === all.size) ? new Set() : cur;
+    render();
+  }
+
+  function selectOnly(memberId) {
+    state.activeFilters = new Set([memberId]);
+    render();
+  }
+
+  function resetFilters() {
+    state.activeFilters = new Set();
+    state.search = '';
+    render();
+  }
+
+  function changeMonth(month, year) {
+    state.selectedMonth = { month, year };
+    state.popovers.monthSelectorOpen = false;
+    state.calendarWeekStart = getWeekStart(new Date(year, month, 1));
+    render();
+  }
+
+  function navMonth(delta) {
+    let m = state.selectedMonth.month + delta;
+    let y = state.selectedMonth.year;
+    if (m < 0) { m = 11; y--; }
+    if (m > 11) { m = 0; y++; }
+    changeMonth(m, y);
+  }
+
+  function onSearch(v) {
+    state.search = v;
+    renderBody();
+  }
+
+  function clearSearch() { state.search = ''; render(); }
+
+  function saveMeeting(fm) {
+    if (fm.id) {
+      meetingsData = meetingsData.map(m => m.id === fm.id ? { ...m, ...fm } : m);
+    } else {
+      meetingsData.push({ ...fm, id: 'm_' + Date.now() });
+    }
+    state.activeModal = null;
+    render();
+  }
+
+  function deleteMeeting(id) {
+    const m = meetingsData.find(x => x.id === id);
+    if (confirm(`Delete "${m ? m.demo_topic : 'this meeting'}"?\n\nThis cannot be undone.`)) {
+      meetingsData = meetingsData.filter(x => x.id !== id);
+      render();
+    }
+  }
+
+  function duplicateMeeting(id) {
+    const meeting = meetingsData.find(x => x.id === id);
+    if (!meeting) return;
+    meetingsData.push({ ...meeting, id: 'm_' + Date.now(), demo_topic: meeting.demo_topic + ' (Copy)' });
+    render();
+  }
+
+  function updateMeetingStatus(id, newStatus) {
+    meetingsData = meetingsData.map(m => m.id === id ? { ...m, status: newStatus } : m);
+    render();
+  }
+
+  function updateMeetingField(id, field, value) {
+    meetingsData = meetingsData.map(m => m.id === id ? { ...m, [field]: value } : m);
+    render();
+  }
+
+  function toggleDetailPop(type, id) {
+    const same = state.popovers[type] === id;
+    state.popovers.pocId = null;
+    state.popovers.momId = null;
+    state.popovers.actionsId = null;
+    if (!same) state.popovers[type] = id;
+    render();
+  }
+
+  function closeAllPopovers() {
+    state.popovers.pocId = null;
+    state.popovers.momId = null;
+    state.popovers.actionsId = null;
+    state.popovers.monthSelectorOpen = false;
+    render();
+  }
+
+  function dismissConflicts(key) { state.dismissedConflictKey = key; render(); }
+
+  function shiftWeek(days) {
+    const d = new Date(state.calendarWeekStart);
+    d.setDate(d.getDate() + days);
+    state.calendarWeekStart = d;
+    render();
+  }
+
+  function jumpToday() {
+    const n = new Date();
+    state.calendarWeekStart = getWeekStart(n);
+    state.selectedMonth = { month: n.getMonth(), year: n.getFullYear() };
+    render();
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     FILTERING
+     ══════════════════════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════════════════════════════
+     CSV IMPORT
+     ══════════════════════════════════════════════════════════════════ */
+
+  // Handles quoted fields, escaped "" quotes, CRLF and a UTF-8 BOM
+  function parseCSV(text) {
+    text = text.replace(/^﻿/, '');
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else field += c;
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === ',') {
+        row.push(field); field = '';
+      } else if (c === '\n') {
+        row.push(field); rows.push(row); row = []; field = '';
+      } else if (c !== '\r') {
+        field += c;
+      }
+    }
+    if (field !== '' || row.length) { row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ''));
+  }
+
+  const norm = h => h.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Accepts the headers Export writes, plus common variations
+  const IMPORT_FIELDS = {
+    demotopic: 'demo_topic', topic: 'demo_topic', demo: 'demo_topic',
+    person: '_person', assignee: '_person', owner: '_person',
+    date: 'date',
+    timeoriginal: 'time', time: 'time', starttime: 'time',
+    originalzone: '_zone', zone: '_zone', timezone: '_zone', tz: '_zone',
+    durationmin: 'duration', duration: 'duration', durationminutes: 'duration',
+    status: 'status',
+    pocname: 'poc_name', poc: 'poc_name', pocdetails: 'poc_name', contact: 'poc_name',
+    pocstate: 'poc_state', pocstatename: 'poc_state_name',
+    pocemail: 'poc_email', pocphone: 'poc_phone',
+    pocpopulationcount: 'poc_population_count', population: 'poc_population_count',
+    poccountyname: 'poc_county_name', county: 'poc_county_name',
+    mom: 'mom', minutesofmeeting: 'mom',
+    meetingtakenby: '_takenby', takenby: '_takenby',
+    meetingoutcome: 'meeting_outcome', outcome: 'meeting_outcome',
+    postdemoactions: 'post_demo_actions', nextsteps: 'post_demo_actions', followup: 'post_demo_actions',
+  };
+
+  const STATUSES = ['Demo Scheduled', 'Demo Completed', 'Demo Canceled'];
+  const OUTCOMES = ['Positive', 'Neutral', 'Negative'];
+
+  function normaliseDate(v) {
+    v = (v || '').trim();
+    if (!v) return '';
+    let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    // D/M/YYYY or M/D/YYYY — assume the US order Export/Excel produce
+    m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+    if (m) return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+    const d = new Date(v);
+    return isNaN(d) ? '' : toDateStr(d);
+  }
+
+  function normaliseTime(v) {
+    v = (v || '').trim();
+    if (!v) return '';
+    let m = v.match(/^(\d{1,2}):(\d{2})\s*([ap]\.?m\.?)?$/i);
+    if (!m) return '';
+    let h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    if (m[3]) {
+      const pm = /^p/i.test(m[3]);
+      if (h === 12) h = pm ? 12 : 0; else if (pm) h += 12;
+    }
+    if (h > 23 || min > 59) return '';
+    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  }
+
+  function buildImportPreview(text) {
+    const rows = parseCSV(text);
+    if (rows.length < 2) return { error: 'That file has no data rows.' };
+
+    const headers = rows[0].map(norm);
+    const cols = {};
+    headers.forEach((h, i) => { if (IMPORT_FIELDS[h] && cols[IMPORT_FIELDS[h]] === undefined) cols[IMPORT_FIELDS[h]] = i; });
+
+    if (cols.demo_topic === undefined) {
+      return { error: 'No "Demo Topic" column found. Export a CSV first to see the expected format.' };
+    }
+
+    const get = (row, key) => cols[key] === undefined ? '' : (row[cols[key]] || '').trim();
+    const meetings = [], skipped = [], notes = new Set();
+
+    rows.slice(1).forEach((row, idx) => {
+      const line = idx + 2;
+      const topic = get(row, 'demo_topic');
+      if (!topic) { skipped.push(`Row ${line}: no demo topic`); return; }
+
+      const date = normaliseDate(get(row, 'date'));
+      if (!date) { skipped.push(`Row ${line}: unreadable date "${get(row, 'date')}"`); return; }
+
+      const time = normaliseTime(get(row, 'time')) || '10:00';
+      if (!normaliseTime(get(row, 'time'))) notes.add('Some rows had no valid time — defaulted to 10:00.');
+
+      const personName = get(row, '_person');
+      let member = MEMBERS.find(x => x.name.toLowerCase() === personName.toLowerCase());
+      if (!member && personName) {
+        member = MEMBERS.find(x => x.name.toLowerCase().startsWith(personName.toLowerCase().split(' ')[0]));
+      }
+      if (!member) { member = MEMBERS[0]; if (personName) notes.add(`Unknown people assigned to ${MEMBERS[0].name}.`); }
+
+      const zoneLabel = get(row, '_zone').toUpperCase();
+      let zoneIdx = ZONES.findIndex(z => z.label === zoneLabel || z.iana.toLowerCase() === zoneLabel.toLowerCase());
+      if (zoneIdx === -1) { zoneIdx = 0; if (zoneLabel) notes.add(`Unrecognised time zones treated as ${ZONES[0].label}.`); }
+
+      const dur = parseInt(get(row, 'duration'), 10);
+      const rawStatus = get(row, 'status');
+      const status = STATUSES.find(s => s.toLowerCase() === rawStatus.toLowerCase())
+        || STATUSES.find(s => s.toLowerCase().endsWith(rawStatus.toLowerCase()) && rawStatus)
+        || 'Demo Scheduled';
+
+      const outcome = OUTCOMES.find(o => o.toLowerCase() === get(row, 'meeting_outcome').toLowerCase()) || '';
+      const takenRaw = get(row, '_takenby');
+      let takenBy = '';
+      if (takenRaw) {
+        const names = takenRaw.replace(/^\[|\]$/g, '').split(/[;,]/)
+          .map(n => n.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        if (names.length) takenBy = JSON.stringify(names);
+      }
+
+      meetings.push({
+        demo_topic: topic,
+        person_id: member.id,
+        date, time,
+        zone_index: zoneIdx,
+        duration: Number.isFinite(dur) && dur > 0 ? dur : 30,
+        status,
+        poc_name: get(row, 'poc_name'),
+        poc_state: get(row, 'poc_state'),
+        poc_email: get(row, 'poc_email'),
+        poc_phone: get(row, 'poc_phone'),
+        poc_state_name: get(row, 'poc_state_name'),
+        poc_population_count: get(row, 'poc_population_count'),
+        poc_county_name: get(row, 'poc_county_name'),
+        mom: get(row, 'mom'),
+        meeting_taken_by: takenBy,
+        meeting_outcome: outcome,
+        post_demo_actions: get(row, 'post_demo_actions'),
+      });
+    });
+
+    if (!meetings.length) return { error: 'No usable rows found.' + (skipped.length ? ' ' + skipped[0] : '') };
+    return { meetings, skipped, notes: [...notes] };
+  }
+
+  function triggerImport() {
+    const input = document.getElementById('importFile');
+    if (input) { input.value = ''; input.click(); }
+  }
+
+  function handleImportFile(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = buildImportPreview(String(reader.result || ''));
+      if (result.error) { alert('Import failed\n\n' + result.error); return; }
+      state.importPreview = { ...result, fileName: file.name };
+      render();
+    };
+    reader.onerror = () => alert('Could not read that file.');
+    reader.readAsText(file);
+  }
+
+  function applyImport(mode) {
+    const p = state.importPreview;
+    if (!p) return;
+    const stamped = p.meetings.map((m, i) => ({ ...m, id: `m_${Date.now()}_${i}` }));
+    meetingsData = mode === 'replace' ? stamped : meetingsData.concat(stamped);
+
+    // jump to the month of the first imported meeting so the rows are visible
+    const first = stamped.slice().sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (first) {
+      const [y, mo, d] = first.date.split('-').map(Number);
+      state.selectedMonth = { month: mo - 1, year: y };
+      state.calendarWeekStart = getWeekStart(new Date(y, mo - 1, d));
+    }
+    state.importPreview = null;
+    render();
+  }
+
+  function renderImportModal() {
+    const p = state.importPreview;
+    return `
+      <div class="overlay" onclick="if(event.target === this){ state.importPreview = null; render(); }">
+        <div class="modal" style="max-width:460px" role="dialog" aria-modal="true" aria-label="Import meetings">
+          <div class="modal-head">
+            <div>
+              <h3>Import meetings</h3>
+              <p>${esc(p.fileName)}</p>
+            </div>
+            <button class="pop-close" onclick="state.importPreview = null; render();" aria-label="Close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="stat" style="box-shadow:none">
+              <div class="stat-icon t-success">${ico.check}</div>
+              <div class="stat-body">
+                <div class="stat-val">${p.meetings.length}</div>
+                <div class="stat-label">meeting${p.meetings.length !== 1 ? 's' : ''} ready to import</div>
+              </div>
+            </div>
+
+            ${p.skipped.length ? `
+              <div class="banner" style="animation:none">
+                ${ico.warn}
+                <div class="banner-body">
+                  <div class="banner-title">${p.skipped.length} row${p.skipped.length !== 1 ? 's' : ''} skipped</div>
+                  <ul class="banner-list">
+                    ${p.skipped.slice(0, 4).map(s => `<li>${esc(s)}</li>`).join('')}
+                    ${p.skipped.length > 4 ? `<li class="date">…and ${p.skipped.length - 4} more</li>` : ''}
+                  </ul>
+                </div>
+              </div>` : ''}
+
+            ${p.notes.length ? `
+              <ul style="font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:5px;padding-left:16px;">
+                ${p.notes.map(n => `<li>${esc(n)}</li>`).join('')}
+              </ul>` : ''}
+
+            <p style="font-size:12.5px;color:var(--muted)">
+              ${meetingsData.length
+                ? `The board currently holds ${meetingsData.length} meeting${meetingsData.length !== 1 ? 's' : ''}.`
+                : 'The board is currently empty.'}
+            </p>
+          </div>
+          <div class="modal-foot">
+            <button class="btn" onclick="state.importPreview = null; render();">Cancel</button>
+            ${meetingsData.length ? `<button class="btn btn-danger-text" onclick="applyImport('replace')">Replace all</button>` : ''}
+            <button class="btn btn-primary" onclick="applyImport('append')">
+              ${meetingsData.length ? 'Add to existing' : 'Import'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function getFilteredMeetings() {
+    const eff = state.activeFilters.size > 0 ? state.activeFilters : new Set(MEMBERS.map(m => m.id));
+    const q = state.search.trim().toLowerCase();
+
+    // Table view scopes to the selected month; calendar view scopes to the
+    // days on screen, so a week straddling two months still shows everything.
+    let inScope;
+    if (state.view === 'calendar') {
+      const zone = ZONES[state.calendarZoneIdx];
+      const shown = new Set(visibleDays().map(toDateStr));
+      inScope = m => shown.has(meetingLocalDay(m, zone).dayStr);
+    } else {
+      inScope = m => {
+        const [year, month] = m.date.split('-').map(Number);
+        return year === state.selectedMonth.year && (month - 1) === state.selectedMonth.month;
+      };
+    }
+
+    return meetingsData.filter(m => {
+      if (!eff.has(m.person_id)) return false;
+      if (!m.date) return false;
+      if (!inScope(m)) return false;
+
+      if (q) {
+        const member = MEMBERS.find(x => x.id === m.person_id) || {};
+        const hay = [m.demo_topic, m.poc_name, m.poc_state, m.poc_state_name, m.poc_email,
+                     m.status, m.meeting_outcome, member.name].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  }
+
+  function exportToCSV() {
+    const filtered = getFilteredMeetings();
+    if (filtered.length === 0) { alert('No data to export for the current filters.'); return; }
+
+    const headers = ['Demo Topic','Person','Date','Time (Original)','Original Zone','Duration (Min)','Status',
+      'EST','CST','MST','PST','IST','POC Name','POC State','POC Email','POC Phone','MOM','Meeting Taken By','Meeting Outcome','Post-Demo Actions'];
+
+    const rows = filtered.map(m => {
+      const member = MEMBERS.find(mem => mem.id === m.person_id) || {};
+      const zone = ZONES[m.zone_index] || ZONES[0];
+      const startUTC = toUTC(m.date, m.time, zone.iana);
+      let takenBy = '';
+      try { takenBy = m.meeting_taken_by ? JSON.parse(m.meeting_taken_by).join('; ') : ''; }
+      catch (e) { takenBy = m.meeting_taken_by || ''; }
+      const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+      return [
+        q(m.demo_topic), q(member.name), q(m.date), q(m.time), q(zone.label), q(m.duration), q(m.status),
+        q(fromUTC(startUTC, ZONES[0].iana)), q(fromUTC(startUTC, ZONES[1].iana)), q(fromUTC(startUTC, ZONES[2].iana)),
+        q(fromUTC(startUTC, ZONES[3].iana)), q(fromUTC(startUTC, ZONES[4].iana)),
+        q(m.poc_name), q(m.poc_state), q(m.poc_email), q(m.poc_phone),
+        q(m.mom), q(takenBy), q(m.meeting_outcome), q(m.post_demo_actions)
+      ];
+    });
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `infostride_meetings_${state.selectedMonth.year}-${String(state.selectedMonth.month + 1).padStart(2, '0')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     RENDER — SHELL
+     ══════════════════════════════════════════════════════════════════ */
+  function render() {
+    const app = document.getElementById('app');
+    document.body.classList.toggle('cal-mode', state.view === 'calendar');
+    app.innerHTML = renderHeader() + `<main id="mainArea">${renderMain()}</main>` +
+      (state.activeModal ? renderModal() : '') +
+      (state.importPreview ? renderImportModal() : '');
+    syncScrollHint();
+    fitCalendar();
+  }
+
+  // Show the sideways-scroll affordance only when the table actually overflows
+  function syncScrollHint() {
+    const card = document.getElementById('tableCard');
+    const scroller = document.getElementById('tableScroll');
+    if (!card || !scroller) return;
+
+    const update = () => {
+      const overflow = scroller.scrollWidth - scroller.clientWidth;
+      card.classList.toggle('can-scroll-x', overflow > 2);
+      card.classList.toggle('show-hint', overflow > 80);
+      card.classList.toggle('at-end', overflow > 2 &&
+        scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 4);
+    };
+
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+  }
+
+  // Lighter re-render for keystroke-level updates (keeps input focus)
+  function renderBody() {
+    const main = document.getElementById('mainArea');
+    if (!main) return render();
+    const input = document.getElementById('searchInput');
+    const caret = input ? input.selectionStart : null;
+    main.innerHTML = renderMain();
+    const next = document.getElementById('searchInput');
+    if (next && input) {
+      next.focus();
+      try { next.setSelectionRange(caret, caret); } catch (e) {}
+    }
+    syncScrollHint();
+  }
+
+  function renderHeader() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    return `
+      <header class="app-header">
+        <div class="header-inner">
+          <a class="brand" href="index.html" title="Back to Workspace" aria-label="Back to Workspace">
+            <img class="brand-logo on-light" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoYAAABYCAMAAABf/8Y9AAABgFBMVEUAAAArYqMhISEAf39VVaoqYqMAAP8AVaoqYqMqYqQqY6UgICAqYqMqYqM+Pn4qWI8gICAgHBgcHBosZqggICAlJSUeGxkgICAhISEA//8rZJoqWqQoSXAhISEAf/8rW5glN00eHRs9frweGxY5OTkqYJ0gIB4pXaA/P78AAH8gHRopXZwwc8seGhUdW5cqYZ4gGxUhFw0/f39/f38pUH4eGhQqXqEAVVUqXp0qYJ4FPn1/f/8gGRIvSpQpX54eDwMfHBcnQF0qVX8gGhMhIB4tcsMscL4dHS4dWnggGBEqX6AucMBVVVUXKjEIOzsJergkMD4qS3UpX58qX6EpYZ8AAFUAP78gGBQAAD8eHiMfHyMfHyIcOFUZTH8ZTJkZZpkhIRYgIBsqVVUrX6ArYJ8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFzmyYAAAAgHRSTlMA/v4CA88BA4+vUNEwbwT8sfsPEo8QK29QAQ8P/jICEv5LBGwELvksBALOKxmKCU60LQQC//tOA2n6BAKXC0gnqf4GVdglSxEIbY1CAw4GBf8Kj251AwQfBDpBcAkKCgoXLwaljgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN6KY40AABlBSURBVHja7V15f9tGkm2ygcZBAKR4AxRJiZIsyVrLiQ/5ijO2k9lkZjbnZGf2vr//Z1gcPHBUdVeDkBKP1X/4l9hkNwg81PH6VTVj9+O3NUQQ/xE99h2zlQ7T8c8Z4/c35n7c4Vgwdu06reKwl0zc35pfY4zG4+l0Oh+PPq2fbbG3vtmqDDMSlzrT8AAY+5rpTwyB/emk12lvRqc3mX9CttAFQJjYQ2b8ypc2Y4IMxP4/fvQYPO61K6PziSCRM78FD1NvmnMbGN4eEabBXJseoY57H7cTG006bXj0pp+CR/651QAMBY8gk2ouhdgHhi37A3tB+/R/tx/+9WMGYRsfvb95FBqoLdRzysg87j5+PYbh4aGzJE7xu/bhwecf62OYdyQobN+WWxbcCAJr427C5P+MRfireGQPRWHrLDaVxHEZLqEZnL2iywSGzw9NjwU0GLYO2181cldOSX/V4BjKQHg7xlBYwTbc4atglYusjScWyYVxw0pHEzB0GjKGNgzkxZ4wPDg4anlsRYNhq9s++Rgdck+KwvZx8xg0Uuxce65vO465Ho5t+643WENMGZNbd2IMzRkXe86zZ6qdwrD9/Ijm2scxDGMcPtr/rkyGwLi9NKHfkaOw07gLTO7m0ttuVpQfvON7y4RBseSPnJ27XjLc2b68msEeoygcMDpruICN6jLk+8OwfdDu+mwhSDBsdY++2JerHINgmNwWCscKFLYbfgGSWDBycSe4Dqf8mXSW+CZvk4FI7A1DF7uMSINpQab5ZU/ecQ3DBIcE4iaDYat19Nl3expDEAy3xQaNVCjsNLoyj2+jZ7cow3GvBT6L5+zS0H3ds2AD+BJ8rR1lvoLJGs4agWGKw1PVj93AsHX4cLzXsp275ExUHrlZMyzie6g0hHkUGMiDyfEijnjaQHAI2TE7YmGoA5fmyZoCDNsPDg6dmSJh3sKwtR9xM78Lz7gdPRUK2/0G/THLGTH1iOMyAWN5lpvFY42kyp5ZjgoipgUggZE1+74lOxjGBjEhbi5oMGwd7pNcDm8bDOoAID8eNWkKI7ulMW5AgMXQcJvf8Y0dp2tv9V32l0m+boR6aAF/3P5vSR6G7ZS4eUKD4T7EzSnoJYe3lJ60784YcoYmAkhsCAFMGGxZeNxL0YweMGX2ZgPPiwap1wsNvbyHC++WdBEFGCY4lLr5PAz3IG7++S59MuKSh9P5fD4ddprEv8HeapnCxI5wyK0/NovhY2P0oRVsgMcDQxvbFkzWRPu/JUUYZsQND0kwbL06+qLe/blLnzyFN022qfF8MmxqHy9gV6YeCiE7UsGyDrlMiRt4PGpNaMHM9csGQoYSDBXETRGGCXHzTWP8ye345FH7zta6kG3awvlJxAG3Xk4k3F9dC7i5tqfmnlswZBgmOHR+wrzA5yUY1iNu5ne0nZaMkztjhgL2pSYKAYC9ZrzMiJiLp78NFFpw3Pu4ibckhuGzAgxT4gZT3FRg2Do80Mch6JM7/bszhv1bQeFjXRQ65bedVzmVhsiaRpw5LDO0mnhLDPb3JRiuiZsVDYatZ9qKm/4d+uSTu9ozfK2ZIkP5icUActj5jaAwfs98+EcYtwTDjLi5oMEwTpj/0ETScCs+GY5Cb8EY4voV03FsO5HYqPZPQotdAYmoVy8NDfmC8/qGj1uLUsTHRVRLZihCzhcLVVIEwhAlbiAYahM3w9vf1d2M47rG8FT5F8WHLgYmvGXsRZvPRN6WO16H9m9E0RS6DXFyPDB2NLgufI3VzvoaOV7RwmSGONi5scpfgBFwTRhiihsQhglxo6G4aSx37Y/n4/G8r80ZEvmZ0Wg+Pk6LSNVVpAZIqNmz7GEYgWGsNaFXvgPmJ8nuC8jJzXI2TVT+A8wkkqXCgeedb/Q7AP8mEAymi4n4y965l359A0RLU2YojPU/rJZniVJtkEksMb4cgSFC3IzbsOc5+ozu6GCfrEp0/qmYax8PtzWeneG0j/JLyjQZtHLj6bBXcOed4WTcl6HQB/NgZuUo4qQaIHkIg6xQuODNElNoIvKX4kIYhvh68yvRdC/ddQhg2hEK2erfp9rHgbuTSJq2G22Ut4h2ewByzCJ766Jkru3PMm3fY5iQN86UuxAMU+Lm2/KXfofAUIe46alkp9MOMHImbD7sVAo8i/ZqsvkWrOrKj4oV7k+HyNdQmvsFaCk8FoWAn4pxyRPIzS55Lr/BNqLN4ki7K7xhv5jVkUpXF7wkrDiLXdoHB/i4E5VwaMUXu/QdQIFjMVRmCMqDFsnfzYoRyObn+Eu4VsBifwKtIUzcoDBsHT4gKm76Sp/ck9E5Y7jEszNWun2S3nUqrVhBqkj5woSeUIRFbvEfvrvzNAsG0DSIKMxKPu4h3rEqMYu/gEizSgDCJZJmEjwIPiMy18JgUsWv6YLBJA7DNXHzpAjDV9j8z4i5rtInjyR59HxIEa5O6SgseOj+RClM7PWJLtlcSnJDI+8UA/aBuBFtp0/wKeQezUiIqsTMERbniDSLl6giHDk+e2OwP8P0uwWAUKH4tSG/HMPwEINhRtz8UIBhF52eSNwoffIEBdm8RxNQD+kwnBdcOeELnYpnhpkMRy5p3saMMVjPiRvR5iBBNuweXRZYbGZX4oLYQf5RyfYtFBLJ2IDNSGSNkRhCU23TITnHn7rP0Zv+/OhVIaEbtyXTk4ibkVL93AP/fcRGQ6KCelTLGE47xO8cV2hd8O2P4oiPQttKatjB7RQemBAgVqKa5MSOF5FmFQBksGtbsfUN/8Srol0zkuCS8kqdMw7xrkc4DjPFzdaBjL5+L5n+1dEjZfeHE5VPniOE87GynuRU3ydvTVtfw4IWk7FLFiE7dSxQ8cd8oaHUzqI5ONTzDBbY1W02C2GS8py4WLAzFXbcgZqsiVPmtz41uDAg/t/E3XKZuOl/diRbQE3c1PLJQxJM5rIl5MZw3tHIaopMe4CZM8dT1X9aGqZwbcAEGOrFT2jpANbzxVOY7fvjDgeccg02aAwH+f0dlHKCrCtkrBZsGePwgQSHzuud9Q0+O+pKVlARN32lT4YAMSbBZCJbQpomT9pao7gNE6F33054siDENwAHGkUrmQIbVuFHkEFLbA5nJsyJh1v0LDWuAc2140u70pgHrL+x2LdOt40axHKp1KO2FIcdKQ4nqkQBYpx7YxI6hro+eePGh3ooLIiBLKnI0HHjB2RYCAp1JDlu+gTgUM+HshZzYGFs3y7c1xfqglRAnOz7Ot+Fm8vGt8qW4LD9vFgqdSLFYVdK3PRUrAmE056Wi6X75H/dvFe6Y6pMUHKE7QDe2zXYL/o1K2CoZ8LhYmIMYbZvxbcXf96qO3ZYjqNLTwvM5j9gcgzmy3BY6nFz3D6U4hAvlRrX8slakZ5GntyvZQuLZHvIlE/Adhmr7B1wNtPXhMGm97GPpAGqouIaQt3de7Hd6+Y6Ea5cuyYS830kw+GrPFU5PjisR9xMauXJWjCcaH6+BgpzKRXaC6G0dcDLd95YOPpx2NMQImt8hGO8DAcwCNbG6EJfqAuIcTFNRrqJ7LquDyncUCXMhRZxM374XpowY6VStXxyfje411HZqEkvG/CeXy83/kW+oGyt8c6o0dxaHNWU4qHZtlkvkpzmhn+ddrCBQz0H299Ai4q5Wi5uOo5JMmgXSHRppjqGdPhVvhFnslZaxM3onYK4GdF98pTmk3vT9OGPjntoAnuqmKnatwuzvsNUQDYeqvhGTi6DsjkidjknKGvWEp0ZNQTLsmSpNMvCXyDbTTRelmxTbrYma54gvz+LiAPDMFaiHLbYUj25EefuMuLmQdd5myNuvqhB3CgbKOE+OSdvOe0RVApzkqgRCSR35aMniqXoMGw518WmXEZyiMNqBuplzWgVVc56MOgxWCI5eIpIs0KRTYah0D5fpwsMz742WL6AU3EnynH3r4Wjrs0uEDevFcSNucx59S/kxM0DAIfKBkqY9enNCSZsrkT8nBQkKLcWczAMNTINByCzLYxSqe4EcjGgrpS5ZJk0K86QYMvqnCUqyZRWvIBVESnjksVnAbZGPvgTJWLVVhXXqIibVHHzl/rEjbKBEtYAbkKpqSq2petQCg0maquqKpwRjM5VVNV5AtYMmOwN5K2oHSFSdgfpAHed6auNGXY+Sn4Lkps4zHEUuqnscZd0uGW6SFXWLNTETT5h/kqTuKnrk4+1rSochQ61t3Qwtz0l84al3YOwbAx9aRpa+OgV2SXHz1FO1mCQfplscytfMTNYSFG4KqS+JWPoUXpkWwTihpOJm5NGfPIxzbmfKMuu5hSXPKRAdZ7zIGc6vEuRqeAYpQK4radMyvAkiuoc1DiXkTVYlOmWyjERa5hhGYknbvIotIr98VrkfjxRQtzIEuZ4oh2cv1EQN++0fDLsbKfEjemRqjC0Q4kRKlX7HQXTaWnJE8qFyVJKpVSsgUPQfjyIk4LVLK39S10yStYsJHnVTVEwjsW92a9A3r+d6FxYyTvnlgNDUvFcQolL3fJ70xMh2S1/pbRQ+aLhKbHRh7rSiZQnk8r24FcjD3njA5mINr9lxZpQjyxPxskax8t7+pV7xi4xoGXKGmGtTDmC5MhP3xLBwRTfSWAmuBWkWY5RlnQ7tGM4LHaqSpbz6og/yJPlojJP3UBpSCzZmyiNJsUngzXM70iWt1cscaOLVJaF4JALU5KGliDxEpeTscBKvyL4pioTkRkOJCqdGKMrRrHV9rpGCl4h2m5YA0VRzoB0nkFCHT47wGsCDrrOcveqWo9+1KEOldz1iNr1qKcyUKcUn9wjgZ6Q6whAcoolD3kYopSKBWz6L7FosyzgScyQBW8W++uYDhZkG6Ua4vj1ApeMslIEJLdKAeid+7YDpuGURhIrdq6xkfKdXAH7vqyAHaoiuimxxYIarpRmDaRcmmJ503J0ouQzf7pJ7LpASuUDp5M1VwVuZGdmLyR1dPwa1iCWIRJgJX0BvoeJtEnZfJPU7D3ZmJGjMN+Bc/RQvp1XbuSg9sm9fXzyMdP07o9oq/VITXCsrPZYGRvmfRJKqVhAxA6SNeY53PBKStYg/1htD8c5guW0MltbLGte0U4zWym4mh+7+Tv0+UNpcnJUEdkc351P7hN8cp+2GjhVD9Tzsyula87niVwsyWQNEoghKIQLBVpmen4kshdT7YiEnCqVYsDQb19mvyWViAmL+a8kKEyPM9vVLB8/0JUcKpsa3q1PntK4oTnxorLuLANFYdpNDoYaTfXRIDJCInyk6VEWGcKpRdklI90M07dEQ2ORS6QofGEcNSj2TwoC7GNtAXa/nk/uN5YnjzVNqgYNnm+aIT2YJ9dRBhG4wGQNHEQO4F0xqb0zMI4ooDl2LyMl9XSuSU0OiahZqHeTo5wtPNEhamQ+eX4bPnnUbs4nUy9qbUKSh4kL4vOe7w1yAqIgM9dYS2wkbjsXGemM1EhxEpbTtySkayxa6yOAFqRWixb7yek+kBZFRbnXVKGt+RrqZjOUlhbTvSSBmaZ4d2LjQ+pFFbavLBtVLBs7aN1QyRpM/nDJEZcskRmSOyIFEuKRbgxN2010hxat32fAIkWJqP39Lnb4NzlRcwgqXtVNDYlesqE8mehsO5TtvjIQL5E00tnxFVhromuQudZq9osYw6yBmICDuoEIy4jAiUdB0baZju2nEGQh9RyqJ3q6a0XB/DvwiIpjVREK2f0pN9dIM3VIoJ+SE5T8+Av3WgovqkPWUFNbqYDRl7WHq3RR4DBznRGPCJ/ouNnwzs685XIDZ/oRQKGCqCn2fR0riJovdJo1nOrRxDSfTPG3lPARA+s37FJ+8LQlrhTACTFlDSeTNVdwS2zB34Jm9kkmM4R3D88q9VqWg79HITzJ4xKSjcDS6b19ydxXRwqJ4S6N+vxBrdrQfvvu8mTKTMck2zvFL9qSxjg+/LAXSrLGoIZ6P6PGUMpcg3OZqwqDDHc6XOBFqq1WZPxgxMOyLM5D7fN6OBtIK+WLZwL0v9ZQ1Cg1zKqmhoBPPlVGa6SZTuqrYkex27OvJWE30lEwlwYg3ZfA42CRZr8z+EA51IO/kaC/7JNXSAqSvSWIztdhex0VxdnvuwrZ/5P8k+nq0YVSn8z0ffK4Xp5cnOkU3snrUS56wl4MzJZ5g+Z/Au7CZkY7T47AwQWNIb3Zr4oTF0jvsZIYd4Vskfzvek1YCys5mEIQYSgjapYF/yODIUzUSPJkZeXRiMj7jLV56SEBhhP41Vm73ISSFUDnuBicSGL7YmcMQZNlDqBQD86oI448TFlNKCLaL8I/trIIHXO2Jh5hn2wLGIbcsNh+MASasEtgePgQJzJOVNw1rZwT88mn2oRzr60MIKfINW9ZvLRfFwsCK0fDJK3+bZX5CuAOvg6w9Y9k1DeI6cE8eFrtiSU7LVcEOVOI1dYosGwCVx+nKanua7APDKEjKXAYHr37Dl+kMZ+shquaVsRhOFXNEy8VsJ93t37TmUDwODLPtqvgtplFlzVD3Fq0mc1Y4wJt/6FJ1hgy/WAMsPUBKklz+Bm2GXmdRaNoCdgZm4U5Kx4nyul/ea5jemqZIQpD+GTlDgLDo0cS26uugKOeKaZmnWkZNwzDXaqDNDjujIKSTzJt92z5YQMvD5E2mFEudzRQe8KsIDAyNEeRNNSDJVPI2Yrrdv1oCzxzmSycniwV+Xg1lyXjj9YxRTJPsDmKyDjL9NeUKigMhgdHXRc40weGYffHE9kak6Z8srojCEnMeoqV5a/7q4+wxjYjeJPLNJ1k4KqTQtMWtN7YjjZojh9fYkFe6J3MZMkbeKFtadMGO6nlwgVC5iYMXuBKQ38n+Bl4u1N+wK2hKgz/rovpui4AnUxXhy6U2Z6eKnZszidPKzBEGyj1Hg2HaIPEY/Y/Nc4JrYi3cJVUeshjWuiZBooL7GQmhLmG2/WLp5uQ1JboD3zflom3tmkMlwleky08P/kJFAkGAYZJAR6kqQRh2FWciDKq5ZM7o8Z88oi4t6gYU/a9ttAuGV8WCBFa1xsvbf9xo0PWWAoBI2d12wvno9GF7ixm+IbVhGFagAcdZAvB8FB13p2yWQOxLISgqibPVAOFE5lfk4zHxTtJUi6n23pI+w8Lkxkqj54wa8Nwl2QYOl0qMB0vCYYHB89KdKEMhurT8uo1axgT92Im+nky0+lMnGsKccmjOrbwgrLVV312ilCPWiiQ23uuDcNcNKr7JtqMyBuWYZgRNUj5SgWG75VHUCibNZzSWhFSfDJNOMO0zk7ZXa+2JUgLgQKmDcPEGF5yea/Wiks+U3pwStEW+Jko5Lt1PK0bENFOJa/AMCVq0O+WYXj0TnnW8ERFFVM9qVoWQ50Jgb4ChVzzCSSgWQKCUjUME4tn0WtV0ue4QLZbBNOI6pyXKiwL9p86RtUnnixehmGKQrxwoAhDoADvrn3ySS2frJmkZO0VLe0Y3wfqwwmxoRljBwn1bD3mOt8nkdB7zIaJxyVXb+wgv+QtF3VgeAATNTAMSYc11mtq2KHGc2MlrYiY66FWcpLef82++c4ZAx4CwaZmxhDel8NkhksknVEitbAuIRrVKsu7oUWGZRiWTp6Qw7BLOrq2XlPDWoWhdJ/M8NbFiCmM7/9A7/APl8GWS6wU85iRwLoZ4soagppbyPHjXLEBRX+mEZuY/A2rAcOD4jk8chg+a5MO8u6oOhZRazDVebJONSf1tMbOdHujzjVgaPrXLMRqllyVKw+wlgkRRtYgAkaLvHDy1hDb3Fnkgyw8WqOGDQwf5HRd8pByB8PDr8eU+es1NST7ZO0GSmpDXQRhfgHaMa0pCH9g+I18Kg/SzFmIt0wIkIdIApDB/g+94J/YE06NRg3iKRw2oxrDHAwTXVeg8uVbGB4+/C/S/HfYQGmu45MzLy43iL1K0DFzCVlKqgCTvc0LYcuTS0QMsztlrGyeiH0SF4i6318mfdexkwOgyumlKt0xHd/TEGSHGxhCui4chsjBJ4AN6wAjj41H++TJ06Jx65BmKgIRYW46w+PKL0yVnQNXdnCNabuRAoQp64E0Xoq/nhxrmDDXZoXRMzEfd8kdMMEVl9WnXV3YSa4YPUblJWiYkvPo8T3o+Fd4AdMaGximRM0bJXwfdte6Lur8EFpPCx/oVwdY6Qx8rsic90fV0Vdf4HxSOg6q0xtOxsgX04LH6yvXrmIxfv+zylyDomsKvFIHQHNT2CsyqehsNiiN/8Cnm10vy5+eXcMLs3z3y81bk645GESVWZaIRRPxb4zO/PJdMB3bPcuENobB9WH4POmtTmAaYxi+UipqPr4xmk+nk8nkZDKdjhXQDTcoi2ae57r+y5cvfffG89aluYFB8kTpHEvPvfHj4breYLb5eigzolpDYAtHZ8myf45XTf/GqHXLeGrvVvFvcONbkBQoe9FaZi2CgLMa1lBN1OSt4d8eCjXHTltcfMKBjgGwglJzVaPwdQEMyRVpfLwAu0KLV701Y9dcvQuLwFjUKdFLYfhcSdTkYEijCz8FMHLLSE8cCwzD4qIenLOvL7i4y0uP132SqKTDBqZaZPcguQV7/IgUhomui2aaH3aJRM39uB+aMOw6/07ddOkcdf56f9PuR/MwXFI7tKcwpBI19+N+aMFwQOzQnnIiJ9/rTf//SNfv0Q2Y9GMAAAAASUVORK5CYII=" alt="InfoStride" width="646" height="88" />
+            <img class="brand-logo on-dark"  src="data:image/png;base64,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"  alt="InfoStride" width="646" height="88" />
+            <span class="brand-divider"></span>
+            <span class="brand-label">Meeting Board</span>
+          </a>
+
+          <div class="header-spacer"></div>
+
+          <div class="segmented" role="tablist" aria-label="View">
+            <button class="seg" role="tab" aria-selected="${state.view === 'table'}" onclick="setView('table')">
+              ${ico.table} Table
+            </button>
+            <button class="seg" role="tab" aria-selected="${state.view === 'calendar'}" onclick="setView('calendar')">
+              ${ico.calendar} Calendar
+            </button>
+          </div>
+
+          <div class="header-actions">
+            <!-- Theme toggle sits immediately LEFT of Export -->
+            <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" role="switch"
+              aria-checked="${isLight}" aria-label="${isLight ? 'Switch to dark mode' : 'Switch to light mode'}"
+              title="Toggle light / dark mode">
+              <span class="theme-toggle-icons">
+                <span class="tt-sun">${ico.sun}</span>
+                <span class="tt-moon">${ico.moon}</span>
+              </span>
+              <span class="theme-toggle-knob">${isLight ? ico.sun : ico.moon}</span>
+            </button>
+
+            <input type="file" id="importFile" accept=".csv,text/csv" hidden
+              onchange="handleImportFile(this)" />
+            <button class="btn" onclick="triggerImport()" title="Import meetings from a CSV file">
+              ${ico.upload}<span class="btn-label-sm">Import</span>
+            </button>
+
+            <button class="btn" onclick="exportToCSV()" title="Export current view to CSV">
+              ${ico.download}<span class="btn-label-sm">Export</span>
+            </button>
+
+            <button class="btn btn-primary" onclick="openMeetingModal()" title="Schedule a new meeting">
+              ${ico.plus}<span class="btn-label-sm">New</span>
+            </button>
+          </div>
+        </div>
+      </header>
+    `;
+  }
+
+  function renderMain() {
+    const meetings = getFilteredMeetings();
+
+    const pairs = [];
+    for (let i = 0; i < meetings.length; i++) {
+      for (let j = i + 1; j < meetings.length; j++) {
+        if (doMeetingsOverlap(meetings[i], meetings[j])) pairs.push([meetings[i], meetings[j]]);
+      }
+    }
+    const conflictKey = pairs.map(([a, b]) => `${a.id}:${b.id}`).sort().join(',');
+    const showBanner = pairs.length > 0 && state.dismissedConflictKey !== conflictKey;
+
+    return [
+      renderPageHead(),
+      renderStats(meetings, pairs.length),
+      showBanner ? renderBanner(pairs, conflictKey) : '',
+      renderToolbar(),
+      state.view === 'table' ? renderTableSection(meetings) : renderCalendar(meetings),
+    ].join('');
+  }
+
+  function renderPageHead() {
+    const { month, year } = state.selectedMonth;
+    return `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">${MONTH_NAMES[month]} ${year}</h1>
+          <p class="page-desc">Client demos across 5 time zones · conflicts flagged automatically</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderStats(meetings, conflictCount) {
+    const scheduled = meetings.filter(m => m.status === 'Demo Scheduled').length;
+    const completed = meetings.filter(m => m.status === 'Demo Completed').length;
+    const positive  = meetings.filter(m => m.meeting_outcome === 'Positive').length;
+
+    const tile = (icon, tone, val, label) => `
+      <div class="stat">
+        <div class="stat-icon ${tone}">${icon}</div>
+        <div class="stat-body">
+          <div class="stat-val">${val}</div>
+          <div class="stat-label" title="${label}">${label}</div>
+        </div>
+      </div>`;
+
+    return `
+      <div class="stats">
+        ${tile(ico.cal2, 't-accent', meetings.length, 'Meetings')}
+        ${tile(ico.clock, 't-warn', scheduled, 'Upcoming')}
+        ${tile(ico.check, 't-success', completed, 'Completed')}
+        ${tile(conflictCount ? ico.warn : ico.users, conflictCount ? 't-danger' : 't-success',
+               conflictCount || positive, conflictCount ? 'Conflicts' : 'Positive outcomes')}
+      </div>
+    `;
+  }
+
+  function renderBanner(pairs, key) {
+    return `
+      <div class="banner" role="alert">
+        ${ico.warn}
+        <div class="banner-body">
+          <div class="banner-title">${pairs.length} scheduling conflict${pairs.length !== 1 ? 's' : ''} detected</div>
+          <ul class="banner-list">
+            ${pairs.map(([a, b]) => {
+              const ma = MEMBERS.find(m => m.id === a.person_id) || {};
+              const mb = MEMBERS.find(m => m.id === b.person_id) || {};
+              return `<li>
+                <b style="color:${ma.color || 'inherit'}">${esc(ma.name || 'Unknown')}</b> · ${esc(a.demo_topic)}
+                &nbsp;⇄&nbsp;
+                <b style="color:${mb.color || 'inherit'}">${esc(mb.name || 'Unknown')}</b> · ${esc(b.demo_topic)}
+                <span class="date">— ${formatDate(a.date)}</span>
+              </li>`;
+            }).join('')}
+          </ul>
+        </div>
+        <button class="icon-btn" onclick="dismissConflicts('${key}')" aria-label="Dismiss conflict warning">&times;</button>
+      </div>
+    `;
+  }
+
+  function renderToolbar() {
+    const { month, year } = state.selectedMonth;
+    const counts = {};
+    meetingsData.forEach(m => {
+      if (!m.date) return;
+      const [y, mo] = m.date.split('-').map(Number);
+      if (y === year && mo - 1 === month) counts[m.person_id] = (counts[m.person_id] || 0) + 1;
+    });
+    const allOn = state.activeFilters.size === 0;
+
+    return `
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <div class="search-wrap">
+            ${ico.search}
+            <input id="searchInput" class="search-input" type="search" placeholder="Search topic, POC, person…"
+              value="${esc(state.search)}" oninput="onSearch(this.value)" autocomplete="off" />
+            ${state.search ? `<button class="search-clear" onclick="clearSearch()" aria-label="Clear search">&times;</button>` : ''}
+          </div>
+
+          ${state.view === 'calendar' ? renderCalNav() : `
+          <div class="month-wrap">
+            <div class="month-bar">
+              <button class="month-nav" onclick="navMonth(-1)" aria-label="Previous month">${ico.chevL}</button>
+              <button class="month-trigger" onclick="state.popovers.monthSelectorOpen = !state.popovers.monthSelectorOpen; render();"
+                aria-expanded="${state.popovers.monthSelectorOpen}">
+                ${ico.cal2}<span>${MONTH_SHORT[month]} ${year}</span>
+              </button>
+              <button class="month-nav" onclick="navMonth(1)" aria-label="Next month">${ico.chevR}</button>
+            </div>
+            ${state.popovers.monthSelectorOpen ? `
+              <div class="month-dropdown">
+                <div class="year-head">
+                  <button class="month-nav" onclick="state.selectedMonth.year--; render();" aria-label="Previous year">${ico.chevL}</button>
+                  <span class="mono">${year}</span>
+                  <button class="month-nav" onclick="state.selectedMonth.year++; render();" aria-label="Next year">${ico.chevR}</button>
+                </div>
+                <div class="month-grid">
+                  ${MONTH_SHORT.map((mn, i) => `
+                    <button class="month-grid-btn" aria-current="${month === i}" onclick="changeMonth(${i}, ${year})">${mn}</button>
+                  `).join('')}
+                </div>
+                <button class="btn" style="width:100%" onclick="jumpToday()">Jump to today</button>
+              </div>
+            ` : ''}
+          </div>`}
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-row">
+          <span class="filter-label">Team</span>
+          <div class="chip-scroller">
+            ${MEMBERS.map(m => {
+              const on = allOn || state.activeFilters.has(m.id);
+              return `
+                <button class="chip" aria-pressed="${on}" onclick="toggleFilter('${m.id}')"
+                  ondblclick="selectOnly('${m.id}')" title="${esc(m.email)} — double-click to isolate">
+                  <span class="chip-avatar" style="background:${m.color}">${initials(m.name)}</span>
+                  <span>${esc(m.name)}</span>
+                  <span class="chip-count">${counts[m.id] || 0}</span>
+                </button>`;
+            }).join('')}
+          </div>
+          ${(!allOn || state.search) ? `<button class="link-btn" onclick="resetFilters()">Reset</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     RENDER — TABLE / CARDS
+     ══════════════════════════════════════════════════════════════════ */
+  function renderEmpty() {
+    const filtering = state.search || state.activeFilters.size > 0;
+    return `
+      <div class="card">
+        <div class="empty">
+          <div class="empty-art">${ico.inbox}</div>
+          <h4>${filtering ? 'No matching meetings' : 'Nothing scheduled yet'}</h4>
+          <p>${filtering
+            ? 'Try a different search term, month, or clear the team filter.'
+            : `No demos are booked for ${MONTH_NAMES[state.selectedMonth.month]} ${state.selectedMonth.year}.`}</p>
+          ${filtering
+            ? `<button class="btn" onclick="resetFilters()">Clear filters</button>`
+            : `<button class="btn btn-primary" onclick="openMeetingModal()">${ico.plus} Schedule a meeting</button>`}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTableSection(meetings) {
+    if (meetings.length === 0) return renderEmpty();
+    return isMobile() ? renderCards(meetings) : renderTable(meetings);
+  }
+
+  function statusClass(s) {
+    return s === 'Demo Completed' ? 's-completed' : s === 'Demo Canceled' ? 's-canceled' : 's-scheduled';
+  }
+  function outcomeClass(o) {
+    return o === 'Positive' ? 'o-positive' : o === 'Negative' ? 'o-negative' : o === 'Neutral' ? 'o-neutral' : 'o-empty';
+  }
+
+  function statusSelect(m) {
+    return `<select class="pill-select ${statusClass(m.status)}" onchange="updateMeetingStatus('${m.id}', this.value)" aria-label="Status">
+      ${['Demo Scheduled','Demo Completed','Demo Canceled'].map(s =>
+        `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s.replace('Demo ','')}</option>`).join('')}
+    </select>`;
+  }
+
+  function takenBySelect(m) {
+    return `<select class="pill-select s-neutral sel-name" onchange="updateMeetingField('${m.id}','meeting_taken_by', this.value ? JSON.stringify([this.value]) : '')" aria-label="Meeting taken by">
+      <option value="">— Select —</option>
+      ${MEMBERS.map(mem => `<option value="${esc(mem.name)}" ${m.meeting_taken_by && m.meeting_taken_by.includes(mem.name) ? 'selected' : ''}>${esc(mem.name)}</option>`).join('')}
+    </select>`;
+  }
+
+  function outcomeSelect(m) {
+    return `<select class="pill-select sel-narrow ${outcomeClass(m.meeting_outcome)}" onchange="updateMeetingField('${m.id}','meeting_outcome', this.value)" aria-label="Outcome">
+      <option value="">— Outcome —</option>
+      ${['Positive','Neutral','Negative'].map(o => `<option value="${o}" ${m.meeting_outcome === o ? 'selected' : ''}>${o}</option>`).join('')}
+    </select>`;
+  }
+
+  function notePopover(m, kind) {
+    const isMom = kind === 'mom';
+    const field = isMom ? 'mom' : 'post_demo_actions';
+    const title = isMom ? 'Minutes of Meeting' : 'Post-Demo Actions';
+    const inputId = `note_${field}_${m.id}`;
+    const align = isMobile() ? '' : 'top:100%; right:0;';
+    return `
+      <div class="pop-backdrop" onclick="closeAllPopovers()"></div>
+      <div class="popover" style="${align}">
+        <div class="pop-head">
+          <strong>${title}</strong>
+          <button class="pop-close" onclick="closeAllPopovers()" aria-label="Close">&times;</button>
+        </div>
+        <textarea class="pop-textarea" id="${inputId}" placeholder="${isMom ? 'Key discussion points, decisions…' : 'Follow-ups, owners, deadlines…'}">${esc(m[field] || '')}</textarea>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn" onclick="closeAllPopovers()">Cancel</button>
+          <button class="btn btn-primary" onclick="updateMeetingField('${m.id}','${field}', document.getElementById('${inputId}').value)">Save</button>
+        </div>
+      </div>`;
+  }
+
+  function pocPopover(m) {
+    const align = isMobile() ? '' : 'top:100%; left:0;';
+    const row = (k, v) => `<div class="pop-row"><span class="k">${k}</span><span class="v">${esc(v || '—')}</span></div>`;
+    return `
+      <div class="pop-backdrop" onclick="closeAllPopovers()"></div>
+      <div class="popover" style="${align}">
+        <div class="pop-head">
+          <strong>Point of contact</strong>
+          <button class="pop-close" onclick="closeAllPopovers()" aria-label="Close">&times;</button>
+        </div>
+        ${row('Name', m.poc_name)}
+        ${row('Email', m.poc_email)}
+        ${row('Phone', m.poc_phone)}
+        ${row('State', m.poc_state_name || m.poc_state)}
+        ${row('Population', m.poc_population_count)}
+        ${row('County / Company', m.poc_county_name)}
+      </div>`;
+  }
+
+  function noteBtn(m, kind) {
+    const field = kind === 'mom' ? 'mom' : 'post_demo_actions';
+    const has = Boolean(m[field]);
+    const key = kind === 'mom' ? 'momId' : 'actionsId';
+    const cap = isMobile() ? 22 : 18;
+    const preview = has ? esc(m[field].slice(0, cap)) + (m[field].length > cap ? '…' : '') : 'Add';
+    return `<button class="note-btn ${has ? 'filled' : ''}" onclick="toggleDetailPop('${key}','${m.id}')"
+      title="${has ? esc(m[field]) : 'Add note'}">${ico.note}<span>${preview}</span></button>`;
+  }
+
+  function actionBtns(m) {
+    return `<div class="actions-wrap">
+      <button class="icon-btn dup"  onclick="duplicateMeeting('${m.id}')" title="Duplicate" aria-label="Duplicate">${ico.copy}</button>
+      <button class="icon-btn edit" onclick="openMeetingModal('${m.id}')" title="Edit" aria-label="Edit">${ico.edit}</button>
+      <button class="icon-btn del"  onclick="deleteMeeting('${m.id}')" title="Delete" aria-label="Delete">${ico.trash}</button>
+    </div>`;
+  }
+
+  function renderTable(meetings) {
+    const conflictIds = getConflictingIds(meetings);
+
+    return `
+      <div class="table-card" id="tableCard">
+        <div class="table-scroll" id="tableScroll">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th class="col-person">Person</th>
+                <th class="th-wrap">Demo Topic</th>
+                <th class="th-wrap">POC Details</th>
+                <th class="th-wrap">Date</th>
+                ${ZONES.map(z => `<th class="c th-group mono">${z.label}</th>`).join('')}
+                <th class="c th-wrap">Duration</th>
+                <th class="c th-wrap">Status</th>
+                <th class="c th-wrap">Minutes of Meeting</th>
+                <th class="c th-wrap">Meeting Taken By</th>
+                <th class="c th-wrap">Meeting Outcome</th>
+                <th class="c th-wrap">Post-Demo Actions</th>
+                <th class="c">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${meetings.map(m => {
+                const member = MEMBERS.find(x => x.id === m.person_id) || {};
+                const zone = ZONES[m.zone_index] || ZONES[0];
+                const startUTC = toUTC(m.date, m.time, zone.iana);
+                const conflict = conflictIds.has(m.id);
+                const done = m.status === 'Demo Completed';
+                const canFollowUp = done && (m.meeting_outcome === 'Positive' || m.meeting_outcome === 'Neutral');
+
+                return `
+                  <tr class="${conflict ? 'is-conflict' : ''}">
+                    <td class="col-person">
+                      <div class="person-cell">
+                        <span class="avatar" style="background:${member.color || 'var(--accent)'}">${initials(member.name)}</span>
+                        <span class="person-name">${esc(member.name || '—')}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="topic-cell">
+                        ${conflict ? `<span class="warn-dot" title="Scheduling conflict">${ico.warnSm}</span>` : ''}
+                        <span class="topic-text">${esc(m.demo_topic)}</span>
+                      </div>
+                    </td>
+                    <td class="pop-anchor">
+                      ${m.poc_name ? `
+                        <button class="poc-btn" onclick="toggleDetailPop('pocId','${m.id}')">${esc(m.poc_name)}</button>
+                        ${m.poc_state ? `<div class="poc-sub">${esc(m.poc_state)}</div>` : ''}
+                        ${state.popovers.pocId === m.id ? pocPopover(m) : ''}
+                      ` : `<span class="dash">—</span>`}
+                    </td>
+                    <td class="date-cell">${formatDate(m.date)}</td>
+                    ${ZONES.map((z, i) => `<td class="tz-cell mono ${i === m.zone_index ? 'is-home' : ''}"
+                      title="${i === m.zone_index ? 'Original timezone' : z.iana}">${fromUTC(startUTC, z.iana)}</td>`).join('')}
+                    <td class="c"><span class="dur-badge">${m.duration}m</span></td>
+                    <td class="c">${statusSelect(m)}</td>
+                    <td class="c pop-anchor">
+                      ${done ? `${noteBtn(m, 'mom')}${state.popovers.momId === m.id ? notePopover(m, 'mom') : ''}` : `<span class="dash">—</span>`}
+                    </td>
+                    <td class="c">${done ? takenBySelect(m) : `<span class="dash">—</span>`}</td>
+                    <td class="c">${done ? outcomeSelect(m) : `<span class="dash">—</span>`}</td>
+                    <td class="c pop-anchor">
+                      ${canFollowUp ? `${noteBtn(m, 'actions')}${state.popovers.actionsId === m.id ? notePopover(m, 'actions') : ''}` : `<span class="dash">—</span>`}
+                    </td>
+                    <td class="c">${actionBtns(m)}</td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="scroll-hint">
+          ${ico.chevR} Scroll sideways for time zones, notes and outcomes — the Person column stays pinned
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCards(meetings) {
+    const conflictIds = getConflictingIds(meetings);
+
+    return `<div class="card-list">
+      ${meetings.map(m => {
+        const member = MEMBERS.find(x => x.id === m.person_id) || {};
+        const zone = ZONES[m.zone_index] || ZONES[0];
+        const startUTC = toUTC(m.date, m.time, zone.iana);
+        const conflict = conflictIds.has(m.id);
+        const done = m.status === 'Demo Completed';
+        const canFollowUp = done && (m.meeting_outcome === 'Positive' || m.meeting_outcome === 'Neutral');
+        let takenBy = '';
+        try { takenBy = m.meeting_taken_by ? JSON.parse(m.meeting_taken_by).join(', ') : ''; }
+        catch (e) { takenBy = m.meeting_taken_by || ''; }
+
+        return `
+          <article class="m-card ${conflict ? 'is-conflict' : ''}" style="--mc:${member.color || 'var(--accent)'}">
+            <div class="mc-top">
+              <div class="mc-top-body">
+                <h3 class="mc-topic">
+                  ${conflict ? `<span class="warn-dot" title="Conflict">${ico.warnSm}</span>` : ''}
+                  ${esc(m.demo_topic)}
+                </h3>
+                <span class="mc-person">
+                  <span class="mc-dot" style="background:${member.color || 'var(--accent)'}"></span>
+                  ${esc(member.name || '—')}
+                </span>
+              </div>
+              ${statusSelect(m)}
+            </div>
+
+            <div class="mc-meta">
+              <span class="mc-meta-item">${ico.cal2} ${formatDate(m.date)}</span>
+              <span class="mc-meta-item">${ico.clock} ${m.duration} min</span>
+              <span class="mc-meta-item">${ico.globe} ${zone.label} ${esc(m.time)}</span>
+            </div>
+
+            <div class="mc-zones">
+              ${ZONES.map((z, i) => `
+                <div class="mc-zone ${i === m.zone_index ? 'is-home' : ''}">
+                  <div class="mc-zone-label">${z.label}</div>
+                  <div class="mc-zone-time">${fromUTC(startUTC, z.iana)}</div>
+                </div>`).join('')}
+            </div>
+
+            ${m.poc_name ? `
+              <div class="mc-field pop-anchor">
+                <span class="mc-field-label">POC</span>
+                <span class="mc-field-val">
+                  <button class="poc-btn" onclick="toggleDetailPop('pocId','${m.id}')">${esc(m.poc_name)}${m.poc_state ? ` · ${esc(m.poc_state)}` : ''}</button>
+                </span>
+                ${state.popovers.pocId === m.id ? pocPopover(m) : ''}
+              </div>` : ''}
+
+            ${done ? `
+              <div class="mc-field pop-anchor">
+                <span class="mc-field-label">Minutes</span>
+                <span class="mc-field-val">${noteBtn(m, 'mom')}</span>
+                ${state.popovers.momId === m.id ? notePopover(m, 'mom') : ''}
+              </div>
+              <div class="mc-field">
+                <span class="mc-field-label">Taken by</span>
+                <span class="mc-field-val">${takenBySelect(m)}</span>
+              </div>
+              <div class="mc-field">
+                <span class="mc-field-label">Outcome</span>
+                <span class="mc-field-val">${outcomeSelect(m)}</span>
+              </div>` : ''}
+
+            ${canFollowUp ? `
+              <div class="mc-field pop-anchor">
+                <span class="mc-field-label">Next steps</span>
+                <span class="mc-field-val">${noteBtn(m, 'actions')}</span>
+                ${state.popovers.actionsId === m.id ? notePopover(m, 'actions') : ''}
+              </div>` : ''}
+
+            <div class="mc-foot">
+              <span style="font-size:11px;color:var(--faint);font-weight:600;">
+                ${takenBy ? esc(takenBy) : (done ? 'Completed' : 'Awaiting demo')}
+              </span>
+              ${actionBtns(m)}
+            </div>
+          </article>`;
+      }).join('')}
+    </div>`;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     RENDER — CALENDAR
+     ══════════════════════════════════════════════════════════════════ */
+  function calDayCount() {
+    const w = window.innerWidth;
+    if (w <= 520) return 2;
+    if (w <= BP.mobile) return 3;
+    if (w <= BP.tablet) return 5;
+    return 7;
+  }
+
+  // The days currently shown in the calendar
+  function visibleDays() {
+    const n = calDayCount();
+    return Array.from({ length: n }, (_, i) => {
+      const d = new Date(state.calendarWeekStart);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+  }
+
+  // Which day column a meeting falls in, in the chosen display zone
+  function meetingLocalDay(m, targetZone) {
+    const mz = ZONES[m.zone_index] || ZONES[0];
+    const p = fromUTCFull(toUTC(m.date, m.time, mz.iana), targetZone.iana);
+    return { dayStr: toDateStr(new Date(p.year, p.month - 1, p.day)), hour: p.hour, minute: p.minute };
+  }
+
+  /* Only span the hours actually in use (padded by one), so rows stay
+     tall enough to read instead of always rendering a fixed 06:00–23:00. */
+  const MIN_HOUR_SPAN = 9;
+  function calHourRange(meetings, targetZone, days) {
+    const dayStrs = new Set(days.map(toDateStr));
+    let lo = 24, hi = 0, found = false;
+
+    meetings.forEach(m => {
+      const p = meetingLocalDay(m, targetZone);
+      if (!dayStrs.has(p.dayStr)) return;
+      found = true;
+      const start = p.hour + p.minute / 60;
+      lo = Math.min(lo, Math.floor(start));
+      hi = Math.max(hi, Math.ceil(start + (Number(m.duration) || 30) / 60));
+    });
+
+    if (!found) { lo = 8; hi = 20; }
+    lo = Math.max(0, lo - 1);
+    hi = Math.min(24, hi + 1);
+
+    // widen symmetrically if the span is too narrow
+    if (hi - lo < MIN_HOUR_SPAN) {
+      const need = MIN_HOUR_SPAN - (hi - lo);
+      const up = Math.min(lo, Math.ceil(need / 2));
+      lo -= up;
+      hi = Math.min(24, hi + (need - up));
+      if (hi - lo < MIN_HOUR_SPAN) lo = Math.max(0, hi - MIN_HOUR_SPAN);
+    }
+    return { lo, hi };
+  }
+
+  function calWeekLabel(days) {
+    const fmtD = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return days.length === 1
+      ? days[0].toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+      : `${fmtD(days[0])} – ${fmtD(days[days.length - 1])}, ${days[days.length - 1].getFullYear()}`;
+  }
+
+  function renderCalNav() {
+    const days = visibleDays();
+    const n = days.length;
+    return `
+      <div style="display:inline-flex; gap:6px; flex-shrink:0;">
+        <button class="btn btn-icon" onclick="shiftWeek(-${n})" aria-label="Previous ${n} days">${ico.chevL}</button>
+        <button class="btn" onclick="jumpToday()">Today</button>
+        <button class="btn btn-icon" onclick="shiftWeek(${n})" aria-label="Next ${n} days">${ico.chevR}</button>
+      </div>
+      <span class="week-label">${calWeekLabel(days)}</span>
+      <select class="field-select" onchange="state.calendarZoneIdx = Number(this.value); render();" aria-label="Display timezone">
+        ${ZONES.map((z, i) => `<option value="${i}" ${state.calendarZoneIdx === i ? 'selected' : ''}>Show in ${z.label} — ${z.iana.split('/')[1].replace('_', ' ')}</option>`).join('')}
+      </select>
+    `;
+  }
+
+  function renderCalendar(meetings) {
+    const targetZone = ZONES[state.calendarZoneIdx];
+    const days = visibleDays();
+    const dayCount = days.length;
+
+    const { lo, hi } = calHourRange(meetings, targetZone, days);
+    const hours = hi - lo;
+    const totalMin = hours * 60;
+    const pct = min => (min / totalMin) * 100;   // minutes -> % of column height
+
+    const conflictIds = getConflictingIds(meetings);
+    const now = new Date();
+    const nowParts = fromUTCFull(now, targetZone.iana);
+    const nowMin = nowParts.hour * 60 + nowParts.minute;
+    const todayStr = toDateStr(now);
+
+    return `
+      <div class="cal-card">
+        <div class="cal-scroll" id="calScroll">
+          <div class="cal-grid" style="--days:${dayCount}">
+            <div class="cal-corner"></div>
+            ${days.map(d => {
+              const isToday = toDateStr(d) === todayStr;
+              return `<div class="cal-dayhead ${isToday ? 'today' : ''}">
+                <span class="dow">${d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                <span class="dom">${d.getDate()}</span>
+              </div>`;
+            }).join('')}
+
+            <div class="cal-gutter">
+              ${Array.from({ length: hours }, (_, h) =>
+                `<div class="gutter-hour mono">${String(lo + h).padStart(2, '0')}</div>`).join('')}
+            </div>
+
+            ${days.map(d => {
+              const dayStr = toDateStr(d);
+              const isToday = dayStr === todayStr;
+              const dayMtgs = meetings
+                .filter(m => meetingLocalDay(m, targetZone).dayStr === dayStr)
+                .map(m => {
+                  const p = meetingLocalDay(m, targetZone);
+                  const s = p.hour * 60 + p.minute;
+                  return { m, p, s, e: s + (Number(m.duration) || 30) };
+                })
+                .sort((a, b) => a.s - b.s || a.e - b.e);
+
+              /* Lay overlapping meetings out side by side instead of stacking
+                 them, so a clash is actually visible. */
+              const laneEnds = [];
+              dayMtgs.forEach(item => {
+                let lane = laneEnds.findIndex(end => end <= item.s);
+                if (lane === -1) { lane = laneEnds.length; laneEnds.push(item.e); }
+                else laneEnds[lane] = item.e;
+                item.lane = lane;
+              });
+              const laneCount = Math.max(1, laneEnds.length);
+
+              return `<div class="cal-col ${isToday ? 'is-today' : ''}">
+                ${Array.from({ length: hours }, (_, h) =>
+                  `<div class="hr-line" style="top:${pct(h * 60)}%"></div>`).join('')}
+
+                ${isToday && nowMin >= lo * 60 && nowMin <= hi * 60
+                  ? `<div class="now-line" style="top:${pct(nowMin - lo * 60)}%"></div>` : ''}
+
+                ${dayMtgs.map(({ m, p, s: startMin, e: endMin, lane }) => {
+                  const member = MEMBERS.find(x => x.id === m.person_id) || {};
+                  const dur = endMin - startMin;
+                  const clock = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
+                  const endClock = `${String(Math.floor(endMin / 60) % 24).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+                  // Keep the start edge truthful, give short meetings a readable
+                  // floor, and never let a block spill past the last hour (a
+                  // 23:30 + 45m demo crosses midnight).
+                  const topPct = pct(startMin - lo * 60);
+                  const hPct = Math.min(Math.max(pct(dur), pct(10)), 100 - topPct);
+                  const wPct = 100 / laneCount;
+                  return `<button class="cal-event ${conflictIds.has(m.id) ? 'conflict' : ''}"
+                    style="top:${topPct}%; height:${hPct}%;
+                           left:calc(${lane * wPct}% + 2px); right:auto; width:calc(${wPct}% - 4px);
+                           background:${member.color || 'var(--accent)'}"
+                    onclick="openMeetingModal('${m.id}')"
+                    title="${esc(member.name)} · ${esc(m.demo_topic)} · ${clock}–${endClock} ${targetZone.label}${conflictIds.has(m.id) ? ' · CLASHES' : ''}">
+                    <span class="ev-title">${esc(m.demo_topic)}</span>
+                    <span class="ev-sub">${clock} · ${esc(member.name)}</span>
+                  </button>`;
+                }).join('')}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* Size the calendar to the space left on screen so the page never scrolls */
+  function fitCalendar() {
+    const scroll = document.getElementById('calScroll');
+    if (!scroll) return;
+
+    const top = scroll.getBoundingClientRect().top;
+    const bottomGap = 16;
+    const avail = Math.max(200, window.innerHeight - top - bottomGap);
+    scroll.style.setProperty('--cal-h', avail + 'px');
+
+    // Blocks too short for two lines of text switch to a compact style
+    scroll.querySelectorAll('.cal-event').forEach(ev => {
+      ev.classList.toggle('compact', ev.offsetHeight < 34);
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     MODAL
+     ══════════════════════════════════════════════════════════════════ */
+  function openMeetingModal(meetingId = null) {
+    if (meetingId) {
+      state.activeModal = { ...meetingsData.find(m => m.id === meetingId) };
+    } else {
+      state.activeModal = {
+        demo_topic: '', person_id: MEMBERS[0].id,
+        date: toDateStr(new Date()), time: '10:00', zone_index: 0, duration: 30,
+        status: 'Demo Scheduled',
+        poc_name: '', poc_state: '', poc_email: '', poc_phone: '',
+        poc_state_name: '', poc_population_count: '', poc_county_name: '',
+        mom: '', meeting_taken_by: '', meeting_outcome: '', post_demo_actions: ''
+      };
+    }
+    render();
+    setTimeout(() => { const el = document.getElementById('m_topic'); if (el) el.focus(); }, 30);
+  }
+
+  function closeModal() { state.activeModal = null; render(); }
+
+  function renderModal() {
+    const m = state.activeModal;
+    const isEdit = Boolean(m.id);
+
+    return `
+      <div class="overlay" onclick="if(event.target === this) closeModal()">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="${isEdit ? 'Edit meeting' : 'New meeting'}">
+          <div class="modal-head">
+            <div>
+              <h3>${isEdit ? 'Edit meeting' : 'Schedule a meeting'}</h3>
+              <p>${isEdit ? 'Update the demo details below' : 'Times convert across all 5 zones automatically'}</p>
+            </div>
+            <button class="pop-close" onclick="closeModal()" aria-label="Close">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <div class="fieldset-label">Meeting</div>
+
+            <div class="fgroup">
+              <label for="m_topic">Demo topic</label>
+              <input type="text" class="control" id="m_topic" value="${esc(m.demo_topic)}" placeholder="e.g. EMStride Client Walkthrough" />
+            </div>
+
+            <div class="grid-2">
+              <div class="fgroup">
+                <label for="m_person">Assignee</label>
+                <select class="control" id="m_person">
+                  ${MEMBERS.map(mem => `<option value="${mem.id}" ${m.person_id === mem.id ? 'selected' : ''}>${esc(mem.name)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="fgroup">
+                <label for="m_status">Status</label>
+                <select class="control" id="m_status">
+                  ${['Demo Scheduled','Demo Completed','Demo Canceled'].map(s =>
+                    `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="fgroup">
+                <label for="m_date">Date</label>
+                <input type="date" class="control" id="m_date" value="${esc(m.date)}" />
+              </div>
+              <div class="fgroup">
+                <label for="m_time">Start time</label>
+                <input type="time" class="control" id="m_time" value="${esc(m.time || '10:00')}" />
+              </div>
+              <div class="fgroup">
+                <label for="m_zone">Time zone</label>
+                <select class="control" id="m_zone">
+                  ${ZONES.map((z, i) => `<option value="${i}" ${m.zone_index === i ? 'selected' : ''}>${z.label}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <label for="m_duration">Duration</label>
+              <select class="control" id="m_duration">
+                ${[15,30,45,60,90,120].map(d => `<option value="${d}" ${Number(m.duration) === d ? 'selected' : ''}>${d} minutes</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="fieldset-label">Point of contact</div>
+
+            <div class="grid-2">
+              <div class="fgroup">
+                <label for="m_poc_name">Name</label>
+                <input type="text" class="control" id="m_poc_name" value="${esc(m.poc_name)}" placeholder="Contact person" />
+              </div>
+              <div class="fgroup">
+                <label for="m_poc_phone">Phone</label>
+                <input type="tel" class="control" id="m_poc_phone" value="${esc(m.poc_phone)}" placeholder="+1 (555) 000-0000" />
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <label for="m_poc_email">Email</label>
+              <input type="email" class="control" id="m_poc_email" value="${esc(m.poc_email)}" placeholder="name@company.com" />
+            </div>
+
+            <div class="grid-3">
+              <div class="fgroup">
+                <label for="m_poc_state_name">State</label>
+                <input type="text" class="control" id="m_poc_state_name" value="${esc(m.poc_state_name)}" placeholder="California" />
+              </div>
+              <div class="fgroup">
+                <label for="m_poc_state">Code</label>
+                <input type="text" class="control" id="m_poc_state" value="${esc(m.poc_state)}" placeholder="CA" maxlength="4" />
+              </div>
+              <div class="fgroup">
+                <label for="m_poc_population_count">Population</label>
+                <input type="text" class="control" id="m_poc_population_count" value="${esc(m.poc_population_count)}" placeholder="39,500,000" />
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <label for="m_poc_county_name">County / Company</label>
+              <input type="text" class="control" id="m_poc_county_name" value="${esc(m.poc_county_name)}" placeholder="Los Angeles County" />
+            </div>
+
+            <div class="fieldset-label">Notes</div>
+
+            <div class="fgroup">
+              <label for="m_mom">Minutes of meeting</label>
+              <textarea class="control" id="m_mom" rows="3" placeholder="Key discussion points, decisions…">${esc(m.mom)}</textarea>
+            </div>
+
+            <div class="fgroup">
+              <label for="m_actions">Post-demo actions</label>
+              <textarea class="control" id="m_actions" rows="2" placeholder="Follow-ups, owners, deadlines…">${esc(m.post_demo_actions)}</textarea>
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            ${isEdit ? `<button class="btn btn-danger-text" style="margin-right:auto" onclick="closeModal(); deleteMeeting('${m.id}')">${ico.trash} Delete</button>` : ''}
+            <button class="btn" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitModal()">${isEdit ? 'Save changes' : 'Create meeting'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function submitModal() {
+    const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const topic = val('m_topic');
+    if (!topic) {
+      alert('Please enter a demo topic.');
+      const el = document.getElementById('m_topic'); if (el) el.focus();
+      return;
+    }
+    if (!val('m_date')) { alert('Please choose a date.'); return; }
+
+    saveMeeting({
+      ...state.activeModal,
+      demo_topic: topic,
+      person_id: val('m_person'),
+      status: val('m_status'),
+      date: val('m_date'),
+      time: val('m_time') || '10:00',
+      zone_index: Number(val('m_zone')),
+      duration: Number(val('m_duration')),
+      poc_name: val('m_poc_name'),
+      poc_phone: val('m_poc_phone'),
+      poc_email: val('m_poc_email'),
+      poc_state: val('m_poc_state'),
+      poc_state_name: val('m_poc_state_name'),
+      poc_population_count: val('m_poc_population_count'),
+      poc_county_name: val('m_poc_county_name'),
+      mom: val('m_mom'),
+      post_demo_actions: val('m_actions'),
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     GLOBAL LISTENERS
+     ══════════════════════════════════════════════════════════════════ */
+  // Re-render when crossing a responsive breakpoint (table <-> cards, calendar day count)
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const b = currentBucket();
+      if (b !== state.bucket || state.view === 'calendar') {
+        state.bucket = b;
+        render();
+      } else {
+        fitCalendar();
+      }
+    }, 140);
+  });
+
+  // Escape closes overlays; click outside closes month dropdown
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (state.importPreview) { state.importPreview = null; render(); return; }
+    if (state.activeModal) { closeModal(); return; }
+    if (state.popovers.pocId || state.popovers.momId || state.popovers.actionsId || state.popovers.monthSelectorOpen) {
+      closeAllPopovers();
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (state.popovers.monthSelectorOpen && !e.target.closest('.month-wrap')) {
+      state.popovers.monthSelectorOpen = false;
+      render();
+    }
+  }, true);
+
+  // Theme changed on another InfoStride page / tab
+  window.addEventListener('storage', e => {
+    if (e.key === THEME_KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
+      applyTheme(e.newValue);
+      render();
+    }
+  });
+
+  // Boot
+  initTheme();
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+  </script>
+</body>
+</html>
