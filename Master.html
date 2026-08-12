@@ -6,6 +6,19 @@
 <meta name="theme-color" content="#090d15" />
 <title>InfoStride · Workspace</title>
 
+<script>
+  /* Auth gate — runs before anything renders. No signed-in session in
+     this browser? Straight to the sign-in page, no flash of the workspace.
+     (Client-side demo gate only — see Login.html for the caveat.) */
+  (function () {
+    try {
+      var raw = window.sessionStorage.getItem('infostride-user');
+      var user = raw ? JSON.parse(raw) : null;
+      if (!user || !user.name) window.location.replace('Login.html');
+    } catch (e) { window.location.replace('Login.html'); }
+  })();
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -59,6 +72,9 @@
     --fx-teal:      rgba(20, 184, 166, .14);
     --fx-beam:      rgba(255, 255, 255, .11);
     --fx-rule:      rgba(255, 255, 255, .035);
+    --notif-badge:  #fb7185;
+    --err:          #fb7185;
+    --err-line:     rgba(251, 113, 133, .35);
     color-scheme: dark;
   }
 
@@ -96,6 +112,9 @@
     --fx-teal:      rgba(13, 148, 136, .11);
     --fx-beam:      rgba(79, 70, 229, .10);
     --fx-rule:      rgba(17, 23, 38, .035);
+    --notif-badge:  #e11d48;
+    --err:          #e11d48;
+    --err-line:     rgba(225, 29, 72, .28);
     color-scheme: light;
   }
 
@@ -251,14 +270,77 @@
 
   .header-inner {
     position: relative; z-index: 1;
-    max-width: 1240px; margin: 0 auto;
+    max-width: 1760px; margin: 0 auto;
     min-height: 62px;
-    padding: 10px clamp(14px, 3vw, 30px);
+    padding: 10px clamp(12px, 2.2vw, 28px);
     display: flex; align-items: center; gap: 14px;
   }
 
   .header-spacer { flex: 1; }
   .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  /* Notification bell — only on this page. Reads what the Meeting
+     Board persists and flags anyone with a meeting today. */
+  .notif-wrap { position: relative; }
+  .notif-btn {
+    position: relative; width: 40px; height: 40px; flex-shrink: 0;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text-2);
+    cursor: pointer; padding: 0;
+    transition: border-color .2s var(--ease), color .2s var(--ease), background .2s var(--ease);
+  }
+  .notif-btn:hover { border-color: var(--accent-line); color: var(--accent); }
+  .notif-btn[aria-expanded="true"] { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
+  .notif-badge {
+    position: absolute; top: -3px; right: -3px;
+    min-width: 17px; height: 17px; padding: 0 4px;
+    border-radius: 999px;
+    background: var(--notif-badge);
+    color: #fff;
+    font-size: 10px; font-weight: 700; font-family: var(--font-ui);
+    display: grid; place-items: center;
+    border: 2px solid var(--bg);
+    line-height: 1;
+  }
+  .notif-panel {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: min(320px, 92vw); max-height: 380px; overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+    z-index: 220;
+  }
+  .notif-panel-head {
+    padding: 12px 14px; font-size: 12.5px; font-weight: 700;
+    color: var(--text); border-bottom: 1px solid var(--border-soft);
+    position: sticky; top: 0; background: var(--panel);
+  }
+  .notif-empty {
+    padding: 22px 14px; font-size: 12.5px; color: var(--muted); text-align: center;
+  }
+  .notif-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid var(--border-soft);
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .notif-item-body { min-width: 0; }
+  .notif-item-name { font-size: 12.5px; font-weight: 650; color: var(--text); }
+  .notif-item-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+  .approval-actions { display: flex; gap: 6px; margin-top: 7px; }
+  .approval-actions button {
+    flex: 1; height: 26px; border-radius: 8px; cursor: pointer;
+    font-size: 11px; font-weight: 650; font-family: var(--font-ui);
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    transition: background .18s var(--ease), border-color .18s var(--ease);
+  }
+  .approval-actions .approve { border-color: var(--accent-line); color: var(--accent); }
+  .approval-actions .approve:hover { background: var(--accent-soft); }
+  .approval-actions .decline { border-color: var(--err-line); color: var(--err); }
+  .approval-actions .decline:hover { background: var(--danger-soft); }
 
   /* Theme toggle — same control as the other three pages */
   .theme-toggle {
@@ -352,9 +434,9 @@
   main {
     flex: 1;
     width: 100%;
-    max-width: 1240px;
+    max-width: 1760px;
     margin: 0 auto;
-    padding: clamp(18px, 3vw, 32px) clamp(14px, 3vw, 30px) clamp(16px, 2.4vw, 28px);
+    padding: clamp(18px, 3vw, 32px) clamp(12px, 2.2vw, 28px) clamp(16px, 2.4vw, 28px);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     position: relative; z-index: 1;
@@ -728,6 +810,28 @@
     <div class="header-spacer"></div>
 
     <div class="header-actions">
+      <div class="notif-wrap" id="approvalWrap" hidden>
+        <button id="approvalBtn" class="notif-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                aria-label="Pending sign-ups" title="Pending sign-ups">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+          <span class="notif-badge" id="approvalBadge" hidden>0</span>
+        </button>
+        <div class="notif-panel" id="approvalPanel" hidden>
+          <div class="notif-panel-head">Pending sign-ups</div>
+          <div id="approvalList"></div>
+        </div>
+      </div>
+      <div class="notif-wrap">
+        <button id="notifBtn" class="notif-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                aria-label="Meeting notifications" title="Today's meetings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="notifBadge" hidden>0</span>
+        </button>
+        <div class="notif-panel" id="notifPanel" hidden>
+          <div class="notif-panel-head">Today's meetings</div>
+          <div id="notifList"></div>
+        </div>
+      </div>
       <button id="themeToggle" class="theme-toggle" type="button" role="switch"
               aria-checked="false" aria-label="Switch to light mode" title="Toggle light / dark mode">
         <span class="theme-toggle-icons">
@@ -1005,7 +1109,109 @@
   });
 
   /* ══════════════════════════════════════════════════════════════════
-     2 · WHO IS SIGNED IN  — wire this to your backend
+     2 · MEETING NOTIFICATIONS — this page only
+     Reads what the Meeting Board persists (it saves its meetings and
+     team list to localStorage on every change) and flags anyone with
+     a meeting dated today.
+     ══════════════════════════════════════════════════════════════════ */
+  var MEETINGS_KEY = 'infostride-meetings';
+  var MEMBERS_KEY  = 'infostride-members';
+
+  function readJSON(key) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function escapeHTML(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  var notifBtn   = document.getElementById('notifBtn');
+  var notifPanel = document.getElementById('notifPanel');
+  var notifBadge = document.getElementById('notifBadge');
+  var notifList  = document.getElementById('notifList');
+
+  function refreshNotifications() {
+    if (!notifBtn) return;
+    var meetings = readJSON(MEETINGS_KEY);
+    var members  = readJSON(MEMBERS_KEY);
+    var today = todayStr();
+    var todays = meetings
+      .filter(function (m) { return m && m.date === today; })
+      .sort(function (a, b) { return String(a.time || '').localeCompare(String(b.time || '')); });
+
+    if (todays.length) {
+      notifBadge.textContent = String(todays.length);
+      notifBadge.hidden = false;
+      notifBtn.setAttribute('aria-label', todays.length + ' meeting' + (todays.length === 1 ? '' : 's') + ' today');
+    } else {
+      notifBadge.hidden = true;
+      notifBtn.setAttribute('aria-label', 'Meeting notifications');
+    }
+
+    if (!todays.length) {
+      notifList.innerHTML = '<div class="notif-empty">No meetings scheduled for today.</div>';
+      return;
+    }
+
+    notifList.innerHTML = todays.map(function (m) {
+      var member = members.filter(function (x) { return x && x.id === m.person_id; })[0] || {};
+      var name  = escapeHTML(member.name || 'Unknown');
+      var color = member.color || 'var(--accent)';
+      var time  = escapeHTML(m.time || '—');
+      var topic = escapeHTML(m.demo_topic || 'Meeting');
+      return '<div class="notif-item">' +
+               '<span class="notif-dot" style="background:' + color + '"></span>' +
+               '<div class="notif-item-body">' +
+                 '<div class="notif-item-name">' + name + '</div>' +
+                 '<div class="notif-item-meta">' + time + ' &middot; ' + topic + '</div>' +
+               '</div>' +
+             '</div>';
+    }).join('');
+  }
+
+  function closeNotifPanel() {
+    if (!notifPanel || notifPanel.hidden) return;
+    notifPanel.hidden = true;
+    notifBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  if (notifBtn) {
+    notifBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var willOpen = notifPanel.hidden;
+      notifPanel.hidden = !willOpen;
+      notifBtn.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) refreshNotifications();
+    });
+    document.addEventListener('click', function (e) {
+      if (!notifPanel.hidden && !notifPanel.contains(e.target) && e.target !== notifBtn) closeNotifPanel();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeNotifPanel();
+    });
+
+    refreshNotifications();
+
+    // Live updates: the Meeting Board changing data in another tab, plus a
+    // slow poll to catch same-tab edits and the day rolling over to a new date.
+    window.addEventListener('storage', function (e) {
+      if (e.key === MEETINGS_KEY || e.key === MEMBERS_KEY) refreshNotifications();
+    });
+    setInterval(refreshNotifications, 60000);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     3 · WHO IS SIGNED IN  — wire this to your backend
      ------------------------------------------------------------------
      resolveUser() checks these in order and uses the first that works:
 
@@ -1119,7 +1325,105 @@
     document.title = 'InfoStride · Workspace' + (isGuest ? '' : ' · ' + firstName(user.name));
   }
 
-  resolveUser().then(paintUser).catch(function () { paintUser(AUTH.fallback); });
+  resolveUser().then(function (user) {
+    paintUser(user);
+    initApprovals(user);
+  }).catch(function () { paintUser(AUTH.fallback); });
+
+  /* ══════════════════════════════════════════════════════════════════
+     PENDING SIGN-UP APPROVALS — admins only
+     Reads the account requests Signup.html writes to localStorage and
+     lets an admin approve or decline each one.
+     ══════════════════════════════════════════════════════════════════ */
+  var USERS_KEY = 'infostride-users';
+
+  function loadUsersList() {
+    try { var r = window.localStorage.getItem(USERS_KEY); return r ? JSON.parse(r) : []; }
+    catch (e) { return []; }
+  }
+  function saveUsersList(list) {
+    try { window.localStorage.setItem(USERS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  var approvalWrap  = document.getElementById('approvalWrap');
+  var approvalBtn   = document.getElementById('approvalBtn');
+  var approvalPanel = document.getElementById('approvalPanel');
+  var approvalBadge = document.getElementById('approvalBadge');
+  var approvalList  = document.getElementById('approvalList');
+  var isAdmin = false;
+
+  function refreshApprovals() {
+    if (!isAdmin) return;
+    var pending = loadUsersList().filter(function (u) { return u && u.status === 'pending'; });
+
+    if (pending.length) {
+      approvalBadge.textContent = String(pending.length);
+      approvalBadge.hidden = false;
+    } else {
+      approvalBadge.hidden = true;
+    }
+
+    if (!pending.length) {
+      approvalList.innerHTML = '<div class="notif-empty">No pending sign-ups.</div>';
+      return;
+    }
+
+    approvalList.innerHTML = pending.map(function (u) {
+      return '<div class="notif-item">' +
+               '<div class="notif-item-body" style="flex:1">' +
+                 '<div class="notif-item-name">' + escapeHTML(u.name) + '</div>' +
+                 '<div class="notif-item-meta">' + escapeHTML(u.email) + '</div>' +
+                 '<div class="approval-actions">' +
+                   '<button class="approve" onclick="window.__approveUser(\'' + u.id + '\')">Approve</button>' +
+                   '<button class="decline" onclick="window.__declineUser(\'' + u.id + '\')">Decline</button>' +
+                 '</div>' +
+               '</div>' +
+             '</div>';
+    }).join('');
+  }
+
+  window.__approveUser = function (id) {
+    var list = loadUsersList();
+    list.forEach(function (u) { if (u.id === id) u.status = 'approved'; });
+    saveUsersList(list);
+    refreshApprovals();
+  };
+  window.__declineUser = function (id) {
+    var list = loadUsersList();
+    list.forEach(function (u) { if (u.id === id) u.status = 'declined'; });
+    saveUsersList(list);
+    refreshApprovals();
+  };
+
+  function closeApprovalPanel() {
+    if (!approvalPanel || approvalPanel.hidden) return;
+    approvalPanel.hidden = true;
+    approvalBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function initApprovals(user) {
+    isAdmin = !!(user && user.role && user.role.toLowerCase() === 'admin');
+    if (!isAdmin || !approvalWrap) return;
+    approvalWrap.hidden = false;
+    refreshApprovals();
+
+    approvalBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var willOpen = approvalPanel.hidden;
+      approvalPanel.hidden = !willOpen;
+      approvalBtn.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) refreshApprovals();
+    });
+    document.addEventListener('click', function (e) {
+      if (!approvalPanel.hidden && !approvalPanel.contains(e.target) && e.target !== approvalBtn) closeApprovalPanel();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeApprovalPanel(); });
+
+    window.addEventListener('storage', function (e) {
+      if (e.key === USERS_KEY) refreshApprovals();
+    });
+    setInterval(refreshApprovals, 60000);
+  }
 
   /* ── profile menu ─────────────────────────────────────────────── */
   var pBtn = document.getElementById('profileBtn');
@@ -1139,14 +1443,12 @@
 
   document.getElementById('signOutBtn').addEventListener('click', function () {
     try { window.sessionStorage.removeItem(USER_KEY); } catch (e) {}
-    if (AUTH.logoutUrl) { window.location.href = AUTH.logoutUrl; return; }
-    window.INFOSTRIDE_USER = null;
-    paintUser(AUTH.fallback);
-    closeMenu();
+    try { window.localStorage.removeItem('infostride-remember'); } catch (e) {}
+    window.location.href = AUTH.logoutUrl || 'Login.html';
   });
 
   /* ══════════════════════════════════════════════════════════════════
-     3 · THE 3-D LOGO
+     4 · THE 3-D LOGO
      Two chevrons from the InfoStride mark, extruded as real geometry and
      turned slowly with proper lighting. Falls back to a layered CSS-3D
      version if WebGL or the Three.js CDN is unavailable.
