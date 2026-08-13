@@ -300,6 +300,73 @@
   .auth-foot a { color: var(--accent); font-weight: 650; text-decoration: none; }
   .auth-foot a:hover { text-decoration: underline; }
 
+  .req-star { color: var(--err); margin-left: 2px; font-weight: 700; }
+
+  /* ══════════════════════════════════════════════════════════════
+     AWAITING-APPROVAL PANEL
+     ══════════════════════════════════════════════════════════════ */
+  .wait-panel { text-align: center; }
+
+  .wait-spinner {
+    width: 46px; height: 46px; margin: 4px auto 16px;
+    border: 3px solid var(--border-soft);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: waitSpin .9s linear infinite;
+  }
+  @keyframes waitSpin { to { transform: rotate(360deg); } }
+
+  .wait-check {
+    width: 46px; height: 46px; margin: 4px auto 16px;
+    border-radius: 50%;
+    background: var(--ok-soft); color: var(--ok);
+    display: grid; place-items: center;
+    animation: waitPop .3s var(--ease);
+  }
+  .wait-check[hidden] { display: none; }
+  @keyframes waitPop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .progress-wrap {
+    width: 100%; height: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 18px 0 8px;
+  }
+  .progress-bar {
+    height: 100%; width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width .5s var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-bar.done { background: var(--ok); }
+  .progress-bar.indeterminate::after {
+    content: '';
+    position: absolute; inset: 0; width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    animation: barSheen 1.3s linear infinite;
+  }
+  @keyframes barSheen { from { transform: translateX(-120%); } to { transform: translateX(350%); } }
+
+  .progress-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11.5px; color: var(--muted); margin-bottom: 4px;
+  }
+  .progress-meta .mono { color: var(--text-2); font-weight: 650; }
+
+  body.waiting .ambient-rings { opacity: .82; transition: opacity .6s ease; }
+  body.waiting .ambient-dots  { opacity: .08; transition: opacity .6s ease; }
+
+  .auth-card.waiting-glow { animation: waitGlow 2.8s ease-in-out infinite; }
+  @keyframes waitGlow {
+    0%, 100% { box-shadow: var(--shadow-lg), 0 0 30px -12px var(--accent-line); }
+    50%      { box-shadow: var(--shadow-lg), 0 0 55px -8px var(--accent-line); }
+  }
+  .auth-card.waiting-glow.done { animation: none; box-shadow: var(--shadow-lg), 0 0 50px -6px var(--ok-soft); }
+
   @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .reveal { animation: fadeUp .6s var(--ease) both; }
   .reveal.d1 { animation-delay: .05s; }
@@ -348,44 +415,66 @@
 </section>
 
 <div class="auth-wrap reveal d2">
-  <div class="auth-card">
+  <div class="auth-card" id="authCard">
     <h1 class="auth-title">Create your account</h1>
-    <p class="auth-sub">An admin reviews new requests before you can sign in.</p>
+    <p class="auth-sub"></p>
 
     <div class="auth-msg" id="authMsg"></div>
 
     <form id="signupForm" novalidate>
       <div class="field-row">
         <div class="field">
-          <label for="f_first">First name</label>
+          <label for="f_first">First name<span class="req-star">*</span></label>
           <input type="text" id="f_first" autocomplete="given-name" placeholder="Jordan" required />
         </div>
         <div class="field">
-          <label for="f_last">Last name</label>
+          <label for="f_last">Last name<span class="req-star">*</span></label>
           <input type="text" id="f_last" autocomplete="family-name" placeholder="Rivera" required />
         </div>
       </div>
       <div class="field">
-        <label for="f_email">Email</label>
+        <label for="f_empid">Employee ID<span class="req-star">*</span></label>
+        <input type="text" id="f_empid" autocomplete="off" inputmode="numeric" pattern="\d{5}" maxlength="5" placeholder="e.g. 12345" required />
+      </div>
+      <div class="field">
+        <label for="f_email">Email<span class="req-star">*</span></label>
         <input type="email" id="f_email" autocomplete="username" placeholder="you@infostride.com" required />
       </div>
       <div class="field">
-        <label for="f_pass">Password</label>
+        <label for="f_pass">Password<span class="req-star">*</span></label>
         <input type="password" id="f_pass" autocomplete="new-password" placeholder="••••••••" required />
         <span class="field-hint">At least 8 characters.</span>
       </div>
       <div class="field">
-        <label for="f_pass2">Confirm password</label>
+        <label for="f_pass2">Confirm password<span class="req-star">*</span></label>
         <input type="password" id="f_pass2" autocomplete="new-password" placeholder="••••••••" required />
       </div>
       <button type="submit" class="auth-btn" id="signupBtn">Create Account</button>
     </form>
 
-    <p class="auth-foot">Already have an account? <a href="Login.html">Sign in</a></p>
+    <div class="wait-panel" id="waitPanel" hidden>
+      <div class="wait-spinner" id="waitSpinner" aria-hidden="true"></div>
+      <div class="wait-check" id="waitCheck" hidden aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h1 class="auth-title" id="waitTitle">Request sent!</h1>
+      <p class="auth-sub" id="waitSub">Hang tight — an admin needs to approve your account before you can sign in.</p>
+
+      <div class="progress-wrap">
+        <div class="progress-bar indeterminate" id="progressBar"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="progressStatus">Waiting for admin approval…</span>
+        <span id="progressPct" class="mono">0%</span>
+      </div>
+    </div>
+
+    <p class="auth-foot" id="signupFoot">Already have an account? <a href="Login.html">Sign in</a></p>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="config.js"></script>
 <script>
 (function () {
   'use strict';
@@ -416,43 +505,13 @@
   });
 
   /* ══════════════════════════════════════════════════════════════════
-     2 · CREATE ACCOUNT
-     Writes a pending account request to localStorage for Master.html's
-     admin approval bell to pick up. The very first account ever created
-     is auto-approved as Admin, so there's always someone able to approve
-     everyone else.
-
-     NOTE: this is a client-side demo gate, not real security — anyone
-     with devtools access to this browser profile can read or edit
-     localStorage, including the password hashes. Don't rely on it to
-     protect sensitive data or real user accounts.
+     2 · CREATE ACCOUNT — calls the real backend API (see config.js).
+     The very first account ever created is auto-approved as Admin, so
+     there's always someone able to approve everyone else (backend rule).
      ══════════════════════════════════════════════════════════════════ */
-  var USERS_KEY = 'infostride-users';
-
-  function loadUsers() {
-    try { var r = window.localStorage.getItem(USERS_KEY); return r ? JSON.parse(r) : []; }
-    catch (e) { return []; }
-  }
-  function saveUsers(list) {
-    try { window.localStorage.setItem(USERS_KEY, JSON.stringify(list)); } catch (e) {}
-  }
-
-  function hash(str) {
-    if (window.crypto && window.crypto.subtle && window.TextEncoder) {
-      var data = new TextEncoder().encode(str);
-      return window.crypto.subtle.digest('SHA-256', data).then(function (buf) {
-        return Array.prototype.map.call(new Uint8Array(buf), function (b) {
-          return b.toString(16).padStart(2, '0');
-        }).join('');
-      });
-    }
-    // Fallback for contexts without SubtleCrypto — NOT cryptographically secure.
-    var h = 0;
-    for (var i = 0; i < str.length; i++) { h = (h << 5) - h + str.charCodeAt(i); h |= 0; }
-    return Promise.resolve('fh_' + Math.abs(h).toString(16));
-  }
-
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var EMPID_RE = /^\d{5}$/;
+  var apiFetch = window.InfoStrideAPI.apiFetch;
 
   var form = document.getElementById('signupForm');
   var msg  = document.getElementById('authMsg');
@@ -468,52 +527,136 @@
 
     var first = document.getElementById('f_first').value.trim();
     var last  = document.getElementById('f_last').value.trim();
+    var empId = document.getElementById('f_empid').value.trim();
     var email = document.getElementById('f_email').value.trim().toLowerCase();
     var pass  = document.getElementById('f_pass').value;
     var pass2 = document.getElementById('f_pass2').value;
 
-    if (!first || !last || !email || !pass || !pass2) {
+    if (!first || !last || !empId || !email || !pass || !pass2) {
       showMsg('Fill in every field to continue.', 'err'); return;
     }
+    if (!EMPID_RE.test(empId)) { showMsg('Employee ID must be exactly 5 digits, e.g. 12345.', 'err'); return; }
     if (!EMAIL_RE.test(email)) { showMsg('Enter a valid email address.', 'err'); return; }
     if (pass.length < 8) { showMsg('Password must be at least 8 characters.', 'err'); return; }
     if (pass !== pass2) { showMsg('Passwords do not match.', 'err'); return; }
 
-    var users = loadUsers();
-    if (users.some(function (u) { return u && u.email === email; })) {
-      showMsg('An account with that email already exists.', 'err'); return;
-    }
-
     signupBtn.disabled = true;
-    hash(pass).then(function (passwordHash) {
-      var isFirstEver = users.length === 0;
-      var user = {
-        id: 'u_' + Date.now(),
-        firstName: first,
-        lastName: last,
-        name: (first + ' ' + last).trim(),
-        email: email,
-        passwordHash: passwordHash,
-        role: isFirstEver ? 'Admin' : 'Member',
-        status: isFirstEver ? 'approved' : 'pending',
-        createdAt: new Date().toISOString()
-      };
-      users.push(user);
-      saveUsers(users);
-      signupBtn.disabled = false;
-
-      if (isFirstEver) {
-        showMsg('Account created — you’re the first user, so you’ve been made an admin. Redirecting to sign in…', 'ok');
-      } else {
-        showMsg('Account created — an admin needs to approve it before you can sign in. Redirecting…', 'ok');
-      }
+    apiFetch('/auth/signup', {
+      method: 'POST',
+      body: { name: (first + ' ' + last).trim(), email: email, password: pass, employee_id: empId }
+    }).then(function (data) {
       form.reset();
-      setTimeout(function () { window.location.href = 'Login.html'; }, 1600);
+      if (data.status === 'approved') {
+        signupBtn.disabled = false;
+        showMsg('Account created — you’re the first user, so you’ve been made an admin. Redirecting to sign in…', 'ok');
+        setTimeout(function () { window.location.href = 'Login.html'; }, 1600);
+      } else {
+        enterWaitState(data.pendingId);
+      }
+    }).catch(function (err) {
+      signupBtn.disabled = false;
+      showMsg(err.message || 'Could not create your account.', 'err');
     });
   });
 
   /* ══════════════════════════════════════════════════════════════════
-     3 · THE 3-D LOGO — identical treatment to Master.html
+     3 · AWAITING APPROVAL
+     Once a request is pending, this page stays put and polls the backend's
+     public signup-status endpoint for an admin's decision instead of
+     redirecting blind. Approval can happen from an admin on any device, so
+     this is a real HTTP poll rather than a same-browser localStorage event.
+
+     The progress bar isn't tied to a real percentage — there's nothing
+     to measure — it eases up to ~88% while waiting and only completes
+     to 100% the moment the account is actually approved.
+     ══════════════════════════════════════════════════════════════════ */
+  var PENDING_KEY = 'infostride-pending-signup';
+
+  var waitPanel     = document.getElementById('waitPanel');
+  var waitSpinner   = document.getElementById('waitSpinner');
+  var waitCheck     = document.getElementById('waitCheck');
+  var waitTitle     = document.getElementById('waitTitle');
+  var waitSub       = document.getElementById('waitSub');
+  var signupFoot    = document.getElementById('signupFoot');
+  var progressBar   = document.getElementById('progressBar');
+  var progressPct   = document.getElementById('progressPct');
+  var progressStatus = document.getElementById('progressStatus');
+  var authCard      = document.getElementById('authCard');
+
+  var progress = 0, progressTimer = null, pollTimer = null, settled = false;
+
+  function setProgress(pct) {
+    progress = pct;
+    progressBar.style.width = pct + '%';
+    progressPct.textContent = Math.round(pct) + '%';
+  }
+
+  function checkStatus(pendingId) {
+    if (settled) return;
+    apiFetch('/auth/signup-status/' + encodeURIComponent(pendingId)).then(function (data) {
+      if (data.status === 'approved') { settled = true; finishWait(true); }
+      else if (data.status === 'declined') { settled = true; finishWait(false); }
+    }).catch(function () { /* transient network hiccup — next poll tick retries */ });
+  }
+
+  function finishWait(approved) {
+    clearInterval(progressTimer);
+    clearInterval(pollTimer);
+    try { window.sessionStorage.removeItem(PENDING_KEY); } catch (e) {}
+
+    progressBar.classList.remove('indeterminate');
+    waitSpinner.hidden = true;
+
+    if (approved) {
+      waitCheck.hidden = false;
+      setProgress(100);
+      progressBar.classList.add('done');
+      authCard.classList.add('done');
+      waitTitle.textContent = 'You’re approved!';
+      waitSub.textContent = 'Your account has been created and approved successfully.';
+      progressStatus.textContent = 'Approved — redirecting to sign in…';
+      setTimeout(function () { window.location.href = 'Login.html'; }, 1800);
+    } else {
+      authCard.classList.remove('waiting-glow');
+      document.body.classList.remove('waiting');
+      progressBar.style.width = '100%';
+      progressBar.style.background = 'var(--err)';
+      waitTitle.textContent = 'Request declined';
+      waitSub.textContent = 'An admin declined this request. Contact your admin, or try creating the account again.';
+      progressStatus.textContent = 'Declined';
+      signupFoot.hidden = false;
+    }
+  }
+
+  function enterWaitState(pendingId) {
+    try { window.sessionStorage.setItem(PENDING_KEY, pendingId); } catch (e) {}
+
+    form.hidden = true;
+    signupFoot.hidden = true;
+    msg.className = 'auth-msg';
+    waitPanel.hidden = false;
+    document.body.classList.add('waiting');
+    authCard.classList.add('waiting-glow');
+
+    setProgress(0);
+    progressTimer = setInterval(function () {
+      setProgress(Math.min(88, progress + (88 - progress) * 0.07 + 0.4));
+    }, 260);
+
+    pollTimer = setInterval(function () { checkStatus(pendingId); }, 1500);
+    checkStatus(pendingId); // in case it was already resolved an instant ago
+  }
+
+  // Resume the wait screen after a refresh, instead of losing it.
+  (function resumePendingWait() {
+    var pendingId;
+    try { pendingId = window.sessionStorage.getItem(PENDING_KEY); } catch (e) { pendingId = null; }
+    if (!pendingId) return;
+    enterWaitState(pendingId);
+  })();
+
+  /* ══════════════════════════════════════════════════════════════════
+     4 · THE 3-D LOGO — identical treatment to Master.html
      ══════════════════════════════════════════════════════════════════ */
   var mount = document.getElementById('logoMount');
 

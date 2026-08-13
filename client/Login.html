@@ -279,16 +279,27 @@
   .auth-msg.err { background: var(--err-soft); color: var(--err); border: 1px solid var(--err-line); }
   .auth-msg.ok  { background: var(--ok-soft);  color: var(--ok);  border: 1px solid var(--accent-line); }
 
+  .auth-row {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    margin-bottom: 16px;
+  }
   .remember-row {
     display: flex; align-items: center; gap: 8px;
     font-size: 12.5px; color: var(--text-2);
-    margin-bottom: 16px; cursor: pointer; user-select: none;
+    cursor: pointer; user-select: none;
   }
   .remember-row input {
     width: 15px; height: 15px; margin: 0;
     accent-color: var(--accent);
     cursor: pointer;
   }
+  .forgot-link {
+    background: none; border: none; padding: 0;
+    font-size: 12.5px; font-weight: 650; color: var(--accent);
+    text-decoration: none; cursor: pointer; font-family: var(--font-ui);
+  }
+  .forgot-link:hover { text-decoration: underline; }
 
   .auth-btn {
     width: 100%; height: 42px;
@@ -307,6 +318,8 @@
   .auth-foot { margin-top: 18px; text-align: center; font-size: 12.5px; color: var(--muted); }
   .auth-foot a { color: var(--accent); font-weight: 650; text-decoration: none; }
   .auth-foot a:hover { text-decoration: underline; }
+
+  .req-star { color: var(--err); margin-left: 2px; font-weight: 700; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .reveal { animation: fadeUp .6s var(--ease) both; }
@@ -353,32 +366,58 @@
 
 <div class="auth-wrap reveal d2">
   <div class="auth-card">
-    <h1 class="auth-title">Welcome back</h1>
-    <p class="auth-sub">Sign in to access the InfoStride workspace.</p>
+    <h1 class="auth-title" id="authTitle">Welcome back</h1>
+    <p class="auth-sub" id="authSub">Sign in to access the InfoStride workspace.</p>
 
     <div class="auth-msg" id="authMsg"></div>
 
     <form id="loginForm" novalidate>
       <div class="field">
-        <label for="f_email">Email</label>
+        <label for="f_email">Email<span class="req-star">*</span></label>
         <input type="email" id="f_email" autocomplete="username" placeholder="you@infostride.com" required />
       </div>
       <div class="field">
-        <label for="f_pass">Password</label>
+        <label for="f_pass">Password<span class="req-star">*</span></label>
         <input type="password" id="f_pass" autocomplete="current-password" placeholder="••••••••" required />
       </div>
-      <label class="remember-row" for="f_remember">
-        <input type="checkbox" id="f_remember" />
-        Remember me on this device
-      </label>
+      <div class="auth-row">
+        <label class="remember-row" for="f_remember">
+          <input type="checkbox" id="f_remember" />
+          Remember me on this device
+        </label>
+        <button type="button" class="forgot-link" id="forgotLink">Forgot password?</button>
+      </div>
       <button type="submit" class="auth-btn" id="loginBtn">Log In</button>
     </form>
 
-    <p class="auth-foot">Don't have an account? <a href="Signup.html">Create one</a></p>
+    <form id="resetForm" novalidate hidden>
+      <div class="field">
+        <label for="r_email">Email<span class="req-star">*</span></label>
+        <input type="email" id="r_email" autocomplete="username" placeholder="you@infostride.com" required />
+      </div>
+      <div class="field">
+        <label for="r_empid">Employee ID<span class="req-star">*</span></label>
+        <input type="text" id="r_empid" autocomplete="off" inputmode="numeric" pattern="\d{5}" maxlength="5" placeholder="e.g. 12345" required />
+      </div>
+      <div class="field">
+        <label for="r_pass">New password<span class="req-star">*</span></label>
+        <input type="password" id="r_pass" autocomplete="new-password" placeholder="••••••••" required />
+        <span class="field-hint">At least 8 characters.</span>
+      </div>
+      <div class="field">
+        <label for="r_pass2">Confirm new password<span class="req-star">*</span></label>
+        <input type="password" id="r_pass2" autocomplete="new-password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="auth-btn" id="resetBtn">Reset Password</button>
+    </form>
+
+    <p class="auth-foot" id="loginFoot">Don't have an account? <a href="Signup.html">Create one</a></p>
+    <p class="auth-foot" id="resetFoot" hidden><button type="button" class="forgot-link" id="backToLogin">&larr; Back to sign in</button></p>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="config.js"></script>
 <script>
 (function () {
   'use strict';
@@ -409,50 +448,18 @@
   });
 
   /* ══════════════════════════════════════════════════════════════════
-     2 · SIGN IN
-     Checks the account list the Signup page writes to localStorage.
-     NOTE: this is a client-side demo gate, not real security — anyone
-     with devtools access to this browser profile can read or edit
-     localStorage. Don't rely on it to protect sensitive data.
+     2 · SIGN IN — calls the real backend API (see config.js for API_BASE).
      ══════════════════════════════════════════════════════════════════ */
-  var USERS_KEY    = 'infostride-users';
-  var SESSION_KEY  = 'infostride-user';
-  var REMEMBER_KEY = 'infostride-remember';
+  var SESSION_KEY = 'infostride-user'; // cached {name,email,role} for instant display elsewhere
+  var apiFetch    = window.InfoStrideAPI.apiFetch;
 
-  function loadUsers() {
-    try { var r = window.localStorage.getItem(USERS_KEY); return r ? JSON.parse(r) : []; }
-    catch (e) { return []; }
+  function cacheSession(member) {
+    try {
+      window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        name: member.name, email: member.email, role: member.is_admin ? 'Admin' : 'Member', id: member.id
+      }));
+    } catch (e) {}
   }
-
-  function hash(str) {
-    if (window.crypto && window.crypto.subtle && window.TextEncoder) {
-      var data = new TextEncoder().encode(str);
-      return window.crypto.subtle.digest('SHA-256', data).then(function (buf) {
-        return Array.prototype.map.call(new Uint8Array(buf), function (b) {
-          return b.toString(16).padStart(2, '0');
-        }).join('');
-      });
-    }
-    // Fallback for contexts without SubtleCrypto — NOT cryptographically secure.
-    var h = 0;
-    for (var i = 0; i < str.length; i++) { h = (h << 5) - h + str.charCodeAt(i); h |= 0; }
-    return Promise.resolve('fh_' + Math.abs(h).toString(16));
-  }
-
-  // Already signed in this tab? Skip straight to the workspace.
-  try {
-    if (window.sessionStorage.getItem(SESSION_KEY)) { window.location.replace('Master.html'); }
-  } catch (e) {}
-
-  // "Remember me" from a previous visit — restore the session without
-  // asking for credentials again, then skip straight to the workspace.
-  try {
-    var remembered = window.localStorage.getItem(REMEMBER_KEY);
-    if (remembered) {
-      window.sessionStorage.setItem(SESSION_KEY, remembered);
-      window.location.replace('Master.html');
-    }
-  } catch (e) {}
 
   var form    = document.getElementById('loginForm');
   var msg     = document.getElementById('authMsg');
@@ -463,42 +470,113 @@
     msg.className = 'auth-msg show ' + type;
   }
 
+  // Already have a token? Verify it's still valid, then skip straight to
+  // the workspace instead of trusting its mere presence.
+  if (window.InfoStrideAPI.isLoggedIn()) {
+    apiFetch('/auth/me').then(function (data) {
+      cacheSession(data.member);
+      window.location.replace('Master.html');
+    }).catch(function () {
+      window.InfoStrideAPI.clearToken();
+    });
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var email = document.getElementById('f_email').value.trim().toLowerCase();
     var pass  = document.getElementById('f_pass').value;
     if (!email || !pass) { showMsg('Enter your email and password.', 'err'); return; }
 
-    var user = loadUsers().filter(function (u) { return u && u.email === email; })[0];
-    if (!user) { showMsg('No account found for that email.', 'err'); return; }
-
     loginBtn.disabled = true;
-    hash(pass).then(function (h) {
-      loginBtn.disabled = false;
-      if (h !== user.passwordHash) { showMsg('Incorrect password.', 'err'); return; }
-      if (user.status === 'pending') { showMsg('Your account is still awaiting admin approval.', 'err'); return; }
-      if (user.status === 'declined') { showMsg('Your account request was declined. Contact an admin.', 'err'); return; }
-
-      var sessionPayload = JSON.stringify({
-        name: user.name, email: user.email, role: user.role
-      });
-      try {
-        window.sessionStorage.setItem(SESSION_KEY, sessionPayload);
+    apiFetch('/auth/login', { method: 'POST', body: { email: email, password: pass } })
+      .then(function (data) {
         var remember = document.getElementById('f_remember').checked;
-        if (remember) {
-          window.localStorage.setItem(REMEMBER_KEY, sessionPayload);
-        } else {
-          window.localStorage.removeItem(REMEMBER_KEY);
-        }
-      } catch (err) {}
+        window.InfoStrideAPI.setToken(data.token, remember);
+        cacheSession(data.member);
+        showMsg('Signed in — redirecting…', 'ok');
+        setTimeout(function () { window.location.href = 'Master.html'; }, 400);
+      })
+      .catch(function (err) {
+        loginBtn.disabled = false;
+        showMsg(err.message || 'Sign in failed.', 'err');
+      });
+  });
 
-      showMsg('Signed in — redirecting…', 'ok');
-      setTimeout(function () { window.location.href = 'Master.html'; }, 400);
+  /* ══════════════════════════════════════════════════════════════════
+     3 · FORGOT PASSWORD
+     Self-service reset gated by email + Employee ID instead of an email
+     link (there's no mail server here). Same demo-only security note as
+     above applies — anyone with devtools access to this browser profile
+     could do this too.
+     ══════════════════════════════════════════════════════════════════ */
+  var resetForm   = document.getElementById('resetForm');
+  var forgotLink  = document.getElementById('forgotLink');
+  var backToLogin = document.getElementById('backToLogin');
+  var loginFoot   = document.getElementById('loginFoot');
+  var resetFoot   = document.getElementById('resetFoot');
+  var authTitle   = document.getElementById('authTitle');
+  var authSub     = document.getElementById('authSub');
+  var resetBtn    = document.getElementById('resetBtn');
+  var EMPID_RE    = /^\d{5}$/;
+
+  function hideMsg() { msg.className = 'auth-msg'; msg.textContent = ''; }
+
+  function showLoginView() {
+    form.hidden = false;
+    resetForm.hidden = true;
+    loginFoot.hidden = false;
+    resetFoot.hidden = true;
+    authTitle.textContent = 'Welcome back';
+    authSub.textContent = 'Sign in to access the InfoStride workspace.';
+    hideMsg();
+    resetForm.reset();
+  }
+
+  function showResetView() {
+    form.hidden = true;
+    resetForm.hidden = false;
+    loginFoot.hidden = true;
+    resetFoot.hidden = false;
+    authTitle.textContent = 'Reset your password';
+    authSub.textContent = '';
+    hideMsg();
+    form.reset();
+  }
+
+  forgotLink.addEventListener('click', showResetView);
+  backToLogin.addEventListener('click', showLoginView);
+
+  resetForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('r_email').value.trim().toLowerCase();
+    var empId = document.getElementById('r_empid').value.trim();
+    var newPass  = document.getElementById('r_pass').value;
+    var newPass2 = document.getElementById('r_pass2').value;
+
+    if (!email || !empId || !newPass || !newPass2) {
+      showMsg('Fill in every field to continue.', 'err'); return;
+    }
+    if (!EMPID_RE.test(empId)) { showMsg('Employee ID must be exactly 5 digits, e.g. 12345.', 'err'); return; }
+    if (newPass.length < 8) { showMsg('Password must be at least 8 characters.', 'err'); return; }
+    if (newPass !== newPass2) { showMsg('Passwords do not match.', 'err'); return; }
+
+    resetBtn.disabled = true;
+    apiFetch('/auth/reset-password', {
+      method: 'POST',
+      body: { email: email, employee_id: empId, newPassword: newPass }
+    }).then(function () {
+      resetBtn.disabled = false;
+      showMsg('Password updated — you can now sign in.', 'ok');
+      resetForm.reset();
+      setTimeout(showLoginView, 1400);
+    }).catch(function (err) {
+      resetBtn.disabled = false;
+      showMsg(err.message || 'Could not reset password.', 'err');
     });
   });
 
   /* ══════════════════════════════════════════════════════════════════
-     3 · THE 3-D LOGO — identical treatment to Master.html
+     4 · THE 3-D LOGO — identical treatment to Master.html
      ══════════════════════════════════════════════════════════════════ */
   var mount = document.getElementById('logoMount');
 

@@ -6,16 +6,16 @@
 <meta name="theme-color" content="#090d15" />
 <title>InfoStride · Workspace</title>
 
+<script src="config.js"></script>
 <script>
-  /* Auth gate — runs before anything renders. No signed-in session in
-     this browser? Straight to the sign-in page, no flash of the workspace.
-     (Client-side demo gate only — see Login.html for the caveat.) */
+  /* Auth gate — runs before anything renders. No token in this browser?
+     Straight to the sign-in page, no flash of the workspace. This only
+     checks a token is *present*; the main script below verifies it's
+     still valid via /api/auth/me and bounces back to Login.html if not. */
   (function () {
-    try {
-      var raw = window.sessionStorage.getItem('infostride-user');
-      var user = raw ? JSON.parse(raw) : null;
-      if (!user || !user.name) window.location.replace('Login.html');
-    } catch (e) { window.location.replace('Login.html'); }
+    if (!window.InfoStrideAPI || !window.InfoStrideAPI.isLoggedIn()) {
+      window.location.replace('Login.html');
+    }
   })();
 </script>
 
@@ -562,7 +562,7 @@
      ══════════════════════════════════════════════════════════════ */
   .apps-label {
     display: flex; align-items: center; gap: 12px;
-    width: 100%; max-width: 1040px;
+    width: 100%; max-width: 1387px;
     font-size: 10.5px; font-weight: 700; letter-spacing: .14em;
     text-transform: uppercase; color: var(--faint);
     margin: clamp(16px, 2.6vw, 26px) 0 14px;
@@ -573,9 +573,9 @@
 
   .apps {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: clamp(12px, 1.8vw, 20px);
-    width: 100%; max-width: 1040px;
+    width: 100%; max-width: 1387px;
   }
 
   .app-card {
@@ -673,6 +673,7 @@
   .app-card.c-board { --tint: var(--accent-soft);  --tint-fg: var(--accent);  --tint-line: var(--accent-line); }
   .app-card.c-timer { --tint: var(--warn-soft);    --tint-fg: var(--warn);    --tint-line: color-mix(in srgb, var(--warn) 40%, transparent); }
   .app-card.c-map   { --tint: var(--success-soft); --tint-fg: var(--success); --tint-line: color-mix(in srgb, var(--success) 40%, transparent); }
+  .app-card.c-assignee { --tint: color-mix(in srgb, var(--map-pst) 15%, transparent); --tint-fg: var(--map-pst); --tint-line: color-mix(in srgb, var(--map-pst) 40%, transparent); }
 
   /* ══════════════════════════════════════════════════════════════
      PREVIEW ARTWORK — shared bits
@@ -716,8 +717,19 @@
     100%    { r: 6;   opacity: 0; }
   }
 
+  /* assignee: hands tap the keyboard, a task-assigned ping pops on the corner */
+  .art-hand { animation: artType 1.1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .art-hand.h2 { animation-delay: .35s; }
+  @keyframes artType { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2.5px); } }
+  .art-ping { animation: artPing 2.6s ease-out infinite; }
+  @keyframes artPing {
+    0%   { r: 4; opacity: .9; }
+    70%  { r: 11; opacity: 0; }
+    100% { r: 11; opacity: 0; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .art-conflict, .art-scan, .art-sec, .art-zone, .art-pin { animation: none !important; }
+    .art-conflict, .art-scan, .art-sec, .art-zone, .art-pin, .art-hand, .art-ping { animation: none !important; }
     .art-scan { opacity: 0; }
   }
 
@@ -954,6 +966,50 @@
       </span>
     </a>
 
+    <a class="app-card c-assignee" href="Assignee.html">
+      <span class="card-preview">
+      <svg viewBox="0 0 200 108" aria-hidden="true">
+        <!-- desk -->
+        <rect x="24" y="88" width="152" height="5" rx="2.5" class="art-soft"/>
+
+        <!-- person, sitting behind the screen -->
+        <path d="M76 46c0-14 11-22 24-22s24 8 24 22" fill="var(--accent)" opacity=".55"/>
+        <circle cx="100" cy="23" r="11" fill="var(--map-pst)" opacity=".9"/>
+
+        <!-- laptop screen -->
+        <rect x="70" y="40" width="60" height="40" rx="4" class="art-panel" stroke="var(--border)" stroke-width="1"/>
+        <circle cx="76" cy="46" r="1.8" fill="var(--danger)"/>
+        <circle cx="82" cy="46" r="1.8" fill="var(--warn)"/>
+        <circle cx="88" cy="46" r="1.8" fill="var(--success)"/>
+        <line x1="70" y1="50.5" x2="130" y2="50.5" stroke="var(--border-soft)" stroke-width="1"/>
+
+        <circle cx="77" cy="58" r="2.2" fill="var(--accent)"/>
+        <rect x="82" y="56.3" width="30" height="3.4" rx="1.7" class="art-muted" opacity=".6"/>
+        <circle cx="77" cy="66" r="2.2" fill="var(--warn)"/>
+        <rect x="82" y="64.3" width="24" height="3.4" rx="1.7" class="art-muted" opacity=".5"/>
+        <circle cx="77" cy="74" r="2.2" fill="var(--success)"/>
+        <rect x="82" y="72.3" width="27" height="3.4" rx="1.7" class="art-muted" opacity=".5"/>
+
+        <!-- keyboard base -->
+        <path d="M62 80 L138 80 L146 88 L54 88 Z" class="art-faint" opacity=".8"/>
+
+        <!-- typing hands -->
+        <circle class="art-hand h1" cx="82" cy="82" r="3" fill="var(--accent)"/>
+        <circle class="art-hand h2" cx="118" cy="82" r="3" fill="var(--map-pst)"/>
+
+        <!-- "task assigned" ping -->
+        <circle cx="152" cy="28" r="9" fill="var(--success)" opacity=".16"/>
+        <circle class="art-ping" cx="152" cy="28" r="4" fill="var(--success)" opacity="0"/>
+        <path d="M148.4 28l2.3 2.6 4.9-5.6" stroke="var(--success)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      </span>
+      <span class="card-foot">
+        <span class="app-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.2"/><path d="M9 2.6h6a1 1 0 0 1 1 1V6H8V3.6a1 1 0 0 1 1-1Z"/><path d="M8.5 12.4l2 2 4-4"/><path d="M8.5 17h5"/></svg></span>
+        <span class="app-title">Assignee</span>
+        <span class="app-arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
+      </span>
+    </a>
+
     <a class="app-card c-timer" href="US Timer.html">
       <span class="card-preview">
       <svg viewBox="0 0 200 108" aria-hidden="true">
@@ -1110,19 +1166,10 @@
 
   /* ══════════════════════════════════════════════════════════════════
      2 · MEETING NOTIFICATIONS — this page only
-     Reads what the Meeting Board persists (it saves its meetings and
-     team list to localStorage on every change) and flags anyone with
-     a meeting dated today.
+     Pulls today's meetings straight from the backend and flags anyone
+     with one scheduled today.
      ══════════════════════════════════════════════════════════════════ */
-  var MEETINGS_KEY = 'infostride-meetings';
-  var MEMBERS_KEY  = 'infostride-members';
-
-  function readJSON(key) {
-    try {
-      var raw = window.localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) { return []; }
-  }
+  var apiFetch = window.InfoStrideAPI.apiFetch;
 
   function todayStr() {
     var d = new Date();
@@ -1142,41 +1189,42 @@
 
   function refreshNotifications() {
     if (!notifBtn) return;
-    var meetings = readJSON(MEETINGS_KEY);
-    var members  = readJSON(MEMBERS_KEY);
-    var today = todayStr();
-    var todays = meetings
-      .filter(function (m) { return m && m.date === today; })
-      .sort(function (a, b) { return String(a.time || '').localeCompare(String(b.time || '')); });
+    Promise.all([
+      apiFetch('/meetings?date=' + encodeURIComponent(todayStr())),
+      apiFetch('/members')
+    ]).then(function (results) {
+      var todays  = results[0].sort(function (a, b) { return String(a.time || '').localeCompare(String(b.time || '')); });
+      var members = results[1];
 
-    if (todays.length) {
-      notifBadge.textContent = String(todays.length);
-      notifBadge.hidden = false;
-      notifBtn.setAttribute('aria-label', todays.length + ' meeting' + (todays.length === 1 ? '' : 's') + ' today');
-    } else {
-      notifBadge.hidden = true;
-      notifBtn.setAttribute('aria-label', 'Meeting notifications');
-    }
+      if (todays.length) {
+        notifBadge.textContent = String(todays.length);
+        notifBadge.hidden = false;
+        notifBtn.setAttribute('aria-label', todays.length + ' meeting' + (todays.length === 1 ? '' : 's') + ' today');
+      } else {
+        notifBadge.hidden = true;
+        notifBtn.setAttribute('aria-label', 'Meeting notifications');
+      }
 
-    if (!todays.length) {
-      notifList.innerHTML = '<div class="notif-empty">No meetings scheduled for today.</div>';
-      return;
-    }
+      if (!todays.length) {
+        notifList.innerHTML = '<div class="notif-empty">No meetings scheduled for today.</div>';
+        return;
+      }
 
-    notifList.innerHTML = todays.map(function (m) {
-      var member = members.filter(function (x) { return x && x.id === m.person_id; })[0] || {};
-      var name  = escapeHTML(member.name || 'Unknown');
-      var color = member.color || 'var(--accent)';
-      var time  = escapeHTML(m.time || '—');
-      var topic = escapeHTML(m.demo_topic || 'Meeting');
-      return '<div class="notif-item">' +
-               '<span class="notif-dot" style="background:' + color + '"></span>' +
-               '<div class="notif-item-body">' +
-                 '<div class="notif-item-name">' + name + '</div>' +
-                 '<div class="notif-item-meta">' + time + ' &middot; ' + topic + '</div>' +
-               '</div>' +
-             '</div>';
-    }).join('');
+      notifList.innerHTML = todays.map(function (m) {
+        var member = members.filter(function (x) { return x && x.id === m.person_id; })[0] || {};
+        var name  = escapeHTML(member.name || 'Unknown');
+        var color = member.color || 'var(--accent)';
+        var time  = escapeHTML(m.time || '—');
+        var topic = escapeHTML(m.demo_topic || 'Meeting');
+        return '<div class="notif-item">' +
+                 '<span class="notif-dot" style="background:' + color + '"></span>' +
+                 '<div class="notif-item-body">' +
+                   '<div class="notif-item-name">' + name + '</div>' +
+                   '<div class="notif-item-meta">' + time + ' &middot; ' + topic + '</div>' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+    }).catch(function () { /* transient — next refresh (click or 60s poll) retries */ });
   }
 
   function closeNotifPanel() {
@@ -1202,109 +1250,14 @@
 
     refreshNotifications();
 
-    // Live updates: the Meeting Board changing data in another tab, plus a
-    // slow poll to catch same-tab edits and the day rolling over to a new date.
-    window.addEventListener('storage', function (e) {
-      if (e.key === MEETINGS_KEY || e.key === MEMBERS_KEY) refreshNotifications();
-    });
+    // Poll periodically to catch meetings created elsewhere and the day
+    // rolling over to a new date.
     setInterval(refreshNotifications, 60000);
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     3 · WHO IS SIGNED IN  — wire this to your backend
-     ------------------------------------------------------------------
-     resolveUser() checks these in order and uses the first that works:
-
-       1. window.INFOSTRIDE_USER — a global your server renders into the
-          page. Simplest option; put this ABOVE this script:
-              <script>window.INFOSTRIDE_USER =
-                { name:"Bhavik Uppal", email:"bhavik@infostride.com",
-                  role:"Admin" };<\/script>
-
-       2. AUTH.endpoint — a URL returning JSON such as
-          { "name":"Bhavik Uppal", "email":"...", "role":"..." }
-          Set it below, e.g. endpoint: '/api/me'. Sent with
-          credentials:'include' so your session cookie travels with it.
-
-       3. ?name=Bhavik%20Uppal in the URL — handy if your login page
-          redirects straight here.
-
-       4. sessionStorage['infostride-user'] — a JSON string, if you'd
-          rather stash the user at login time.
-
-       5. AUTH.fallback — shown when none of the above are present, so
-          the page still works when opened on its own.
-
-     Accepted field names are flexible: name / fullName / full_name /
-     displayName / username, and email / mail, role / title.
+     3 · WHO IS SIGNED IN — real backend call, not a placeholder.
      ══════════════════════════════════════════════════════════════════ */
-  var AUTH = {
-    endpoint: null,                 // e.g. '/api/me'
-    logoutUrl: null,                // e.g. '/logout'  (null = just clears locally)
-    fallback: { name: 'Guest', email: '', role: '' }
-  };
-
-  var USER_KEY = 'infostride-user';
-
-  function pick(obj, keys) {
-    for (var i = 0; i < keys.length; i++) {
-      var v = obj && obj[keys[i]];
-      if (typeof v === 'string' && v.trim()) return v.trim();
-    }
-    return '';
-  }
-
-  function normalise(raw) {
-    if (!raw) return null;
-    var src = raw.user || raw.data || raw;
-    var name = pick(src, ['name', 'fullName', 'full_name', 'displayName', 'display_name', 'username', 'userName']);
-    if (!name) {
-      var first = pick(src, ['firstName', 'first_name', 'given_name']);
-      var last  = pick(src, ['lastName', 'last_name', 'family_name']);
-      name = (first + ' ' + last).trim();
-    }
-    if (!name) return null;
-    return {
-      name: name,
-      email: pick(src, ['email', 'mail', 'emailAddress', 'email_address']),
-      role:  pick(src, ['role', 'title', 'designation', 'department'])
-    };
-  }
-
-  function fromQuery() {
-    try {
-      var q = new URLSearchParams(window.location.search);
-      var name = q.get('name') || q.get('user');
-      if (!name) return null;
-      return normalise({ name: name, email: q.get('email') || '', role: q.get('role') || '' });
-    } catch (e) { return null; }
-  }
-
-  function fromSession() {
-    try {
-      var raw = window.sessionStorage.getItem(USER_KEY);
-      return raw ? normalise(JSON.parse(raw)) : null;
-    } catch (e) { return null; }
-  }
-
-  function resolveUser() {
-    // 1 · server-rendered global
-    var u = normalise(window.INFOSTRIDE_USER);
-    if (u) return Promise.resolve(u);
-
-    // 3 · URL parameter   4 · sessionStorage   (checked before the network)
-    u = fromQuery() || fromSession();
-
-    // 2 · JSON endpoint
-    if (AUTH.endpoint) {
-      return fetch(AUTH.endpoint, { credentials: 'include', headers: { Accept: 'application/json' } })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { return normalise(j) || u || AUTH.fallback; })
-        .catch(function () { return u || AUTH.fallback; });
-    }
-    return Promise.resolve(u || AUTH.fallback);
-  }
-
   function initials(name) {
     return (name || '?').trim().split(/\s+/).slice(0, 2)
       .map(function (w) { return w.charAt(0); }).join('').toUpperCase();
@@ -1312,39 +1265,31 @@
 
   function firstName(name) { return (name || '').trim().split(/\s+/)[0] || 'there'; }
 
-  function paintUser(user) {
-    var isGuest = !user.name || user.name === AUTH.fallback.name;
-    document.getElementById('greetName').textContent   = firstName(user.name);
-    document.getElementById('profileName').textContent = firstName(user.name);
-    document.getElementById('menuName').textContent    = user.name || 'Not signed in';
-    document.getElementById('menuSub').textContent     = user.email || user.role || 'InfoStride';
-    document.getElementById('avatarSm').textContent    = initials(user.name);
-    document.getElementById('avatarLg').textContent    = initials(user.name);
-    document.getElementById('eyebrowText').textContent =
-      user.role ? user.role + ' · InfoStride Workspace' : 'InfoStride Workspace';
-    document.title = 'InfoStride · Workspace' + (isGuest ? '' : ' · ' + firstName(user.name));
+  function paintUser(member) {
+    var role = member.is_admin ? 'Admin' : 'Member';
+    document.getElementById('greetName').textContent   = firstName(member.name);
+    document.getElementById('profileName').textContent = firstName(member.name);
+    document.getElementById('menuName').textContent    = member.name || 'Not signed in';
+    document.getElementById('menuSub').textContent     = member.email || role || 'InfoStride';
+    document.getElementById('avatarSm').textContent    = initials(member.name);
+    document.getElementById('avatarLg').textContent    = initials(member.name);
+    document.getElementById('eyebrowText').textContent = role + ' · InfoStride Workspace';
+    document.title = 'InfoStride · Workspace · ' + firstName(member.name);
   }
 
-  resolveUser().then(function (user) {
-    paintUser(user);
-    initApprovals(user);
-  }).catch(function () { paintUser(AUTH.fallback); });
+  apiFetch('/auth/me').then(function (data) {
+    paintUser(data.member);
+    initApprovals(data.member);
+  }).catch(function () {
+    // Token invalid/expired — the shallow gate at the top of <head> only
+    // checked a token was present, not that it still works.
+    window.InfoStrideAPI.clearToken();
+    window.location.replace('Login.html');
+  });
 
   /* ══════════════════════════════════════════════════════════════════
      PENDING SIGN-UP APPROVALS — admins only
-     Reads the account requests Signup.html writes to localStorage and
-     lets an admin approve or decline each one.
      ══════════════════════════════════════════════════════════════════ */
-  var USERS_KEY = 'infostride-users';
-
-  function loadUsersList() {
-    try { var r = window.localStorage.getItem(USERS_KEY); return r ? JSON.parse(r) : []; }
-    catch (e) { return []; }
-  }
-  function saveUsersList(list) {
-    try { window.localStorage.setItem(USERS_KEY, JSON.stringify(list)); } catch (e) {}
-  }
-
   var approvalWrap  = document.getElementById('approvalWrap');
   var approvalBtn   = document.getElementById('approvalBtn');
   var approvalPanel = document.getElementById('approvalPanel');
@@ -1354,45 +1299,43 @@
 
   function refreshApprovals() {
     if (!isAdmin) return;
-    var pending = loadUsersList().filter(function (u) { return u && u.status === 'pending'; });
+    apiFetch('/pending-requests').then(function (pending) {
+      if (pending.length) {
+        approvalBadge.textContent = String(pending.length);
+        approvalBadge.hidden = false;
+      } else {
+        approvalBadge.hidden = true;
+      }
 
-    if (pending.length) {
-      approvalBadge.textContent = String(pending.length);
-      approvalBadge.hidden = false;
-    } else {
-      approvalBadge.hidden = true;
-    }
+      if (!pending.length) {
+        approvalList.innerHTML = '<div class="notif-empty">No pending sign-ups.</div>';
+        return;
+      }
 
-    if (!pending.length) {
-      approvalList.innerHTML = '<div class="notif-empty">No pending sign-ups.</div>';
-      return;
-    }
-
-    approvalList.innerHTML = pending.map(function (u) {
-      return '<div class="notif-item">' +
-               '<div class="notif-item-body" style="flex:1">' +
-                 '<div class="notif-item-name">' + escapeHTML(u.name) + '</div>' +
-                 '<div class="notif-item-meta">' + escapeHTML(u.email) + '</div>' +
-                 '<div class="approval-actions">' +
-                   '<button class="approve" onclick="window.__approveUser(\'' + u.id + '\')">Approve</button>' +
-                   '<button class="decline" onclick="window.__declineUser(\'' + u.id + '\')">Decline</button>' +
+      approvalList.innerHTML = pending.map(function (u) {
+        return '<div class="notif-item">' +
+                 '<div class="notif-item-body" style="flex:1">' +
+                   '<div class="notif-item-name">' + escapeHTML(u.name) + '</div>' +
+                   '<div class="notif-item-meta">' + escapeHTML(u.email) + (u.employee_id ? ' · ID ' + escapeHTML(u.employee_id) : '') + '</div>' +
+                   '<div class="approval-actions">' +
+                     '<button class="approve" onclick="window.__approveUser(\'' + u.id + '\')">Approve</button>' +
+                     '<button class="decline" onclick="window.__declineUser(\'' + u.id + '\')">Decline</button>' +
+                   '</div>' +
                  '</div>' +
-               '</div>' +
-             '</div>';
-    }).join('');
+               '</div>';
+      }).join('');
+    }).catch(function () { /* transient — next refresh (click or 60s poll) retries */ });
   }
 
   window.__approveUser = function (id) {
-    var list = loadUsersList();
-    list.forEach(function (u) { if (u.id === id) u.status = 'approved'; });
-    saveUsersList(list);
-    refreshApprovals();
+    apiFetch('/pending-requests/' + encodeURIComponent(id) + '/approve', { method: 'POST' })
+      .then(refreshApprovals)
+      .catch(function (err) { alert(err.message || 'Could not approve this request.'); });
   };
   window.__declineUser = function (id) {
-    var list = loadUsersList();
-    list.forEach(function (u) { if (u.id === id) u.status = 'declined'; });
-    saveUsersList(list);
-    refreshApprovals();
+    apiFetch('/pending-requests/' + encodeURIComponent(id) + '/decline', { method: 'POST' })
+      .then(refreshApprovals)
+      .catch(function (err) { alert(err.message || 'Could not decline this request.'); });
   };
 
   function closeApprovalPanel() {
@@ -1401,8 +1344,8 @@
     approvalBtn.setAttribute('aria-expanded', 'false');
   }
 
-  function initApprovals(user) {
-    isAdmin = !!(user && user.role && user.role.toLowerCase() === 'admin');
+  function initApprovals(member) {
+    isAdmin = !!(member && member.is_admin);
     if (!isAdmin || !approvalWrap) return;
     approvalWrap.hidden = false;
     refreshApprovals();
@@ -1419,9 +1362,6 @@
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeApprovalPanel(); });
 
-    window.addEventListener('storage', function (e) {
-      if (e.key === USERS_KEY) refreshApprovals();
-    });
     setInterval(refreshApprovals, 60000);
   }
 
@@ -1442,9 +1382,8 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
 
   document.getElementById('signOutBtn').addEventListener('click', function () {
-    try { window.sessionStorage.removeItem(USER_KEY); } catch (e) {}
-    try { window.localStorage.removeItem('infostride-remember'); } catch (e) {}
-    window.location.href = AUTH.logoutUrl || 'Login.html';
+    window.InfoStrideAPI.clearToken();
+    window.location.href = 'Login.html';
   });
 
   /* ══════════════════════════════════════════════════════════════════

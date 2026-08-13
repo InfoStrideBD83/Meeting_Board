@@ -399,7 +399,15 @@
 
   /* ================= scene ================= */
   var stage = document.getElementById('stage');
-  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  } catch (e) {
+    var fb = document.getElementById('fallback');
+    fb.textContent = 'Your browser could not create a WebGL context, so the 3D map can’t render. Try enabling hardware acceleration in your browser’s settings, updating your graphics driver, or opening this page in a different browser.';
+    fb.style.display = 'grid';
+    return;
+  }
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.physicallyCorrectLights = false;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));

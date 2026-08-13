@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0e17" />
-  <title>InfoStride · Meeting Board</title>
+  <title>InfoStride · Assignee</title>
 
   <script src="config.js"></script>
   <script>
@@ -25,7 +25,7 @@
 
   <style>
     /* ══════════════════════════════════════════════════════════════
-       DESIGN TOKENS — Indigo / Slate, tuned for both colour modes
+       DESIGN TOKENS — shared with Master, Meeting Board, US Timer & US Map
        ══════════════════════════════════════════════════════════════ */
     :root {
       --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -77,15 +77,10 @@
       --danger-soft:  rgba(251, 113, 133, .13);
       --danger-line:  rgba(251, 113, 133, .38);
 
-      --grid:         #1c2330;
-      --row-hover:    rgba(129, 140, 248, .07);
-      --col-line:     #232b3a;
-
       --shadow-sm:    0 1px 2px rgba(0,0,0,.5);
       --shadow:       0 8px 24px -6px rgba(0,0,0,.6);
       --shadow-lg:    0 24px 60px -12px rgba(0,0,0,.75);
 
-      --select-arrow: %239aa3b8;
       --scroll-thumb: #2d3748;
 
       --fx-teal:      rgba(20, 184, 166, .14);
@@ -128,15 +123,10 @@
       --danger-soft:  rgba(225, 29, 72, .07);
       --danger-line:  rgba(225, 29, 72, .28);
 
-      --grid:         #edf1f8;
-      --row-hover:    rgba(79, 70, 229, .05);
-      --col-line:     #e5eaf3;
-
       --shadow-sm:    0 1px 2px rgba(24, 39, 75, .06);
       --shadow:       0 8px 24px -8px rgba(24, 39, 75, .14);
       --shadow-lg:    0 24px 60px -14px rgba(24, 39, 75, .22);
 
-      --select-arrow: %235c6579;
       --scroll-thumb: #c9d2e3;
 
       --fx-teal:      rgba(13, 148, 136, .11);
@@ -160,9 +150,8 @@
         radial-gradient(900px 520px at 88% -12%, var(--bg-glow-1), transparent 70%),
         radial-gradient(700px 460px at 4% 4%, var(--bg-glow-2), transparent 70%);
       background-attachment: fixed;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
+      min-height: 100vh;
+      min-height: 100dvh;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
       line-height: 1.45;
@@ -180,7 +169,6 @@
       border-radius: 4px;
     }
 
-    /* Scrollbars */
     * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
     *::-webkit-scrollbar { width: 10px; height: 10px; }
     *::-webkit-scrollbar-track { background: transparent; }
@@ -193,60 +181,7 @@
     *::-webkit-scrollbar-thumb:hover { background: var(--border-strong); background-clip: content-box; }
 
     /* ══════════════════════════════════════════════════════════════
-       AMBIENT 3D BACKDROP — slow-drifting translucent cubes behind
-       the header and board, purely decorative (z-index:0, inert),
-       so the workspace reads as dimensional instead of flat.
-       ══════════════════════════════════════════════════════════════ */
-    .bg3d {
-      position: fixed; inset: 0; z-index: 0;
-      pointer-events: none; overflow: hidden;
-      perspective: 1600px;
-    }
-    .bg3d-float {
-      position: absolute; left: var(--x); top: var(--y);
-      animation: bg3dFloat var(--fdur, 12s) ease-in-out infinite;
-      animation-delay: var(--delay, 0s);
-    }
-    .bg3d-cube {
-      width: var(--size); height: var(--size);
-      transform-style: preserve-3d;
-      animation: bg3dSpin var(--dur, 46s) linear infinite;
-      animation-delay: var(--delay, 0s);
-      opacity: var(--op, .1);
-      filter: blur(var(--blur, .3px));
-    }
-    .bg3d-face {
-      position: absolute; inset: 0;
-      border: 1px solid var(--accent-line);
-      background: linear-gradient(135deg, var(--accent-soft), transparent 75%);
-    }
-    .bg3d-cube.hue-teal .bg3d-face {
-      border-color: var(--fx-teal);
-      background: linear-gradient(135deg, var(--fx-teal), transparent 75%);
-    }
-    .bg3d-face.f-front  { transform: translateZ(calc(var(--size) / 2)); }
-    .bg3d-face.f-back   { transform: translateZ(calc(var(--size) / -2)) rotateY(180deg); }
-    .bg3d-face.f-right  { transform: rotateY(90deg)  translateZ(calc(var(--size) / 2)); }
-    .bg3d-face.f-left   { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
-    .bg3d-face.f-top    { transform: rotateX(90deg)  translateZ(calc(var(--size) / 2)); }
-    .bg3d-face.f-bottom { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
-    @keyframes bg3dSpin {
-      from { transform: rotateX(0deg) rotateY(0deg); }
-      to   { transform: rotateX(360deg) rotateY(360deg); }
-    }
-    @keyframes bg3dFloat {
-      0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(-22px); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .bg3d-float, .bg3d-cube { animation: none !important; }
-    }
-    @media (max-width: 860px) {
-      .bg3d-float.hide-sm { display: none; }
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       HEADER
+       HEADER — identical to Meeting Board / US Map / US Timer
        ══════════════════════════════════════════════════════════════ */
     .app-header {
       position: sticky;
@@ -259,9 +194,6 @@
       isolation: isolate;
     }
 
-    /* ── animated header backdrop ─────────────────────────────────
-       A drifting aurora, a light beam that sweeps across, and a
-       highlight travelling along the bottom rule.                  */
     .header-fx {
       position: absolute; inset: 0;
       overflow: hidden;
@@ -341,7 +273,6 @@
       color: inherit;
     }
 
-    /* Brand logo — colour artwork in light mode, white artwork in dark mode */
     .brand-logo {
       height: 27px;
       width: auto;
@@ -353,21 +284,6 @@
     html[data-theme="light"] .brand-logo.on-dark  { display: none; }
     html[data-theme="dark"]  .brand-logo.on-light { display: none; }
 
-    .brand-divider {
-      width: 1px;
-      height: 22px;
-      background: var(--border);
-      flex-shrink: 0;
-    }
-
-    .brand-label {
-      font-size: 13px;
-      font-weight: 650;
-      color: var(--muted);
-      letter-spacing: -.1px;
-      white-space: nowrap;
-    }
-
     .header-spacer { flex: 1 1 auto; }
 
     .header-actions {
@@ -375,35 +291,6 @@
       align-items: center;
       gap: 8px;
       flex-shrink: 0;
-    }
-
-    /* ── Segmented view switch ──────────────────────────────────── */
-    .segmented {
-      display: inline-flex;
-      background: var(--panel-2);
-      padding: 3px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--border);
-      gap: 2px;
-    }
-
-    .seg {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 7px 14px;
-      font-size: 12.5px; font-weight: 600;
-      font-family: var(--font-ui);
-      border: none; background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      border-radius: 7px;
-      transition: color .18s var(--ease), background .18s var(--ease);
-      white-space: nowrap;
-    }
-    .seg:hover { color: var(--text); }
-    .seg[aria-selected="true"] {
-      background: var(--panel);
-      color: var(--accent);
-      box-shadow: var(--shadow-sm);
     }
 
     /* ── Buttons ────────────────────────────────────────────────── */
@@ -436,51 +323,7 @@
     }
     .btn-primary:hover { filter: brightness(1.08); background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; }
 
-    .btn-ghost { background: transparent; }
-    .btn-ghost:hover { background: var(--panel-2); }
-
     .btn-icon { padding: 8px; width: 36px; }
-
-    .btn-danger-text { color: var(--danger); }
-    .btn-danger-text:hover { border-color: var(--danger-line); background: var(--danger-soft); }
-
-    /* ── Theme toggle (left of Export) ──────────────────────────── */
-    .theme-toggle {
-      position: relative;
-      width: 62px; height: 32px;
-      flex-shrink: 0;
-      border-radius: var(--r-pill);
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      cursor: pointer;
-      padding: 0;
-      transition: background .25s var(--ease), border-color .25s var(--ease);
-    }
-    .theme-toggle:hover { border-color: var(--accent-line); }
-
-    .theme-toggle-knob {
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(140deg, var(--accent), var(--accent-2));
-      display: grid; place-items: center;
-      color: #fff;
-      box-shadow: 0 2px 8px -1px var(--accent-line);
-      transition: transform .32s cubic-bezier(.34, 1.4, .64, 1);
-    }
-    html[data-theme="light"] .theme-toggle-knob { transform: translateX(30px); }
-
-    .theme-toggle-icons {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 8px;
-      color: var(--faint);
-      pointer-events: none;
-    }
-    .theme-toggle-icons svg { transition: opacity .25s var(--ease); }
-    html[data-theme="dark"]  .tt-moon { opacity: 0; }
-    html[data-theme="light"] .tt-sun  { opacity: 0; }
 
     /* ══════════════════════════════════════════════════════════════
        MAIN / LAYOUT
@@ -489,7 +332,14 @@
       position: relative;
       max-width: 1760px;
       margin: 0 auto;
-      padding: clamp(14px, 2vw, 24px) clamp(12px, 2.2vw, 28px) 0;
+      padding: clamp(14px, 2vw, 24px) clamp(12px, 2.2vw, 28px) clamp(24px, 4vw, 40px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* everything is rendered into this one div, so it — not <main> —
+       needs to be the flex column that spaces the blocks out */
+    #mainContent {
       display: flex;
       flex-direction: column;
       gap: clamp(14px, 1.6vw, 20px);
@@ -502,218 +352,41 @@
       box-shadow: var(--shadow);
     }
 
-    /* ── Page title row ─────────────────────────────────────────── */
-    .page-head {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .page-title { font-size: clamp(19px, 2.4vw, 25px); font-weight: 750; letter-spacing: -.6px; }
-    .page-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-    /* ── Stat tiles ─────────────────────────────────────────────── */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: clamp(10px, 1.1vw, 14px);
+    /* ══════════════════════════════════════════════════════════════
+       EMPTY STATE
+       ══════════════════════════════════════════════════════════════ */
+    .empty {
+      text-align: center;
+      padding: clamp(48px, 10vw, 90px) 20px;
+      color: var(--muted);
     }
-
-    .stat {
-      background: var(--panel);
-      border: 1px solid var(--border);
+    .empty-art {
+      width: 62px; height: 62px; margin: 0 auto 16px;
       border-radius: var(--r-lg);
-      padding: 13px 15px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: var(--shadow-sm);
-      transition: transform .18s var(--ease), border-color .18s var(--ease);
-    }
-    .stat:hover { transform: translateY(-2px); border-color: var(--border-strong); }
-
-    .stat-icon {
-      width: 36px; height: 36px; flex-shrink: 0;
-      border-radius: var(--r-md);
+      background: var(--accent-soft); color: var(--accent);
       display: grid; place-items: center;
     }
-    .stat-body { min-width: 0; }
-    .stat-val {
-      font-family: var(--font-mono);
-      font-size: 21px; font-weight: 600; line-height: 1.1;
-      letter-spacing: -.5px;
-    }
-    .stat-label {
-      font-size: 11px; font-weight: 600; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .5px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      margin-top: 2px;
-    }
+    .empty h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .empty p { font-size: 13px; max-width: 380px; margin: 0 auto; }
 
-    .t-accent  { background: var(--accent-soft);  color: var(--accent); }
-    .t-success { background: var(--success-soft); color: var(--success); }
-    .t-warn    { background: var(--warn-soft);    color: var(--warn); }
-    .t-danger  { background: var(--danger-soft);  color: var(--danger); }
-
-    /* ── Conflict banner ────────────────────────────────────────── */
-    .banner {
-      background: var(--danger-soft);
-      border: 1px solid var(--danger-line);
-      border-radius: var(--r-lg);
-      padding: 13px 15px;
-      display: flex; align-items: flex-start; gap: 12px;
-      animation: slideDown .25s var(--ease);
-    }
-    .banner > svg { color: var(--danger); flex-shrink: 0; margin-top: 1px; }
-    .banner-body { flex: 1; min-width: 0; }
-    .banner-title {
-      color: var(--danger); font-size: 13px; font-weight: 700;
-      margin-bottom: 5px;
-    }
-    .banner-list { list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
-    .banner-list li { color: var(--text-2); }
-    .banner-list b { font-weight: 650; }
-    .banner-list .date { color: var(--muted); font-size: 11.5px; }
-
-    /* ── Toolbar ────────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════════
+       TOOLBAR — the "team members" row, filterable like Meeting Board
+       ══════════════════════════════════════════════════════════════ */
     .toolbar {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--r-xl);
       box-shadow: var(--shadow-sm);
       padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
     }
-
-    .toolbar-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-divider {
-      height: 1px;
-      background: var(--border-soft);
-      margin: 0 -14px;
-    }
-
-    .search-wrap {
-      position: relative;
-      flex: 1 1 220px;
-      min-width: 180px;
-      max-width: 380px;
-    }
-    .search-wrap svg {
-      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-      color: var(--faint); pointer-events: none;
-    }
-    .search-input {
-      width: 100%;
-      height: 36px;
-      padding: 0 34px 0 33px;
-      border-radius: var(--r-md);
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      font-family: var(--font-ui);
-      font-size: 13px;
-      transition: border-color .18s var(--ease), background .18s var(--ease);
-    }
-    .search-input::placeholder { color: var(--faint); }
-    .search-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      background: var(--panel);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-    .search-clear {
-      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-      width: 22px; height: 22px; border: none; border-radius: 50%;
-      background: var(--panel-3); color: var(--muted);
-      cursor: pointer; display: grid; place-items: center;
-      font-size: 14px; line-height: 1;
-    }
-    .search-clear:hover { color: var(--text); }
-
-    /* Month selector */
-    .month-wrap { position: relative; flex-shrink: 0; }
-    .month-bar {
-      display: inline-flex; align-items: center; gap: 2px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      padding: 3px;
-    }
-    .month-nav {
-      width: 28px; height: 28px;
-      border-radius: 7px; border: none;
-      background: transparent; color: var(--muted);
-      cursor: pointer; display: grid; place-items: center;
-      transition: all .15s var(--ease);
-    }
-    .month-nav:hover { background: var(--panel-3); color: var(--text); }
-
-    .month-trigger {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: transparent; border: none;
-      color: var(--text);
-      font-family: var(--font-ui);
-      font-size: 12.5px; font-weight: 650;
-      padding: 5px 10px; cursor: pointer; border-radius: 7px;
-      white-space: nowrap;
-    }
-    .month-trigger:hover { background: var(--panel-3); }
-
-    .month-dropdown {
-      position: absolute;
-      top: calc(100% + 8px); right: 0;
-      z-index: 130;
-      width: 268px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow-lg);
-      padding: 13px;
-      animation: pop .16s var(--ease);
-    }
-    .year-head {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 11px; font-weight: 700; font-size: 13.5px;
-    }
-    .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 11px; }
-    .month-grid-btn {
-      padding: 8px 4px; border-radius: 8px;
-      border: 1px solid var(--border-soft);
-      background: var(--panel-2); color: var(--text-2);
-      font-family: var(--font-ui);
-      font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: all .15s var(--ease);
-    }
-    .month-grid-btn:hover { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
-    .month-grid-btn[aria-current="true"] {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      border-color: transparent; color: #fff;
-    }
-
-    /* Member filter chips */
+    .toolbar-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .filter-label {
       font-size: 11px; font-weight: 700; color: var(--faint);
       text-transform: uppercase; letter-spacing: .6px;
       margin-right: 2px; white-space: nowrap;
     }
-
-    .chip-scroller {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
+    .chip-scroller { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 auto; min-width: 0; }
     .chip {
       display: inline-flex; align-items: center; gap: 7px;
       padding: 6px 12px 6px 8px;
@@ -727,13 +400,12 @@
       font-family: var(--font-ui);
     }
     .chip:hover { border-color: var(--border-strong); color: var(--text); }
-    .chip[aria-pressed="false"] { opacity: .42; }
+    .chip[aria-pressed="false"] { opacity: .48; }
     .chip-avatar {
       width: 20px; height: 20px; border-radius: 50%;
       display: grid; place-items: center;
       font-size: 9.5px; font-weight: 700; color: #fff;
-      flex-shrink: 0;
-      letter-spacing: -.2px;
+      flex-shrink: 0; letter-spacing: -.2px;
     }
     .chip-count {
       font-family: var(--font-mono);
@@ -742,7 +414,6 @@
       border-radius: var(--r-pill);
       padding: 1px 6px;
     }
-
     .link-btn {
       background: none; border: none;
       color: var(--accent);
@@ -757,119 +428,41 @@
        TABLE
        ══════════════════════════════════════════════════════════════ */
     .table-card {
-      position: relative;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--r-xl);
       box-shadow: var(--shadow);
       overflow: hidden;
     }
-
-    /* Right-edge fade: tells the user the table scrolls sideways */
-    .table-card::after {
-      content: "";
-      position: absolute;
-      top: 0; right: 0; bottom: 0;
-      width: 46px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .2s var(--ease);
-      background: linear-gradient(to left, var(--panel), transparent);
-      border-top-right-radius: var(--r-xl);
-      border-bottom-right-radius: var(--r-xl);
-    }
-    .table-card.can-scroll-x::after { opacity: 1; }
-    .table-card.at-end::after { opacity: 0; }
-
-    .scroll-hint {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-weight: 650;
-      color: var(--muted);
-      padding: 7px 14px;
-      border-top: 1px solid var(--border-soft);
-      background: var(--panel-2);
-    }
-    .table-card.show-hint .scroll-hint { display: flex; }
-
-    /* Height comes from fitTableScroll() — sized to the space left on
-       screen so the table scrolls internally and the page never does. */
-    .table-scroll {
-      height: var(--tbl-h, 420px);
-      overflow-x: auto;
-      overflow-y: auto;
-      overscroll-behavior-x: contain;
-    }
-
+    .table-scroll { overflow-x: auto; }
     table.tbl {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
       font-size: 13px;
-      min-width: 1240px;
+      min-width: 760px;
     }
-
     table.tbl thead th {
-      position: sticky; top: 0; z-index: 20;
+      position: sticky; top: 0; z-index: 5;
       background: var(--panel);
       text-align: left;
-      padding: 11px 9px;
+      padding: 11px 12px;
       font-size: 10.5px; font-weight: 700;
       letter-spacing: .55px;
       text-transform: uppercase;
       color: var(--muted);
       white-space: nowrap;
       border-bottom: 2px solid var(--border);
-      box-shadow: inset 0 -2px 0 var(--border);
     }
     table.tbl thead th.c { text-align: center; }
-
-    /* Long headers wrap to two lines instead of stretching their column */
-    table.tbl thead th.th-wrap {
-      white-space: normal;
-      line-height: 1.25;
-      max-width: 96px;
-    }
-
-    /* ── Column partitions ──────────────────────────────────────
-       One uniform divider between every column, identical across
-       the header and every body row.                            */
-    table.tbl thead th,
     table.tbl tbody td {
-      border-right: 1px solid var(--col-line);
-    }
-    table.tbl thead th:last-child,
-    table.tbl tbody td:last-child { border-right: none; }
-
-    /* Time-zone headers keep the mono type but no tinted background */
-    .th-group { letter-spacing: .7px; }
-
-    table.tbl tbody td {
-      padding: 10px 9px;
+      padding: 11px 12px;
       border-bottom: 1px solid var(--border-soft);
       vertical-align: middle;
     }
-    table.tbl tbody td.c { text-align: center; }
-
-    table.tbl tbody tr:hover { background: var(--row-hover); }
+    table.tbl tbody tr:hover { background: var(--accent-soft); }
     table.tbl tbody tr:last-child td { border-bottom: none; }
-
-    table.tbl tbody tr.is-conflict { background: var(--danger-soft); }
-    table.tbl tbody tr.is-conflict:hover { background: var(--danger-soft); filter: brightness(1.06); }
-
-    /* Sticky first column on desktop/tablet */
-    .col-person {
-      position: sticky; left: 0; z-index: 15;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      min-width: 150px;
-    }
-    thead .col-person { z-index: 25; }
-    /* The pinned column must stay opaque, so it mirrors the row it sits in */
-    tbody tr.is-conflict .col-person { background: color-mix(in srgb, var(--panel) 82%, var(--danger)); }
-    tbody tr:hover .col-person { background: color-mix(in srgb, var(--panel) 100%, var(--row-hover)); }
+    table.tbl tbody td.c { text-align: center; }
 
     .person-cell { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
     .avatar {
@@ -877,119 +470,9 @@
       display: grid; place-items: center;
       font-size: 10.5px; font-weight: 700; color: #fff;
       flex-shrink: 0; letter-spacing: -.2px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
     }
     .person-name { font-weight: 650; font-size: 13px; }
-
-    .topic-cell { display: flex; align-items: center; gap: 7px; min-width: 168px; }
-    .topic-text { font-weight: 550; }
-
-    .warn-dot {
-      width: 18px; height: 18px; border-radius: 50%;
-      background: var(--danger-soft); color: var(--danger);
-      display: grid; place-items: center; flex-shrink: 0;
-    }
-
-    .tz-cell {
-      text-align: center; white-space: nowrap;
-      font-size: 12.5px; color: var(--text-2);
-      padding-left: 5px !important;
-      padding-right: 5px !important;
-    }
-    table.tbl thead th.th-group { padding-left: 5px; padding-right: 5px; }
-    /* The meeting's own zone is marked with weight + colour, not a fill */
-    .tz-cell.is-home { color: var(--accent); font-weight: 700; }
-
-    .date-cell { white-space: nowrap; font-size: 12.5px; font-weight: 550; }
-    .dur-badge {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 11.5px; font-weight: 600;
-      background: var(--panel-2); color: var(--text-2);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--r-pill);
-      padding: 2px 9px;
-    }
-
-    /* Pill selects */
-    .pill-select {
-      height: 29px;
-      max-width: 100%;
-      font-size: 11.5px; font-weight: 650;
-      font-family: var(--font-ui);
-      padding: 0 26px 0 12px;
-      border-radius: var(--r-pill);
-      cursor: pointer; outline: none;
-      appearance: none; -webkit-appearance: none;
-      border: 1px solid transparent;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 9px center;
-      text-align: center;
-      text-align-last: center;
-      transition: filter .15s var(--ease);
-    }
-    .pill-select:hover { filter: brightness(1.08); }
-
-    .s-scheduled { background-color: var(--accent-soft);  color: var(--accent);  border-color: var(--accent-line); }
-    .s-completed { background-color: var(--success-soft); color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
-    .s-canceled  { background-color: var(--danger-soft);  color: var(--danger);  border-color: var(--danger-line); }
-    .s-neutral   { background-color: var(--panel-2);      color: var(--text-2);  border-color: var(--border); }
-
-    .o-positive { background-color: var(--success-soft); color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
-    .o-neutral  { background-color: var(--warn-soft);    color: var(--warn);    border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
-    .o-negative { background-color: var(--danger-soft);  color: var(--danger);  border-color: var(--danger-line); }
-    .o-empty    { background-color: var(--panel-2);      color: var(--faint);   border-color: var(--border); }
-
-    .poc-btn {
-      background: none; border: none;
-      color: var(--accent);
-      font-family: var(--font-ui);
-      font-size: 12.5px; font-weight: 650;
-      cursor: pointer; padding: 3px 0;
-      border-bottom: 1px dashed var(--accent-line);
-      text-align: left;
-      white-space: nowrap;
-    }
-    .poc-btn:hover { border-bottom-style: solid; }
-
     .dash { color: var(--faint); }
-
-    .note-btn {
-      display: inline-flex; align-items: center; gap: 5px;
-      height: 27px; padding: 0 10px;
-      border-radius: var(--r-pill);
-      border: 1px solid var(--border);
-      background: var(--panel-2); color: var(--text-2);
-      font-family: var(--font-ui);
-      font-size: 11px; font-weight: 650;
-      cursor: pointer;
-      transition: all .16s var(--ease);
-      max-width: 100%;
-    }
-    .note-btn:hover { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
-    .note-btn.filled { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
-    .note-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    table.tbl .note-btn { max-width: 158px; }
-    table.tbl .note-btn svg { flex-shrink: 0; }
-
-    /* Outcome values are short, so this pill stays capped */
-    table.tbl .sel-narrow { max-width: 118px; }
-    /* Taken By must show the full member name — no cap */
-    table.tbl .sel-name { max-width: none; }
-
-    .taken-by-wrap { display: inline-flex; align-items: center; gap: 6px; }
-    .taken-by-other {
-      height: 29px; width: 132px;
-      padding: 0 10px;
-      border-radius: var(--r-pill);
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 11.5px; font-weight: 650;
-      font-family: var(--font-ui);
-    }
-    .taken-by-other:focus { outline: none; border-color: var(--accent-line); background: var(--panel); }
 
     .actions-wrap { display: inline-flex; gap: 4px; }
     .icon-btn {
@@ -1003,303 +486,8 @@
       transition: all .16s var(--ease);
     }
     .icon-btn:hover { color: var(--text); border-color: var(--border-strong); background: var(--panel-3); }
-    .icon-btn.edit:hover { color: var(--accent);  border-color: var(--accent-line);  background: var(--accent-soft); }
-    .icon-btn.dup:hover  { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); background: var(--success-soft); }
-    .icon-btn.del:hover  { color: var(--danger);  border-color: var(--danger-line);  background: var(--danger-soft); }
-
-    /* ══════════════════════════════════════════════════════════════
-       MOBILE CARDS
-       ══════════════════════════════════════════════════════════════ */
-    .card-list {
-      display: flex; flex-direction: column;
-      gap: 12px;
-    }
-
-    .m-card {
-      position: relative;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow-sm);
-      padding: 13px;
-      display: flex; flex-direction: column; gap: 11px;
-      border-left: 3px solid var(--mc, var(--accent));
-    }
-    .m-card.is-conflict {
-      background: var(--danger-soft);
-      border-color: var(--danger-line);
-    }
-
-    .mc-top { display: flex; align-items: flex-start; gap: 10px; }
-    .mc-top-body { flex: 1; min-width: 0; }
-    .mc-topic {
-      font-size: 14.5px; font-weight: 700; letter-spacing: -.2px;
-      line-height: 1.3;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .mc-person {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--muted); font-weight: 600;
-      margin-top: 4px;
-    }
-    .mc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-    .mc-meta {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      font-size: 12px; color: var(--text-2);
-    }
-    .mc-meta-item {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: var(--panel-2);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--r-pill);
-      padding: 3px 10px;
-      font-weight: 600;
-    }
-    .mc-meta-item svg { color: var(--muted); }
-
-    .mc-zones {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1px;
-      background: var(--border-soft);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--r-md);
-      overflow: hidden;
-    }
-    .mc-zone {
-      background: var(--panel-2);
-      padding: 6px 2px;
-      text-align: center;
-    }
-    .mc-zone.is-home { background: var(--accent-soft); }
-    .mc-zone-label {
-      font-size: 9px; font-weight: 700; letter-spacing: .5px;
-      color: var(--muted); text-transform: uppercase;
-    }
-    .mc-zone.is-home .mc-zone-label { color: var(--accent); }
-    .mc-zone-time {
-      font-family: var(--font-mono);
-      font-size: 12px; font-weight: 600;
-      margin-top: 1px;
-    }
-    .mc-zone.is-home .mc-zone-time { color: var(--accent); }
-
-    .mc-field {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 10px;
-      font-size: 12.5px;
-      padding-top: 9px;
-      border-top: 1px dashed var(--border-soft);
-    }
-    .mc-field-label {
-      font-size: 10.5px; font-weight: 700; color: var(--faint);
-      text-transform: uppercase; letter-spacing: .5px;
-      flex-shrink: 0;
-    }
-    .mc-field-val { text-align: right; min-width: 0; }
-
-    .mc-foot {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 10px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border-soft);
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       POPOVERS
-       ══════════════════════════════════════════════════════════════ */
-    .pop-anchor { position: relative; }
-
-    .popover {
-      position: absolute;
-      z-index: 160;
-      width: 288px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow-lg);
-      padding: 13px;
-      animation: pop .16s var(--ease);
-      text-align: left;
-    }
-    .pop-head {
-      display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid var(--border-soft);
-      padding-bottom: 8px; margin-bottom: 10px;
-    }
-    .pop-head strong {
-      font-size: 11px; font-weight: 750; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .6px;
-    }
-    .pop-close {
-      background: none; border: none; color: var(--muted);
-      width: 22px; height: 22px; border-radius: 6px;
-      cursor: pointer; display: grid; place-items: center;
-      font-size: 17px; line-height: 1;
-    }
-    .pop-close:hover { background: var(--panel-2); color: var(--text); }
-
-    .pop-row {
-      display: flex; justify-content: space-between; gap: 12px;
-      font-size: 12.5px; padding: 5px 0;
-      border-bottom: 1px dashed var(--border-soft);
-    }
-    .pop-row:last-child { border-bottom: none; }
-    .pop-row .k { color: var(--muted); flex-shrink: 0; }
-    .pop-row .v { color: var(--text); font-weight: 600; text-align: right; word-break: break-word; }
-
-    .pop-textarea {
-      width: 100%; min-height: 100px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      color: var(--text);
-      font-family: inherit; font-size: 12.5px;
-      padding: 9px; margin-bottom: 10px;
-      resize: vertical;
-      line-height: 1.5;
-    }
-    .pop-textarea:focus {
-      outline: none; border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-
-    .pop-backdrop { display: none; }
-
-    /* ══════════════════════════════════════════════════════════════
-       CALENDAR
-       ══════════════════════════════════════════════════════════════ */
-    .cal-toolbar {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    }
-    .week-label {
-      font-weight: 650; font-size: 13.5px;
-      padding: 0 4px;
-      white-space: nowrap;
-    }
-    .field-select {
-      height: 36px;
-      font-family: var(--font-ui);
-      font-size: 12.5px; font-weight: 600;
-      color: var(--text);
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      padding: 0 30px 0 11px;
-      cursor: pointer;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-    }
-    .field-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-
-    .cal-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r-xl);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    /* Height is set from JS to exactly fill the space left on screen,
-       so the calendar never needs vertical scrolling. */
-    .cal-scroll {
-      height: var(--cal-h, 460px);
-      overflow-x: auto;
-      overflow-y: hidden;
-    }
-    .cal-grid {
-      display: grid;
-      grid-template-columns: 52px repeat(var(--days, 7), minmax(96px, 1fr));
-      grid-template-rows: 52px 1fr;
-      height: 100%;
-      position: relative;
-    }
-
-    .cal-corner {
-      position: sticky; top: 0; left: 0; z-index: 40;
-      background: var(--panel-2);
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      height: 52px;
-    }
-    .cal-dayhead {
-      position: sticky; top: 0; z-index: 30;
-      background: var(--panel-2);
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--border-soft);
-      height: 52px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .cal-dayhead.today { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
-    .dow { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-    .cal-dayhead.today .dow { color: var(--accent); }
-    .dom { font-family: var(--font-mono); font-size: 16px; font-weight: 600; line-height: 1.1; }
-    .cal-dayhead.today .dom { color: var(--accent); }
-
-    .cal-gutter {
-      grid-column: 1;
-      position: sticky; left: 0; z-index: 20;
-      background: var(--panel-2);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-    }
-    .gutter-hour {
-      flex: 1 1 0;
-      min-height: 0;
-      overflow: hidden;
-      border-bottom: 1px solid var(--grid);
-      font-size: 9.5px; color: var(--faint); font-weight: 600;
-      line-height: 1;
-      text-align: right;
-      padding: 2px 6px 0 0;
-    }
-
-    .cal-col {
-      position: relative;
-      border-right: 1px solid var(--border-soft);
-      height: 100%;
-    }
-    .cal-col.is-today { background: color-mix(in srgb, var(--accent) 3.5%, transparent); }
-    .hr-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--grid); pointer-events: none; }
-
-    .cal-event {
-      position: absolute;
-      left: 3px; right: 3px;
-      min-height: 0;
-      border-radius: 8px;
-      padding: 4px 7px;
-      overflow: hidden;
-      color: #fff;
-      font-size: 10.5px;
-      cursor: pointer;
-      border-left: 3px solid rgba(255,255,255,.65);
-      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.16);
-      transition: filter .15s var(--ease), transform .15s var(--ease);
-      text-align: left;
-      font-family: var(--font-ui);
-    }
-    .cal-event:hover { filter: brightness(1.12); transform: scale(1.015); z-index: 8; }
-    .cal-event.conflict { outline: 2px solid var(--danger); outline-offset: -2px; }
-    .ev-title { font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ev-sub { font-size: 9.5px; opacity: .92; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    /* Short blocks drop the second line and tighten up so the title still reads */
-    .cal-event.compact { padding: 1px 6px; line-height: 1.15; font-size: 10px; }
-    .cal-event.compact .ev-sub { display: none; }
-
-    /* Calendar view reclaims the vertical space the table view needs */
-    body.cal-mode .stats,
-    body.cal-mode .page-head { display: none; }
-    body.cal-mode { padding-bottom: 0; }
-
-    .now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 9; pointer-events: none; }
-    .now-line::before {
-      content: ""; position: absolute; left: -3px; top: -3px;
-      width: 8px; height: 8px; border-radius: 50%; background: var(--danger);
-      box-shadow: 0 0 0 3px var(--danger-soft);
-    }
+    .icon-btn.edit:hover { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+    .icon-btn.del:hover { color: var(--danger); border-color: var(--danger-line); background: var(--danger-soft); }
 
     /* ══════════════════════════════════════════════════════════════
        MODAL
@@ -1315,14 +503,13 @@
       animation: fade .2s var(--ease);
     }
     html[data-theme="light"] .overlay { background: rgba(24, 39, 75, .35); }
-
     .modal {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--r-xl);
       box-shadow: var(--shadow-lg);
       width: 100%;
-      max-width: 620px;
+      max-width: 520px;
       max-height: 92dvh;
       display: flex; flex-direction: column;
       overflow: hidden;
@@ -1336,33 +523,13 @@
       background: var(--panel-2);
     }
     .modal-head h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -.2px; }
-    .modal-head p { font-size: 12px; color: var(--muted); margin-top: 1px; }
-
-    .modal-body {
-      padding: 18px;
-      overflow-y: auto;
-      display: flex; flex-direction: column; gap: 15px;
-    }
-
-    .fieldset-label {
-      display: flex; align-items: center; gap: 9px;
-      font-size: 10.5px; font-weight: 750; color: var(--faint);
-      text-transform: uppercase; letter-spacing: .7px;
-    }
-    .fieldset-label::after {
-      content: ""; flex: 1; height: 1px; background: var(--border-soft);
-    }
-
+    .modal-body { padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
     .fgroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .fgroup > label {
       font-size: 11px; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: .5px;
     }
     .req-star { color: var(--danger); margin-left: 2px; font-weight: 700; }
-    .field-hint {
-      font-size: 11px; color: var(--faint); font-weight: 500;
-      text-transform: none; letter-spacing: normal; margin-top: -2px;
-    }
     .control {
       width: 100%;
       min-height: 38px;
@@ -1389,633 +556,159 @@
       background-repeat: no-repeat;
       background-position: right 11px center;
     }
-    textarea.control { resize: vertical; line-height: 1.55; }
-
+    select.control:disabled { opacity: .55; cursor: not-allowed; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-
     .modal-foot {
       padding: 14px 18px;
       border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: flex-end; gap: 10px;
       background: var(--panel-2);
     }
-
-    /* ══════════════════════════════════════════════════════════════
-       EMPTY STATE
-       ══════════════════════════════════════════════════════════════ */
-    .empty {
-      text-align: center;
-      padding: clamp(40px, 8vw, 74px) 20px;
-      color: var(--muted);
-    }
-    .empty-art {
-      width: 62px; height: 62px; margin: 0 auto 16px;
-      border-radius: var(--r-lg);
-      background: var(--accent-soft); color: var(--accent);
-      display: grid; place-items: center;
-    }
-    .empty h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
-    .empty p { font-size: 13px; max-width: 340px; margin: 0 auto 18px; }
-
-    /* ══════════════════════════════════════════════════════════════
-       ANIMATIONS
-       ══════════════════════════════════════════════════════════════ */
     @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
     @keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
-    }
 
     /* ══════════════════════════════════════════════════════════════
        RESPONSIVE
        ══════════════════════════════════════════════════════════════ */
-
-    /* Large desktop — let the table breathe, no inner scroll needed */
-    @media (min-width: 1500px) {
-      table.tbl { min-width: 100%; font-size: 13.5px; }
-      table.tbl tbody td { padding: 11px 14px; }
-    }
-
-    /* Laptop */
-    @media (max-width: 1499px) and (min-width: 1100px) {
-      table.tbl { min-width: 1240px; }
-    }
-
-    /* Tablet & down: header stacks */
     @media (max-width: 1023px) {
       :root { --header-h: auto; }
       .header-inner { flex-wrap: wrap; row-gap: 10px; }
-      .header-spacer { display: none; }
-      .segmented { order: 3; flex: 1 1 100%; }
-      .seg { flex: 1; justify-content: center; }
       .header-actions { margin-left: auto; }
-      /* height comes from fitTableScroll() — no fixed override here */
     }
 
-    /* Mobile */
     @media (max-width: 767px) {
       body { font-size: 13.5px; }
       main { gap: 12px; padding-left: 12px; padding-right: 12px; }
-
       .brand-logo { height: 23px; }
-      .brand-divider, .brand-label { display: none; }
-
-      .page-head { align-items: flex-start; }
-      .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; }
-      .stat { padding: 11px; gap: 9px; }
-      .stat-icon { width: 30px; height: 30px; }
-      .stat-val { font-size: 18px; }
-      .stat-label { font-size: 10px; }
-
-      .toolbar { padding: 11px; border-radius: var(--r-lg); }
-      .search-wrap { flex: 1 1 100%; max-width: none; }
-      .month-wrap { flex: 1 1 100%; }
-      .month-bar { width: 100%; justify-content: space-between; }
-      .month-trigger { flex: 1; justify-content: center; }
-      .month-dropdown { left: 0; right: 0; width: auto; }
-      .filter-label { flex: 1 1 100%; }
-
-      /* Filter chips scroll horizontally instead of wrapping into a tall block */
-      .chip-scroller {
-        display: flex;
-        flex-wrap: nowrap;
-        gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 3px;
-        margin: 0 -11px;
-        padding-left: 11px; padding-right: 11px;
-        scroll-snap-type: x proximity;
-        -webkit-overflow-scrolling: touch;
-        mask-image: linear-gradient(to right, transparent 0, #000 11px, #000 calc(100% - 18px), transparent 100%);
-        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 11px, #000 calc(100% - 18px), transparent 100%);
-      }
-      .chip-scroller::-webkit-scrollbar { height: 0; }
-      .chip { flex-shrink: 0; scroll-snap-align: start; }
-
-      .cal-toolbar > .week-label { flex: 1 1 100%; text-align: center; order: 3; }
-      .field-select { flex: 1 1 100%; }
-      .cal-grid { grid-template-columns: 44px repeat(var(--days, 3), minmax(88px, 1fr)); }
-      /* height comes from fitCalendar() — no fixed override here */
-      body.cal-mode .search-wrap { display: none; }
-
-      /* Popovers become centred sheets */
-      .popover {
-        position: fixed !important;
-        left: 50% !important; right: auto !important;
-        top: 50% !important; bottom: auto !important;
-        transform: translate(-50%, -50%);
-        width: min(340px, calc(100vw - 32px));
-        max-height: 80dvh; overflow-y: auto;
-        z-index: 190;
-      }
-      .pop-backdrop {
-        display: block;
-        position: fixed; inset: 0;
-        background: rgba(6, 9, 16, .55);
-        backdrop-filter: blur(3px);
-        z-index: 185;
-      }
-
-      .modal { max-height: 94dvh; border-radius: var(--r-lg); }
-      .modal-body { padding: 15px; gap: 13px; }
-      .modal-head, .modal-foot { padding: 13px 15px; }
-      .modal-foot .btn { flex: 1; }
-      .grid-3 { grid-template-columns: 1fr 1fr; }
-      .grid-3 > .fgroup:first-child { grid-column: span 2; }
     }
 
     @media (max-width: 420px) {
-      .grid-2, .grid-3 { grid-template-columns: 1fr; }
-      .grid-3 > .fgroup:first-child { grid-column: auto; }
-      .stats { grid-template-columns: 1fr 1fr; }
-      .mc-zone { padding: 5px 1px; }
-      .mc-zone-time { font-size: 11px; }
-      .theme-toggle { width: 54px; }
-      html[data-theme="light"] .theme-toggle-knob { transform: translateX(22px); }
       .btn-label-sm { display: none; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .modal-foot .btn { flex: 1; }
     }
 
-    /* Print */
     @media print {
-      .app-header, .toolbar, .actions-wrap, .theme-toggle { display: none !important; }
+      .app-header { display: none !important; }
       body { background: #fff !important; }
     }
   </style>
 </head>
 <body>
 
-  <div class="bg3d" aria-hidden="true">
-    <div class="bg3d-float" style="--x:-30px; --y:80px; --fdur:13s; --delay:0s;">
-      <div class="bg3d-cube" style="--size:90px; --dur:50s; --op:.09;">
-        <div class="bg3d-face f-front"></div>
-        <div class="bg3d-face f-back"></div>
-        <div class="bg3d-face f-right"></div>
-        <div class="bg3d-face f-left"></div>
-        <div class="bg3d-face f-top"></div>
-        <div class="bg3d-face f-bottom"></div>
-      </div>
+  <header class="app-header">
+    <div class="header-fx" aria-hidden="true">
+      <span class="fx-aurora"></span>
+      <span class="fx-grid"></span>
+      <span class="fx-beam"></span>
+      <span class="fx-line"></span>
     </div>
-    <div class="bg3d-float" style="--x:calc(100% - 110px); --y:40px; --fdur:16s; --delay:-4s;">
-      <div class="bg3d-cube hue-teal" style="--size:130px; --dur:65s; --op:.07;">
-        <div class="bg3d-face f-front"></div>
-        <div class="bg3d-face f-back"></div>
-        <div class="bg3d-face f-right"></div>
-        <div class="bg3d-face f-left"></div>
-        <div class="bg3d-face f-top"></div>
-        <div class="bg3d-face f-bottom"></div>
-      </div>
-    </div>
-    <div class="bg3d-float" style="--x:20px; --y:calc(100% - 140px); --fdur:10s; --delay:-2s;">
-      <div class="bg3d-cube" style="--size:70px; --dur:40s; --op:.1;">
-        <div class="bg3d-face f-front"></div>
-        <div class="bg3d-face f-back"></div>
-        <div class="bg3d-face f-right"></div>
-        <div class="bg3d-face f-left"></div>
-        <div class="bg3d-face f-top"></div>
-        <div class="bg3d-face f-bottom"></div>
-      </div>
-    </div>
-    <div class="bg3d-float" style="--x:calc(100% - 90px); --y:calc(100% - 160px); --fdur:14s; --delay:-6s;">
-      <div class="bg3d-cube hue-teal" style="--size:100px; --dur:55s; --op:.08;">
-        <div class="bg3d-face f-front"></div>
-        <div class="bg3d-face f-back"></div>
-        <div class="bg3d-face f-right"></div>
-        <div class="bg3d-face f-left"></div>
-        <div class="bg3d-face f-top"></div>
-        <div class="bg3d-face f-bottom"></div>
-      </div>
-    </div>
-    <div class="bg3d-float hide-sm" style="--x:calc(50% - 110px); --y:calc(50% - 110px); --fdur:20s; --delay:-8s;">
-      <div class="bg3d-cube" style="--size:220px; --dur:90s; --op:.04;">
-        <div class="bg3d-face f-front"></div>
-        <div class="bg3d-face f-back"></div>
-        <div class="bg3d-face f-right"></div>
-        <div class="bg3d-face f-left"></div>
-        <div class="bg3d-face f-top"></div>
-        <div class="bg3d-face f-bottom"></div>
-      </div>
-    </div>
-  </div>
+    <div class="header-inner">
+      <a class="btn btn-icon" href="Master.html" title="Home" aria-label="Go to Home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      </a>
 
-  <div id="app"></div>
+      <div class="brand">
+        <img class="brand-logo on-light" src="assets/logo-light.png" alt="InfoStride" width="2560" height="349" />
+        <img class="brand-logo on-dark" src="assets/logo-dark-cropped.png" alt="InfoStride" width="853" height="120" />
+      </div>
+
+      <div class="header-spacer"></div>
+
+      <div class="header-actions">
+        <input type="file" id="importFile" accept=".csv,text/csv" hidden onchange="handleImportFile(this)" />
+        <button class="btn" onclick="triggerImport()" title="Import assignments from a CSV file">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span class="btn-label-sm">Import</span>
+        </button>
+        <button class="btn" onclick="exportData()" title="Export current view to CSV">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="btn-label-sm">Export</span>
+        </button>
+        <button class="btn btn-primary" onclick="openAssignModal()" title="Add assigned work">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="btn-label-sm">Assign Work</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="mainContent"></div>
+  </main>
 
   <script>
   /* ══════════════════════════════════════════════════════════════════
-     ICONS
+     THEME — same shared key/convention as Master, Meeting Board, Login & Signup
      ══════════════════════════════════════════════════════════════════ */
-  const ico = {
-    table: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h18M3 12h18M3 19h18"/></svg>`,
-    calendar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 10h18M8 2.5v4M16 2.5v4"/></svg>`,
-    download: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-    upload: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
-    sun: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M3.5 12h-2M22.5 12h-2M18.4 5.6l-1.4 1.4M7 17l-1.4 1.4M18.4 18.4L17 17M7 7L5.6 5.6"/></svg>`,
-    moon: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
-    plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
-    search: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>`,
-    warn: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>`,
-    warnSm: `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>`,
-    clock: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>`,
-    cal2: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 10h18M8 2.5v4M16 2.5v4"/></svg>`,
-    check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
-    users: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 00-3-3.9"/><path d="M16 3.1a4 4 0 010 7.8"/></svg>`,
-    note: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5A2 2 0 004.5 4.5v15a2 2 0 002 2h11a2 2 0 002-2V8z"/><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h4"/></svg>`,
-    edit: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
-    copy: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`,
-    trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>`,
-    inbox: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>`,
-    chevL: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
-    chevR: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
-    globe: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>`,
-  };
-
-  /* ══════════════════════════════════════════════════════════════════
-     THEME
-     ══════════════════════════════════════════════════════════════════ */
-  const THEME_KEY = 'infostride-theme';   // shared across all InfoStride pages
+  const THEME_KEY = 'infostride-theme';
 
   function safeGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
-  function safeSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* no-op */ } }
 
-  function initTheme() {
-    let t = safeGet(THEME_KEY);
-    if (t !== 'light' && t !== 'dark') {
-      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
-    }
-    applyTheme(t);
-  }
-
+  /* Read-only here — no toggle on this page. The theme is set from
+     Master.html (or any other page) and just carries over via the
+     shared localStorage key, in sync live across tabs. */
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', t === 'light' ? '#f1f4fa' : '#090d15');
   }
 
-  function toggleTheme() {
-    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    applyTheme(next);
-    safeSet(THEME_KEY, next);
-    const btn = document.getElementById('themeToggle');
-    if (btn) btn.setAttribute('aria-label', next === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+  function readTheme() {
+    const t = safeGet(THEME_KEY);
+    if (t === 'light' || t === 'dark') return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
   }
+
+  applyTheme(readTheme());
+
+  window.addEventListener('storage', function (e) {
+    if (e.key === THEME_KEY && (e.newValue === 'light' || e.newValue === 'dark')) applyTheme(e.newValue);
+  });
 
   /* ══════════════════════════════════════════════════════════════════
-     TIMEZONE & DATE UTILITIES
+     UTILITIES
      ══════════════════════════════════════════════════════════════════ */
-  const ZONES = [
-    { label: 'EST', iana: 'America/New_York' },
-    { label: 'CST', iana: 'America/Chicago' },
-    { label: 'MST', iana: 'America/Denver' },
-    { label: 'PST', iana: 'America/Los_Angeles' },
-    { label: 'IST', iana: 'Asia/Kolkata' },
-  ];
-
-  function getParts(date, ianaZone) {
-    const fmt = new Intl.DateTimeFormat('en-US', {
-      timeZone: ianaZone,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
-      hour12: false,
-    });
-    const parts = Object.fromEntries(fmt.formatToParts(date).map(p => [p.type, p.value]));
-    return {
-      year: parseInt(parts.year),
-      month: parseInt(parts.month),
-      day: parseInt(parts.day),
-      hour: parseInt(parts.hour) % 24,
-      minute: parseInt(parts.minute),
-      second: parseInt(parts.second),
-    };
-  }
-
-  function toUTC(dateStr, timeStr, ianaZone) {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const [hour, minute] = timeStr.split(':').map(Number);
-    const localDt = new Date(Date.UTC(year, month - 1, day, hour, minute));
-    const utcParts = getParts(localDt, 'UTC');
-    const zoneParts = getParts(localDt, ianaZone);
-    const offsetMs = ((utcParts.hour * 60 + utcParts.minute) - (zoneParts.hour * 60 + zoneParts.minute)) * 60000;
-    return new Date(localDt.getTime() + offsetMs);
-  }
-
-  function fromUTC(utcDate, ianaZone) {
-    const p = getParts(utcDate, ianaZone);
-    return `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
-  }
-
-  function fromUTCFull(utcDate, ianaZone) { return getParts(utcDate, ianaZone); }
-
-  function getMeetingUTCRange(meeting) {
-    const zone = ZONES[meeting.zone_index] || ZONES[0];
-    const startUTC = toUTC(meeting.date, meeting.time, zone.iana);
-    const endUTC = new Date(startUTC.getTime() + meeting.duration * 60000);
-    return { startUTC, endUTC };
-  }
-
-  function doMeetingsOverlap(a, b) {
-    const ra = getMeetingUTCRange(a);
-    const rb = getMeetingUTCRange(b);
-    return ra.startUTC < rb.endUTC && rb.startUTC < ra.endUTC;
-  }
-
-  function getConflictingIds(meetings) {
-    const conflicting = new Set();
-    for (let i = 0; i < meetings.length; i++) {
-      for (let j = i + 1; j < meetings.length; j++) {
-        if (doMeetingsOverlap(meetings[i], meetings[j])) {
-          conflicting.add(meetings[i].id);
-          conflicting.add(meetings[j].id);
-        }
-      }
-    }
-    return conflicting;
-  }
-
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  }
-
-  function toDateStr(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  function getWeekStart(date) {
-    const d = new Date(date);
-    d.setDate(d.getDate() - d.getDay());
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  function initials(name) {
-    return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  }
-
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
+  function initials(name) {
+    return (name || '?').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
+  }
+
+  var apiFetch = window.InfoStrideAPI.apiFetch;
 
   /* ══════════════════════════════════════════════════════════════════
-     DATA — loaded from the real backend (see bootstrap() near the bottom)
+     TEAM MEMBERS + WHO'S SIGNED IN — loaded from the real backend in
+     bootstrap() near the bottom, so "assigned to" reflects who actually
+     has an account.
      ══════════════════════════════════════════════════════════════════ */
-  const apiFetch = window.InfoStrideAPI.apiFetch;
+  var MEMBERS = [];
+  var CURRENT_USER = null;
+  var IS_ADMIN = false;
+  var CURRENT_MEMBER = null;
 
-  let MEMBERS = [];
+  var AVATAR_COLORS = ['#818cf8', '#34d399', '#fbbf24', '#fb7185', '#38bdf8', '#f472b6', '#a78bfa', '#22d3ee', '#fb923c', '#4ade80'];
+  function avatarColor(id) {
+    var idx = MEMBERS.findIndex(function (m) { return m.id === id; });
+    return AVATAR_COLORS[(idx < 0 ? 0 : idx) % AVATAR_COLORS.length];
+  }
+  function memberById(id) { return MEMBERS.find(function (m) { return m.id === id; }); }
 
-  /* Names offered in the table's "Meeting Taken By" dropdown — a separate
-     list from MEMBERS, since whoever actually took the call isn't
-     necessarily the team member the meeting is scheduled by. Not backed
-     by a table; kept as a fixed list like before. */
-  const TAKEN_BY_OPTIONS = ['Vishal Mangla', 'Ritu Mangla', 'Deepak Sharma', 'Rohit Sood', 'Amit Kaushal'];
-
-  const todayObj = new Date();
-
-  let meetingsData = [];
-
-  /* Who's signed in — decides whether this person can reassign a meeting
-     to someone else, or only ever to themselves. Populated by bootstrap(). */
-  let CURRENT_USER = null;
-  let IS_ADMIN = false;
-  let CURRENT_MEMBER = null;
-
-  // Only the person a meeting is scheduled by, or an admin, can duplicate/edit/delete it.
-  // Mirrors the same rule the backend enforces on PATCH/DELETE /api/meetings/:id.
-  function canManageMeeting(m) {
-    return IS_ADMIN || Boolean(CURRENT_MEMBER && m.person_id === CURRENT_MEMBER.id);
+  // Only the person an assignment is made to, or an admin, can edit/delete
+  // it — mirrors the same rule the backend enforces on PATCH/DELETE.
+  function canManageAssignment(a) {
+    return IS_ADMIN || Boolean(CURRENT_MEMBER && a.assigned_to === CURRENT_MEMBER.id);
   }
 
-  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var TOPIC_OPTIONS = ['EMStride', 'HRIS', 'CMS', 'AI', 'Others'];
 
   /* ══════════════════════════════════════════════════════════════════
-     STATE
+     GEO DATA — same country / state lists as Meeting Board, so the
+     two pages stay consistent.
      ══════════════════════════════════════════════════════════════════ */
-  const BP = { mobile: 767, tablet: 1023 };
-
-  function currentBucket() {
-    const w = window.innerWidth;
-    if (w <= BP.mobile) return 'mobile';
-    if (w <= BP.tablet) return 'tablet';
-    return 'desktop';
-  }
-
-  let state = {
-    view: 'table',
-    bucket: currentBucket(),
-    search: '',
-    selectedMonth: { month: todayObj.getMonth(), year: todayObj.getFullYear() },
-    activeFilters: new Set(),   // empty == everyone shown (see toggleFilter)
-    calendarWeekStart: getWeekStart(todayObj),
-    calendarZoneIdx: 4,
-    activeModal: null,
-    importPreview: null,
-    importBusy: false,
-    popovers: { pocId: null, momId: null, actionsId: null, monthSelectorOpen: false },
-    dismissedConflictKey: '',
-  };
-
-  const isMobile = () => state.bucket === 'mobile';
-
-  /* ══════════════════════════════════════════════════════════════════
-     ACTIONS
-     ══════════════════════════════════════════════════════════════════ */
-  function setView(v) { state.view = v; render(); }
-
-  function toggleFilter(memberId) {
-    const all = new Set(MEMBERS.map(m => m.id));
-    const cur = state.activeFilters.size === 0 ? all : new Set(state.activeFilters);
-    if (cur.has(memberId)) cur.delete(memberId); else cur.add(memberId);
-    state.activeFilters = (cur.size === all.size) ? new Set() : cur;
-    render();
-  }
-
-  function selectOnly(memberId) {
-    state.activeFilters = new Set([memberId]);
-    render();
-  }
-
-  function resetFilters() {
-    state.activeFilters = new Set();
-    state.search = '';
-    render();
-  }
-
-  function changeMonth(month, year) {
-    state.selectedMonth = { month, year };
-    state.popovers.monthSelectorOpen = false;
-    state.calendarWeekStart = getWeekStart(new Date(year, month, 1));
-    render();
-  }
-
-  function navMonth(delta) {
-    let m = state.selectedMonth.month + delta;
-    let y = state.selectedMonth.year;
-    if (m < 0) { m = 11; y--; }
-    if (m > 11) { m = 0; y++; }
-    changeMonth(m, y);
-  }
-
-  function onSearch(v) {
-    state.search = v;
-    renderBody();
-  }
-
-  function clearSearch() { state.search = ''; render(); }
-
-  function saveMeeting(fm) {
-    const isEdit = Boolean(fm.id);
-    const payload = { ...fm };
-    delete payload.id; // id travels in the URL for an edit, never in the body
-
-    const request = isEdit
-      ? apiFetch('/meetings/' + encodeURIComponent(fm.id), { method: 'PATCH', body: payload })
-      : apiFetch('/meetings', { method: 'POST', body: payload });
-
-    request.then(saved => {
-      meetingsData = isEdit
-        ? meetingsData.map(m => m.id === saved.id ? saved : m)
-        : meetingsData.concat([saved]);
-      state.activeModal = null;
-      render();
-    }).catch(err => alert(err.message || 'Could not save this meeting.'));
-  }
-
-  function deleteMeeting(id) {
-    const m = meetingsData.find(x => x.id === id);
-    if (!m) return;
-    if (!canManageMeeting(m)) { alert('Only the person this meeting is scheduled by, or an admin, can delete it.'); return; }
-    if (confirm(`Delete "${m.demo_topic}"?\n\nThis cannot be undone.`)) {
-      apiFetch('/meetings/' + encodeURIComponent(id), { method: 'DELETE' })
-        .then(() => { meetingsData = meetingsData.filter(x => x.id !== id); render(); })
-        .catch(err => alert(err.message || 'Could not delete this meeting.'));
-    }
-  }
-
-  function duplicateMeeting(id) {
-    const meeting = meetingsData.find(x => x.id === id);
-    if (!meeting) return;
-    if (!canManageMeeting(meeting)) { alert('Only the person this meeting is scheduled by, or an admin, can duplicate it.'); return; }
-    const payload = { ...meeting, demo_topic: meeting.demo_topic + ' (Copy)' };
-    delete payload.id;
-    apiFetch('/meetings', { method: 'POST', body: payload })
-      .then(saved => { meetingsData = meetingsData.concat([saved]); render(); })
-      .catch(err => alert(err.message || 'Could not duplicate this meeting.'));
-  }
-
-  function updateMeetingStatus(id, newStatus) {
-    apiFetch('/meetings/' + encodeURIComponent(id), { method: 'PATCH', body: { status: newStatus } })
-      .then(saved => { meetingsData = meetingsData.map(m => m.id === id ? saved : m); render(); })
-      .catch(err => alert(err.message || 'Could not update the status.'));
-  }
-
-  function updateMeetingField(id, field, value) {
-    apiFetch('/meetings/' + encodeURIComponent(id), { method: 'PATCH', body: { [field]: value } })
-      .then(saved => { meetingsData = meetingsData.map(m => m.id === id ? saved : m); render(); })
-      .catch(err => alert(err.message || 'Could not update this meeting.'));
-  }
-
-  function toggleDetailPop(type, id) {
-    const same = state.popovers[type] === id;
-    state.popovers.pocId = null;
-    state.popovers.momId = null;
-    state.popovers.actionsId = null;
-    if (!same) state.popovers[type] = id;
-    render();
-  }
-
-  function closeAllPopovers() {
-    state.popovers.pocId = null;
-    state.popovers.momId = null;
-    state.popovers.actionsId = null;
-    state.popovers.monthSelectorOpen = false;
-    render();
-  }
-
-  function dismissConflicts(key) { state.dismissedConflictKey = key; render(); }
-
-  function shiftWeek(days) {
-    const d = new Date(state.calendarWeekStart);
-    d.setDate(d.getDate() + days);
-    state.calendarWeekStart = d;
-    render();
-  }
-
-  function jumpToday() {
-    const n = new Date();
-    state.calendarWeekStart = getWeekStart(n);
-    state.selectedMonth = { month: n.getMonth(), year: n.getFullYear() };
-    render();
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     FILTERING
-     ══════════════════════════════════════════════════════════════════ */
-  /* ══════════════════════════════════════════════════════════════════
-     CSV IMPORT
-     ══════════════════════════════════════════════════════════════════ */
-
-  // Handles quoted fields, escaped "" quotes, CRLF and a UTF-8 BOM
-  function parseCSV(text) {
-    text = text.replace(/^﻿/, '');
-    const rows = [];
-    let row = [], field = '', inQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (inQuotes) {
-        if (c === '"') {
-          if (text[i + 1] === '"') { field += '"'; i++; }
-          else inQuotes = false;
-        } else field += c;
-      } else if (c === '"') {
-        inQuotes = true;
-      } else if (c === ',') {
-        row.push(field); field = '';
-      } else if (c === '\n') {
-        row.push(field); rows.push(row); row = []; field = '';
-      } else if (c !== '\r') {
-        field += c;
-      }
-    }
-    if (field !== '' || row.length) { row.push(field); rows.push(row); }
-    return rows.filter(r => r.some(c => c.trim() !== ''));
-  }
-
-  const norm = h => h.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-  // Accepts the headers Export writes, plus common variations
-  const IMPORT_FIELDS = {
-    demotopic: 'demo_topic', topic: 'demo_topic', demo: 'demo_topic',
-    person: '_person', assignee: '_person', owner: '_person',
-    date: 'date',
-    timeoriginal: 'time', time: 'time', starttime: 'time',
-    originalzone: '_zone', zone: '_zone', timezone: '_zone', tz: '_zone',
-    durationmin: 'duration', duration: 'duration', durationminutes: 'duration',
-    status: 'status',
-    pocname: 'poc_name', poc: 'poc_name', pocdetails: 'poc_name', contact: 'poc_name',
-    pocstate: 'poc_state', pocstatename: 'poc_state_name',
-    pocemail: 'poc_email', pocphone: 'poc_phone',
-    pocpopulationcount: 'poc_population_count', population: 'poc_population_count',
-    poccountyname: 'poc_county_name', county: 'poc_county_name',
-    mom: 'mom', minutesofmeeting: 'mom',
-    meetingtakenby: '_takenby', takenby: '_takenby',
-    meetingoutcome: 'meeting_outcome', outcome: 'meeting_outcome',
-    postdemoactions: 'post_demo_actions', nextsteps: 'post_demo_actions', followup: 'post_demo_actions',
-  };
-
-  const STATUSES = ['Demo Scheduled', 'Demo Completed', 'Demo Canceled'];
-  const OUTCOMES = ['Positive', 'Neutral', 'Negative'];
-
-  const TOPIC_OPTIONS = ['EMStride', 'HRIS', 'CMS', 'AI', 'Others'];
-
   const COUNTRIES = [
     'Afghanistan',
     'Aland Islands',
@@ -2502,1446 +1195,296 @@
   };
   function statesForCountry(country) { return STATES_BY_COUNTRY[country] || []; }
 
-  function normaliseDate(v) {
-    v = (v || '').trim();
-    if (!v) return '';
-    let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
-    // D/M/YYYY or M/D/YYYY — assume the US order Export/Excel produce
-    m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
-    if (m) return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
-    const d = new Date(v);
-    return isNaN(d) ? '' : toDateStr(d);
-  }
+  /* ══════════════════════════════════════════════════════════════════
+     DATA — assigned work items, loaded from the backend in bootstrap()
+     ══════════════════════════════════════════════════════════════════ */
+  var assignments = [];
 
-  function normaliseTime(v) {
-    v = (v || '').trim();
-    if (!v) return '';
-    let m = v.match(/^(\d{1,2}):(\d{2})\s*([ap]\.?m\.?)?$/i);
-    if (!m) return '';
-    let h = parseInt(m[1], 10);
-    const min = parseInt(m[2], 10);
-    if (m[3]) {
-      const pm = /^p/i.test(m[3]);
-      if (h === 12) h = pm ? 12 : 0; else if (pm) h += 12;
-    }
-    if (h > 23 || min > 59) return '';
-    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-  }
+  var state = {
+    activeFilter: null,   // member id, or null = everyone
+    activeModal: null,    // null | 'assign'
+    editingId: null
+  };
 
-  function buildImportPreview(text) {
-    const rows = parseCSV(text);
-    if (rows.length < 2) return { error: 'That file has no data rows.' };
-
-    const headers = rows[0].map(norm);
-    const cols = {};
-    headers.forEach((h, i) => { if (IMPORT_FIELDS[h] && cols[IMPORT_FIELDS[h]] === undefined) cols[IMPORT_FIELDS[h]] = i; });
-
-    if (cols.demo_topic === undefined) {
-      return { error: 'No "Demo Topic" column found. Export a CSV first to see the expected format.' };
-    }
-
-    const get = (row, key) => cols[key] === undefined ? '' : (row[cols[key]] || '').trim();
-    const meetings = [], skipped = [], notes = new Set();
-
-    rows.slice(1).forEach((row, idx) => {
-      const line = idx + 2;
-      const topic = get(row, 'demo_topic');
-      if (!topic) { skipped.push(`Row ${line}: no demo topic`); return; }
-
-      const date = normaliseDate(get(row, 'date'));
-      if (!date) { skipped.push(`Row ${line}: unreadable date "${get(row, 'date')}"`); return; }
-
-      const time = normaliseTime(get(row, 'time')) || '10:00';
-      if (!normaliseTime(get(row, 'time'))) notes.add('Some rows had no valid time — defaulted to 10:00.');
-
-      const personName = get(row, '_person');
-      let member = MEMBERS.find(x => x.name.toLowerCase() === personName.toLowerCase());
-      if (!member && personName) {
-        member = MEMBERS.find(x => x.name.toLowerCase().startsWith(personName.toLowerCase().split(' ')[0]));
-      }
-      if (!member && MEMBERS.length) { member = MEMBERS[0]; if (personName) notes.add(`Unknown people assigned to ${MEMBERS[0].name}.`); }
-      if (!member) { skipped.push(`Row ${line}: no team members exist yet — add one first.`); return; }
-
-      const zoneLabel = get(row, '_zone').toUpperCase();
-      let zoneIdx = ZONES.findIndex(z => z.label === zoneLabel || z.iana.toLowerCase() === zoneLabel.toLowerCase());
-      if (zoneIdx === -1) { zoneIdx = 0; if (zoneLabel) notes.add(`Unrecognised time zones treated as ${ZONES[0].label}.`); }
-
-      const dur = parseInt(get(row, 'duration'), 10);
-      const rawStatus = get(row, 'status');
-      const status = STATUSES.find(s => s.toLowerCase() === rawStatus.toLowerCase())
-        || STATUSES.find(s => s.toLowerCase().endsWith(rawStatus.toLowerCase()) && rawStatus)
-        || 'Demo Scheduled';
-
-      const outcome = OUTCOMES.find(o => o.toLowerCase() === get(row, 'meeting_outcome').toLowerCase()) || '';
-      const takenRaw = get(row, '_takenby');
-      let takenBy = '';
-      if (takenRaw) {
-        const names = takenRaw.replace(/^\[|\]$/g, '').split(/[;,]/)
-          .map(n => n.trim().replace(/^"|"$/g, '')).filter(Boolean);
-        if (names.length) takenBy = JSON.stringify(names);
-      }
-
-      meetings.push({
-        demo_topic: topic,
-        person_id: member.id,
-        date, time,
-        zone_index: zoneIdx,
-        duration: Number.isFinite(dur) && dur > 0 ? dur : 30,
-        status,
-        poc_name: get(row, 'poc_name'),
-        poc_state: get(row, 'poc_state'),
-        poc_email: get(row, 'poc_email'),
-        poc_phone: get(row, 'poc_phone'),
-        poc_state_name: get(row, 'poc_state_name'),
-        poc_population_count: get(row, 'poc_population_count'),
-        poc_county_name: get(row, 'poc_county_name'),
-        mom: get(row, 'mom'),
-        meeting_taken_by: takenBy,
-        meeting_outcome: outcome,
-        post_demo_actions: get(row, 'post_demo_actions'),
-      });
-    });
-
-    if (!meetings.length) return { error: 'No usable rows found.' + (skipped.length ? ' ' + skipped[0] : '') };
-    return { meetings, skipped, notes: [...notes] };
-  }
-
-  function triggerImport() {
-    const input = document.getElementById('importFile');
-    if (input) { input.value = ''; input.click(); }
-  }
-
-  function handleImportFile(input) {
-    const file = input.files && input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = buildImportPreview(String(reader.result || ''));
-      if (result.error) { alert('Import failed\n\n' + result.error); return; }
-      state.importPreview = { ...result, fileName: file.name };
-      render();
-    };
-    reader.onerror = () => alert('Could not read that file.');
-    reader.readAsText(file);
-  }
-
-  async function applyImport(mode) {
-    const p = state.importPreview;
-    if (!p) return;
-    state.importPreview = null;
-    state.importBusy = true;
+  /* ══════════════════════════════════════════════════════════════════
+     ACTIONS
+     ══════════════════════════════════════════════════════════════════ */
+  function toggleFilter(memberId) {
+    state.activeFilter = state.activeFilter === memberId ? null : memberId;
     render();
+  }
+  function resetFilter() { state.activeFilter = null; render(); }
 
-    try {
-      if (mode === 'replace') {
-        // Best-effort — a row failing to delete (e.g. someone else's,
-        // for a non-admin) shouldn't block the rest.
-        await Promise.all(meetingsData.map(m =>
-          apiFetch('/meetings/' + encodeURIComponent(m.id), { method: 'DELETE' }).catch(() => {})
-        ));
-        meetingsData = [];
+  function openAssignModal(id) {
+    if (id) {
+      var existing = assignments.find(function (a) { return a.id === id; });
+      if (!existing || !canManageAssignment(existing)) {
+        alert('Only the assignee or an admin can edit this assignment.');
+        return;
       }
-
-      const created = [];
-      for (const m of p.meetings) {
-        const payload = { ...m };
-        delete payload.id;
-        created.push(await apiFetch('/meetings', { method: 'POST', body: payload }));
-      }
-      meetingsData = meetingsData.concat(created);
-
-      // jump to the month of the first imported meeting so the rows are visible
-      const first = created.slice().sort((a, b) => a.date.localeCompare(b.date))[0];
-      if (first) {
-        const [y, mo, d] = first.date.split('-').map(Number);
-        state.selectedMonth = { month: mo - 1, year: y };
-        state.calendarWeekStart = getWeekStart(new Date(y, mo - 1, d));
-      }
-    } catch (err) {
-      alert('Import stopped partway through: ' + (err.message || 'Unknown error') + '\n\nRows already saved will still be on the board.');
     }
-
-    state.importBusy = false;
+    state.activeModal = 'assign';
+    state.editingId = id || null;
+    render();
+  }
+  function closeModal() {
+    state.activeModal = null;
+    state.editingId = null;
     render();
   }
 
-  function renderImportModal() {
-    const p = state.importPreview;
-    return `
-      <div class="overlay" onclick="if(event.target === this){ state.importPreview = null; render(); }">
-        <div class="modal" style="max-width:460px" role="dialog" aria-modal="true" aria-label="Import meetings">
-          <div class="modal-head">
-            <div>
-              <h3>Import meetings</h3>
-              <p>${esc(p.fileName)}</p>
-            </div>
-            <button class="pop-close" onclick="state.importPreview = null; render();" aria-label="Close">&times;</button>
-          </div>
-          <div class="modal-body">
-            <div class="stat" style="box-shadow:none">
-              <div class="stat-icon t-success">${ico.check}</div>
-              <div class="stat-body">
-                <div class="stat-val">${p.meetings.length}</div>
-                <div class="stat-label">meeting${p.meetings.length !== 1 ? 's' : ''} ready to import</div>
-              </div>
-            </div>
-
-            ${p.skipped.length ? `
-              <div class="banner" style="animation:none">
-                ${ico.warn}
-                <div class="banner-body">
-                  <div class="banner-title">${p.skipped.length} row${p.skipped.length !== 1 ? 's' : ''} skipped</div>
-                  <ul class="banner-list">
-                    ${p.skipped.slice(0, 4).map(s => `<li>${esc(s)}</li>`).join('')}
-                    ${p.skipped.length > 4 ? `<li class="date">…and ${p.skipped.length - 4} more</li>` : ''}
-                  </ul>
-                </div>
-              </div>` : ''}
-
-            ${p.notes.length ? `
-              <ul style="font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:5px;padding-left:16px;">
-                ${p.notes.map(n => `<li>${esc(n)}</li>`).join('')}
-              </ul>` : ''}
-
-            <p style="font-size:12.5px;color:var(--muted)">
-              ${meetingsData.length
-                ? `The board currently holds ${meetingsData.length} meeting${meetingsData.length !== 1 ? 's' : ''}.`
-                : 'The board is currently empty.'}
-            </p>
-          </div>
-          <div class="modal-foot">
-            <button class="btn" onclick="state.importPreview = null; render();">Cancel</button>
-            ${meetingsData.length ? `<button class="btn btn-danger-text" onclick="applyImport('replace')">Replace all</button>` : ''}
-            <button class="btn btn-primary" onclick="applyImport('append')">
-              ${meetingsData.length ? 'Add to existing' : 'Import'}
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
+  function onAssignCountryChange() {
+    var country = document.getElementById('a_country').value;
+    var stateSel = document.getElementById('a_state');
+    var options = statesForCountry(country);
+    stateSel.innerHTML = '<option value="">' + (options.length ? 'Select a state' : 'No states listed') + '</option>' +
+      options.map(function (pair) { return '<option value="' + esc(pair[0]) + '">' + esc(pair[0]) + '</option>'; }).join('');
+    stateSel.disabled = options.length === 0;
   }
 
-  function renderImportBusy() {
-    return `
-      <div class="overlay">
-        <div class="modal" style="max-width:320px; text-align:center; padding:28px 20px;">
-          <div style="font-size:13.5px; font-weight:650;">Importing meetings…</div>
-          <div style="font-size:12px; color:var(--muted); margin-top:6px;">Saving each row to the board — please wait.</div>
-        </div>
-      </div>
-    `;
-  }
+  function saveAssignment(e) {
+    e.preventDefault();
+    var assignedTo = document.getElementById('a_assignedTo').value;
+    var topic = document.getElementById('a_topic').value;
+    var subTopic = document.getElementById('a_subTopic').value.trim();
+    var country = document.getElementById('a_country').value;
+    var stateName = document.getElementById('a_state').value;
 
-  function getFilteredMeetings() {
-    const eff = state.activeFilters.size > 0 ? state.activeFilters : new Set(MEMBERS.map(m => m.id));
-    const q = state.search.trim().toLowerCase();
-
-    // Table view scopes to the selected month; calendar view scopes to the
-    // days on screen, so a week straddling two months still shows everything.
-    let inScope;
-    if (state.view === 'calendar') {
-      const zone = ZONES[state.calendarZoneIdx];
-      const shown = new Set(visibleDays().map(toDateStr));
-      inScope = m => shown.has(meetingLocalDay(m, zone).dayStr);
-    } else {
-      inScope = m => {
-        const [year, month] = m.date.split('-').map(Number);
-        return year === state.selectedMonth.year && (month - 1) === state.selectedMonth.month;
-      };
-    }
-
-    return meetingsData.filter(m => {
-      if (!eff.has(m.person_id)) return false;
-      if (!m.date) return false;
-      if (!inScope(m)) return false;
-
-      if (q) {
-        const member = MEMBERS.find(x => x.id === m.person_id) || {};
-        const hay = [m.demo_topic, m.poc_name, m.poc_state, m.poc_state_name, m.poc_email,
-                     m.status, m.meeting_outcome, member.name].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-  }
-
-  function exportToCSV() {
-    const filtered = getFilteredMeetings();
-    if (filtered.length === 0) { alert('No data to export for the current filters.'); return; }
-
-    const headers = ['Demo Topic','Person','Date','Time (Original)','Original Zone','Duration (Min)','Status',
-      'EST','CST','MST','PST','IST','POC Name','POC State','POC Email','POC Phone','MOM','Meeting Taken By','Meeting Outcome','Post-Demo Actions'];
-
-    const rows = filtered.map(m => {
-      const member = MEMBERS.find(mem => mem.id === m.person_id) || {};
-      const zone = ZONES[m.zone_index] || ZONES[0];
-      const startUTC = toUTC(m.date, m.time, zone.iana);
-      let takenBy = '';
-      try { takenBy = m.meeting_taken_by ? JSON.parse(m.meeting_taken_by).join('; ') : ''; }
-      catch (e) { takenBy = m.meeting_taken_by || ''; }
-      const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-      return [
-        q(m.demo_topic), q(member.name), q(m.date), q(m.time), q(zone.label), q(m.duration), q(m.status),
-        q(fromUTC(startUTC, ZONES[0].iana)), q(fromUTC(startUTC, ZONES[1].iana)), q(fromUTC(startUTC, ZONES[2].iana)),
-        q(fromUTC(startUTC, ZONES[3].iana)), q(fromUTC(startUTC, ZONES[4].iana)),
-        q(m.poc_name), q(m.poc_state), q(m.poc_email), q(m.poc_phone),
-        q(m.mom), q(takenBy), q(m.meeting_outcome), q(m.post_demo_actions)
-      ];
-    });
-
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `infostride_meetings_${state.selectedMonth.year}-${String(state.selectedMonth.month + 1).padStart(2, '0')}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     RENDER — SHELL
-     ══════════════════════════════════════════════════════════════════ */
-  function render() {
-    const app = document.getElementById('app');
-    document.body.classList.toggle('cal-mode', state.view === 'calendar');
-    app.innerHTML = renderHeader() + `<main id="mainArea">${renderMain()}</main>` +
-      (state.activeModal ? renderModal() : '') +
-      (state.importPreview ? renderImportModal() : '') +
-      (state.importBusy ? renderImportBusy() : '');
-    syncScrollHint();
-    fitCalendar();
-    fitTableScroll();
-  }
-
-  // Show the sideways-scroll affordance only when the table actually overflows
-  function syncScrollHint() {
-    const card = document.getElementById('tableCard');
-    const scroller = document.getElementById('tableScroll');
-    if (!card || !scroller) return;
-
-    const update = () => {
-      const overflow = scroller.scrollWidth - scroller.clientWidth;
-      card.classList.toggle('can-scroll-x', overflow > 2);
-      card.classList.toggle('show-hint', overflow > 80);
-      card.classList.toggle('at-end', overflow > 2 &&
-        scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 4);
-    };
-
-    update();
-    scroller.addEventListener('scroll', update, { passive: true });
-  }
-
-  // Lighter re-render for keystroke-level updates (keeps input focus)
-  function renderBody() {
-    const main = document.getElementById('mainArea');
-    if (!main) return render();
-    const input = document.getElementById('searchInput');
-    const caret = input ? input.selectionStart : null;
-    main.innerHTML = renderMain();
-    const next = document.getElementById('searchInput');
-    if (next && input) {
-      next.focus();
-      try { next.setSelectionRange(caret, caret); } catch (e) {}
-    }
-    syncScrollHint();
-    fitTableScroll();
-  }
-
-  function renderHeader() {
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    return `
-      <header class="app-header">
-        <div class="header-fx" aria-hidden="true">
-          <span class="fx-aurora"></span>
-          <span class="fx-grid"></span>
-          <span class="fx-beam"></span>
-          <span class="fx-line"></span>
-        </div>
-        <div class="header-inner">
-          <a class="btn btn-icon" href="Master.html" title="Home" aria-label="Go to Home">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
-          </a>
-
-          <div class="brand">
-            <img class="brand-logo on-light" src="assets/logo-light.png" alt="InfoStride" width="2560" height="349" />
-            <img class="brand-logo on-dark" src="assets/logo-dark-cropped.png" alt="InfoStride" width="853" height="120" />
-          </div>
-
-          <div class="header-spacer"></div>
-
-          <div class="segmented" role="tablist" aria-label="View">
-            <button class="seg" role="tab" aria-selected="${state.view === 'table'}" onclick="setView('table')">
-              ${ico.table} Table
-            </button>
-            <button class="seg" role="tab" aria-selected="${state.view === 'calendar'}" onclick="setView('calendar')">
-              ${ico.calendar} Calendar
-            </button>
-          </div>
-
-          <div class="header-actions">
-
-
-            <input type="file" id="importFile" accept=".csv,text/csv" hidden
-              onchange="handleImportFile(this)" />
-            <button class="btn" onclick="triggerImport()" title="Import meetings from a CSV file">
-              ${ico.upload}<span class="btn-label-sm">Import</span>
-            </button>
-
-            <button class="btn" onclick="exportToCSV()" title="Export current view to CSV">
-              ${ico.download}<span class="btn-label-sm">Export</span>
-            </button>
-
-            <button class="btn btn-primary" onclick="openMeetingModal()" title="Schedule a new meeting">
-              ${ico.plus}<span class="btn-label-sm">New</span>
-            </button>
-          </div>
-        </div>
-      </header>
-    `;
-  }
-
-  function renderMain() {
-    const meetings = getFilteredMeetings();
-
-    const pairs = [];
-    for (let i = 0; i < meetings.length; i++) {
-      for (let j = i + 1; j < meetings.length; j++) {
-        if (doMeetingsOverlap(meetings[i], meetings[j])) pairs.push([meetings[i], meetings[j]]);
-      }
-    }
-    const conflictKey = pairs.map(([a, b]) => `${a.id}:${b.id}`).sort().join(',');
-    const showBanner = pairs.length > 0 && state.dismissedConflictKey !== conflictKey;
-
-    return [
-      renderPageHead(),
-      renderStats(meetings, pairs.length),
-      showBanner ? renderBanner(pairs, conflictKey) : '',
-      renderToolbar(),
-      state.view === 'table' ? renderTableSection(meetings) : renderCalendar(meetings),
-    ].join('');
-  }
-
-  function renderPageHead() {
-    const { month, year } = state.selectedMonth;
-    return `
-      <div class="page-head">
-        <div>
-          <h1 class="page-title">${MONTH_NAMES[month]} ${year}</h1>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderStats(meetings, conflictCount) {
-    const scheduled = meetings.filter(m => m.status === 'Demo Scheduled').length;
-    const completed = meetings.filter(m => m.status === 'Demo Completed').length;
-    const positive  = meetings.filter(m => m.meeting_outcome === 'Positive').length;
-
-    const tile = (icon, tone, val, label) => `
-      <div class="stat">
-        <div class="stat-icon ${tone}">${icon}</div>
-        <div class="stat-body">
-          <div class="stat-val">${val}</div>
-          <div class="stat-label" title="${label}">${label}</div>
-        </div>
-      </div>`;
-
-    return `
-      <div class="stats">
-        ${tile(ico.cal2, 't-accent', meetings.length, 'Meetings')}
-        ${tile(ico.clock, 't-warn', scheduled, 'Upcoming')}
-        ${tile(ico.check, 't-success', completed, 'Completed')}
-        ${tile(conflictCount ? ico.warn : ico.users, conflictCount ? 't-danger' : 't-success',
-               conflictCount || positive, conflictCount ? 'Conflicts' : 'Positive outcomes')}
-      </div>
-    `;
-  }
-
-  function renderBanner(pairs, key) {
-    return `
-      <div class="banner" role="alert">
-        ${ico.warn}
-        <div class="banner-body">
-          <div class="banner-title">${pairs.length} scheduling conflict${pairs.length !== 1 ? 's' : ''} detected</div>
-          <ul class="banner-list">
-            ${pairs.map(([a, b]) => {
-              const ma = MEMBERS.find(m => m.id === a.person_id) || {};
-              const mb = MEMBERS.find(m => m.id === b.person_id) || {};
-              return `<li>
-                <b style="color:${ma.color || 'inherit'}">${esc(ma.name || 'Unknown')}</b> · ${esc(a.demo_topic)}
-                &nbsp;⇄&nbsp;
-                <b style="color:${mb.color || 'inherit'}">${esc(mb.name || 'Unknown')}</b> · ${esc(b.demo_topic)}
-                <span class="date">— ${formatDate(a.date)}</span>
-              </li>`;
-            }).join('')}
-          </ul>
-        </div>
-        <button class="icon-btn" onclick="dismissConflicts('${key}')" aria-label="Dismiss conflict warning">&times;</button>
-      </div>
-    `;
-  }
-
-  function renderToolbar() {
-    const { month, year } = state.selectedMonth;
-    const counts = {};
-    meetingsData.forEach(m => {
-      if (!m.date) return;
-      const [y, mo] = m.date.split('-').map(Number);
-      if (y === year && mo - 1 === month) counts[m.person_id] = (counts[m.person_id] || 0) + 1;
-    });
-    const allOn = state.activeFilters.size === 0;
-
-    return `
-      <div class="toolbar">
-        <div class="toolbar-row">
-          <div class="search-wrap">
-            ${ico.search}
-            <input id="searchInput" class="search-input" type="search" placeholder="Search topic, POC, person…"
-              value="${esc(state.search)}" oninput="onSearch(this.value)" autocomplete="off" />
-            ${state.search ? `<button class="search-clear" onclick="clearSearch()" aria-label="Clear search">&times;</button>` : ''}
-          </div>
-
-          ${state.view === 'calendar' ? renderCalNav() : `
-          <div class="month-wrap">
-            <div class="month-bar">
-              <button class="month-nav" onclick="navMonth(-1)" aria-label="Previous month">${ico.chevL}</button>
-              <button class="month-trigger" onclick="state.popovers.monthSelectorOpen = !state.popovers.monthSelectorOpen; render();"
-                aria-expanded="${state.popovers.monthSelectorOpen}">
-                ${ico.cal2}<span>${MONTH_SHORT[month]} ${year}</span>
-              </button>
-              <button class="month-nav" onclick="navMonth(1)" aria-label="Next month">${ico.chevR}</button>
-            </div>
-            ${state.popovers.monthSelectorOpen ? `
-              <div class="month-dropdown">
-                <div class="year-head">
-                  <button class="month-nav" onclick="state.selectedMonth.year--; render();" aria-label="Previous year">${ico.chevL}</button>
-                  <span class="mono">${year}</span>
-                  <button class="month-nav" onclick="state.selectedMonth.year++; render();" aria-label="Next year">${ico.chevR}</button>
-                </div>
-                <div class="month-grid">
-                  ${MONTH_SHORT.map((mn, i) => `
-                    <button class="month-grid-btn" aria-current="${month === i}" onclick="changeMonth(${i}, ${year})">${mn}</button>
-                  `).join('')}
-                </div>
-                <button class="btn" style="width:100%" onclick="jumpToday()">Jump to today</button>
-              </div>
-            ` : ''}
-          </div>`}
-        </div>
-
-        <div class="toolbar-divider"></div>
-
-        <div class="toolbar-row">
-          <span class="filter-label">Team</span>
-          <div class="chip-scroller">
-            ${MEMBERS.map(m => {
-              const on = allOn || state.activeFilters.has(m.id);
-              return `
-                <button class="chip" aria-pressed="${on}" onclick="toggleFilter('${m.id}')"
-                  ondblclick="selectOnly('${m.id}')" title="${esc(m.email)} — double-click to isolate">
-                  <span class="chip-avatar" style="background:${m.color}">${initials(m.name)}</span>
-                  <span>${esc(m.name)}</span>
-                  <span class="chip-count">${counts[m.id] || 0}</span>
-                </button>`;
-            }).join('')}
-          </div>
-          ${(!allOn || state.search) ? `<button class="link-btn" onclick="resetFilters()">Reset</button>` : ''}
-        </div>
-      </div>
-    `;
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     RENDER — TABLE / CARDS
-     ══════════════════════════════════════════════════════════════════ */
-  function renderEmpty() {
-    const filtering = state.search || state.activeFilters.size > 0;
-    return `
-      <div class="card">
-        <div class="empty">
-          <div class="empty-art">${ico.inbox}</div>
-          <h4>${filtering ? 'No matching meetings' : 'Nothing scheduled yet'}</h4>
-          <p>${filtering
-            ? 'Try a different search term, month, or clear the team filter.'
-            : `No demos are booked for ${MONTH_NAMES[state.selectedMonth.month]} ${state.selectedMonth.year}.`}</p>
-          ${filtering
-            ? `<button class="btn" onclick="resetFilters()">Clear filters</button>`
-            : `<button class="btn btn-primary" onclick="openMeetingModal()">${ico.plus} Schedule a meeting</button>`}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderTableSection(meetings) {
-    if (meetings.length === 0) return renderEmpty();
-    return isMobile() ? renderCards(meetings) : renderTable(meetings);
-  }
-
-  function statusClass(s) {
-    return s === 'Demo Completed' ? 's-completed' : s === 'Demo Canceled' ? 's-canceled' : 's-scheduled';
-  }
-  function outcomeClass(o) {
-    return o === 'Positive' ? 'o-positive' : o === 'Negative' ? 'o-negative' : o === 'Neutral' ? 'o-neutral' : 'o-empty';
-  }
-
-  function statusSelect(m) {
-    return `<select class="pill-select ${statusClass(m.status)}" onchange="updateMeetingStatus('${m.id}', this.value)" aria-label="Status">
-      ${['Demo Scheduled','Demo Completed','Demo Canceled'].map(s =>
-        `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s.replace('Demo ','')}</option>`).join('')}
-    </select>`;
-  }
-
-  function takenBySelect(m) {
-    let takenByName = '';
-    try { takenByName = m.meeting_taken_by ? JSON.parse(m.meeting_taken_by)[0] || '' : ''; }
-    catch (e) { takenByName = m.meeting_taken_by || ''; }
-    const isKnown = TAKEN_BY_OPTIONS.includes(takenByName);
-    const isOther = Boolean(takenByName) && !isKnown;
-    const inputId = `tb_other_${m.id}`;
-
-    return `<span class="taken-by-wrap">
-      <select class="pill-select s-neutral sel-name" onchange="onTakenByChange('${m.id}', this.value)" aria-label="Meeting taken by">
-        <option value="">— Select —</option>
-        ${TAKEN_BY_OPTIONS.map(name => `<option value="${esc(name)}" ${!isOther && takenByName === name ? 'selected' : ''}>${esc(name)}</option>`).join('')}
-        <option value="Others" ${isOther ? 'selected' : ''}>Others</option>
-      </select>
-      <input type="text" class="taken-by-other" id="${inputId}"
-        style="${isOther ? '' : 'display:none'}"
-        value="${esc(isOther ? takenByName : '')}"
-        placeholder="Enter name"
-        onkeydown="if(event.key==='Enter') this.blur();"
-        onblur="commitTakenByOther('${m.id}', this.value)" />
-    </span>`;
-  }
-
-  function onTakenByChange(id, value) {
-    const input = document.getElementById('tb_other_' + id);
-    if (value === 'Others') {
-      if (input) { input.style.display = ''; input.focus(); }
+    if (!assignedTo || !topic || !country) {
+      alert('Work Assigned To, Topic, and Country are required.');
       return;
     }
-    if (input) input.style.display = 'none';
-    updateMeetingField(id, 'meeting_taken_by', value ? JSON.stringify([value]) : '');
-  }
 
-  function commitTakenByOther(id, value) {
-    const v = value.trim();
-    if (v) updateMeetingField(id, 'meeting_taken_by', JSON.stringify([v]));
-  }
+    var payload = { assigned_to: assignedTo, topic: topic, sub_topic: subTopic, country: country, state: stateName };
 
-  function outcomeSelect(m) {
-    return `<select class="pill-select sel-narrow ${outcomeClass(m.meeting_outcome)}" onchange="updateMeetingField('${m.id}','meeting_outcome', this.value)" aria-label="Outcome">
-      <option value="">— Outcome —</option>
-      ${['Positive','Neutral','Negative'].map(o => `<option value="${o}" ${m.meeting_outcome === o ? 'selected' : ''}>${o}</option>`).join('')}
-    </select>`;
-  }
-
-  function notePopover(m, kind) {
-    const isMom = kind === 'mom';
-    const field = isMom ? 'mom' : 'post_demo_actions';
-    const title = isMom ? 'Minutes of Meeting' : 'Post-Demo Actions';
-    const inputId = `note_${field}_${m.id}`;
-    const align = isMobile() ? '' : 'top:100%; right:0;';
-    return `
-      <div class="pop-backdrop" onclick="closeAllPopovers()"></div>
-      <div class="popover" style="${align}">
-        <div class="pop-head">
-          <strong>${title}</strong>
-          <button class="pop-close" onclick="closeAllPopovers()" aria-label="Close">&times;</button>
-        </div>
-        <textarea class="pop-textarea" id="${inputId}" placeholder="${isMom ? 'Key discussion points, decisions…' : 'Follow-ups, owners, deadlines…'}">${esc(m[field] || '')}</textarea>
-        <div style="display:flex; gap:8px; justify-content:flex-end;">
-          <button class="btn" onclick="closeAllPopovers()">Cancel</button>
-          <button class="btn btn-primary" onclick="updateMeetingField('${m.id}','${field}', document.getElementById('${inputId}').value)">Save</button>
-        </div>
-      </div>`;
-  }
-
-  function pocPopover(m) {
-    const align = isMobile() ? '' : 'top:100%; left:0;';
-    const row = (k, v) => `<div class="pop-row"><span class="k">${k}</span><span class="v">${esc(v || '—')}</span></div>`;
-    return `
-      <div class="pop-backdrop" onclick="closeAllPopovers()"></div>
-      <div class="popover" style="${align}">
-        <div class="pop-head">
-          <strong>Point of contact</strong>
-          <button class="pop-close" onclick="closeAllPopovers()" aria-label="Close">&times;</button>
-        </div>
-        ${row('Name', m.poc_name)}
-        ${row('Email', m.poc_email)}
-        ${row('Phone', m.poc_phone)}
-        ${row('Country', m.poc_country)}
-        ${row('State', m.poc_state_name || m.poc_state)}
-        ${row('Population', m.poc_population_count)}
-        ${row('County / Company', m.poc_county_name)}
-      </div>`;
-  }
-
-  function noteBtn(m, kind) {
-    const field = kind === 'mom' ? 'mom' : 'post_demo_actions';
-    const has = Boolean(m[field]);
-    const key = kind === 'mom' ? 'momId' : 'actionsId';
-    const cap = isMobile() ? 22 : 18;
-    const preview = has ? esc(m[field].slice(0, cap)) + (m[field].length > cap ? '…' : '') : 'Add';
-    return `<button class="note-btn ${has ? 'filled' : ''}" onclick="toggleDetailPop('${key}','${m.id}')"
-      title="${has ? esc(m[field]) : 'Add note'}">${ico.note}<span>${preview}</span></button>`;
-  }
-
-  function actionBtns(m) {
-    if (!canManageMeeting(m)) {
-      return `<span class="dash" title="Only the scheduler or an admin can manage this meeting">—</span>`;
-    }
-    return `<div class="actions-wrap">
-      <button class="icon-btn dup"  onclick="duplicateMeeting('${m.id}')" title="Duplicate" aria-label="Duplicate">${ico.copy}</button>
-      <button class="icon-btn edit" onclick="openMeetingModal('${m.id}')" title="Edit" aria-label="Edit">${ico.edit}</button>
-      <button class="icon-btn del"  onclick="deleteMeeting('${m.id}')" title="Delete" aria-label="Delete">${ico.trash}</button>
-    </div>`;
-  }
-
-  function renderTable(meetings) {
-    const conflictIds = getConflictingIds(meetings);
-
-    return `
-      <div class="table-card" id="tableCard">
-        <div class="table-scroll" id="tableScroll">
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th class="col-person">Person</th>
-                <th class="th-wrap">Demo Topic</th>
-                <th class="th-wrap">POC Details</th>
-                <th class="th-wrap">Date</th>
-                ${ZONES.map(z => `<th class="c th-group mono">${z.label}</th>`).join('')}
-                <th class="c th-wrap">Duration</th>
-                <th class="c th-wrap">Status</th>
-                <th class="c th-wrap">Minutes of Meeting</th>
-                <th class="c th-wrap">Meeting Taken By</th>
-                <th class="c th-wrap">Meeting Outcome</th>
-                <th class="c th-wrap">Post-Demo Actions</th>
-                <th class="c">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${meetings.map(m => {
-                const member = MEMBERS.find(x => x.id === m.person_id) || {};
-                const zone = ZONES[m.zone_index] || ZONES[0];
-                const startUTC = toUTC(m.date, m.time, zone.iana);
-                const conflict = conflictIds.has(m.id);
-                const done = m.status === 'Demo Completed';
-                const canFollowUp = done && (m.meeting_outcome === 'Positive' || m.meeting_outcome === 'Neutral');
-
-                return `
-                  <tr class="${conflict ? 'is-conflict' : ''}">
-                    <td class="col-person">
-                      <div class="person-cell">
-                        <span class="avatar" style="background:${member.color || 'var(--accent)'}">${initials(member.name)}</span>
-                        <span class="person-name">${esc(member.name || '—')}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="topic-cell">
-                        ${conflict ? `<span class="warn-dot" title="Scheduling conflict">${ico.warnSm}</span>` : ''}
-                        <span class="topic-text">${esc(m.demo_topic)}</span>
-                      </div>
-                    </td>
-                    <td class="pop-anchor">
-                      ${m.poc_name ? `
-                        <button class="poc-btn" onclick="toggleDetailPop('pocId','${m.id}')">${esc(m.poc_name)}${m.poc_state_name ? ` (${esc(m.poc_state_name)})` : ''}</button>
-                        ${state.popovers.pocId === m.id ? pocPopover(m) : ''}
-                      ` : `<span class="dash">—</span>`}
-                    </td>
-                    <td class="date-cell">${formatDate(m.date)}</td>
-                    ${ZONES.map((z, i) => `<td class="tz-cell mono ${i === m.zone_index ? 'is-home' : ''}"
-                      title="${i === m.zone_index ? 'Original timezone' : z.iana}">${fromUTC(startUTC, z.iana)}</td>`).join('')}
-                    <td class="c"><span class="dur-badge">${m.duration}m</span></td>
-                    <td class="c">${statusSelect(m)}</td>
-                    <td class="c pop-anchor">
-                      ${done ? `${noteBtn(m, 'mom')}${state.popovers.momId === m.id ? notePopover(m, 'mom') : ''}` : `<span class="dash">—</span>`}
-                    </td>
-                    <td class="c">${done ? takenBySelect(m) : `<span class="dash">—</span>`}</td>
-                    <td class="c">${done ? outcomeSelect(m) : `<span class="dash">—</span>`}</td>
-                    <td class="c pop-anchor">
-                      ${canFollowUp ? `${noteBtn(m, 'actions')}${state.popovers.actionsId === m.id ? notePopover(m, 'actions') : ''}` : `<span class="dash">—</span>`}
-                    </td>
-                    <td class="c">${actionBtns(m)}</td>
-                  </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="scroll-hint">
-          ${ico.chevR} Scroll sideways for time zones, notes and outcomes — the Person column stays pinned
-        </div>
-      </div>
-    `;
-  }
-
-  function renderCards(meetings) {
-    const conflictIds = getConflictingIds(meetings);
-
-    return `<div class="card-list">
-      ${meetings.map(m => {
-        const member = MEMBERS.find(x => x.id === m.person_id) || {};
-        const zone = ZONES[m.zone_index] || ZONES[0];
-        const startUTC = toUTC(m.date, m.time, zone.iana);
-        const conflict = conflictIds.has(m.id);
-        const done = m.status === 'Demo Completed';
-        const canFollowUp = done && (m.meeting_outcome === 'Positive' || m.meeting_outcome === 'Neutral');
-        let takenBy = '';
-        try { takenBy = m.meeting_taken_by ? JSON.parse(m.meeting_taken_by).join(', ') : ''; }
-        catch (e) { takenBy = m.meeting_taken_by || ''; }
-
-        return `
-          <article class="m-card ${conflict ? 'is-conflict' : ''}" style="--mc:${member.color || 'var(--accent)'}">
-            <div class="mc-top">
-              <div class="mc-top-body">
-                <h3 class="mc-topic">
-                  ${conflict ? `<span class="warn-dot" title="Conflict">${ico.warnSm}</span>` : ''}
-                  ${esc(m.demo_topic)}
-                </h3>
-                <span class="mc-person">
-                  <span class="mc-dot" style="background:${member.color || 'var(--accent)'}"></span>
-                  ${esc(member.name || '—')}
-                </span>
-              </div>
-              ${statusSelect(m)}
-            </div>
-
-            <div class="mc-meta">
-              <span class="mc-meta-item">${ico.cal2} ${formatDate(m.date)}</span>
-              <span class="mc-meta-item">${ico.clock} ${m.duration} min</span>
-              <span class="mc-meta-item">${ico.globe} ${zone.label} ${esc(m.time)}</span>
-            </div>
-
-            <div class="mc-zones">
-              ${ZONES.map((z, i) => `
-                <div class="mc-zone ${i === m.zone_index ? 'is-home' : ''}">
-                  <div class="mc-zone-label">${z.label}</div>
-                  <div class="mc-zone-time">${fromUTC(startUTC, z.iana)}</div>
-                </div>`).join('')}
-            </div>
-
-            ${m.poc_name ? `
-              <div class="mc-field pop-anchor">
-                <span class="mc-field-label">POC</span>
-                <span class="mc-field-val">
-                  <button class="poc-btn" onclick="toggleDetailPop('pocId','${m.id}')">${esc(m.poc_name)}${m.poc_state_name ? ` (${esc(m.poc_state_name)})` : ''}</button>
-                </span>
-                ${state.popovers.pocId === m.id ? pocPopover(m) : ''}
-              </div>` : ''}
-
-            ${done ? `
-              <div class="mc-field pop-anchor">
-                <span class="mc-field-label">Minutes</span>
-                <span class="mc-field-val">${noteBtn(m, 'mom')}</span>
-                ${state.popovers.momId === m.id ? notePopover(m, 'mom') : ''}
-              </div>
-              <div class="mc-field">
-                <span class="mc-field-label">Taken by</span>
-                <span class="mc-field-val">${takenBySelect(m)}</span>
-              </div>
-              <div class="mc-field">
-                <span class="mc-field-label">Outcome</span>
-                <span class="mc-field-val">${outcomeSelect(m)}</span>
-              </div>` : ''}
-
-            ${canFollowUp ? `
-              <div class="mc-field pop-anchor">
-                <span class="mc-field-label">Next steps</span>
-                <span class="mc-field-val">${noteBtn(m, 'actions')}</span>
-                ${state.popovers.actionsId === m.id ? notePopover(m, 'actions') : ''}
-              </div>` : ''}
-
-            <div class="mc-foot">
-              <span style="font-size:11px;color:var(--faint);font-weight:600;">
-                ${takenBy ? esc(takenBy) : (done ? 'Completed' : 'Awaiting demo')}
-              </span>
-              ${actionBtns(m)}
-            </div>
-          </article>`;
-      }).join('')}
-    </div>`;
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     RENDER — CALENDAR
-     ══════════════════════════════════════════════════════════════════ */
-  function calDayCount() {
-    const w = window.innerWidth;
-    if (w <= 520) return 2;
-    if (w <= BP.mobile) return 3;
-    if (w <= BP.tablet) return 5;
-    return 7;
-  }
-
-  // The days currently shown in the calendar
-  function visibleDays() {
-    const n = calDayCount();
-    return Array.from({ length: n }, (_, i) => {
-      const d = new Date(state.calendarWeekStart);
-      d.setDate(d.getDate() + i);
-      return d;
-    });
-  }
-
-  // Which day column a meeting falls in, in the chosen display zone
-  function meetingLocalDay(m, targetZone) {
-    const mz = ZONES[m.zone_index] || ZONES[0];
-    const p = fromUTCFull(toUTC(m.date, m.time, mz.iana), targetZone.iana);
-    return { dayStr: toDateStr(new Date(p.year, p.month - 1, p.day)), hour: p.hour, minute: p.minute };
-  }
-
-  /* Only span the hours actually in use (padded by one), so rows stay
-     tall enough to read instead of always rendering a fixed 06:00–23:00. */
-  const MIN_HOUR_SPAN = 9;
-  function calHourRange(meetings, targetZone, days) {
-    const dayStrs = new Set(days.map(toDateStr));
-    let lo = 24, hi = 0, found = false;
-
-    meetings.forEach(m => {
-      const p = meetingLocalDay(m, targetZone);
-      if (!dayStrs.has(p.dayStr)) return;
-      found = true;
-      const start = p.hour + p.minute / 60;
-      lo = Math.min(lo, Math.floor(start));
-      hi = Math.max(hi, Math.ceil(start + (Number(m.duration) || 30) / 60));
-    });
-
-    if (!found) { lo = 8; hi = 20; }
-    lo = Math.max(0, lo - 1);
-    hi = Math.min(24, hi + 1);
-
-    // widen symmetrically if the span is too narrow
-    if (hi - lo < MIN_HOUR_SPAN) {
-      const need = MIN_HOUR_SPAN - (hi - lo);
-      const up = Math.min(lo, Math.ceil(need / 2));
-      lo -= up;
-      hi = Math.min(24, hi + (need - up));
-      if (hi - lo < MIN_HOUR_SPAN) lo = Math.max(0, hi - MIN_HOUR_SPAN);
-    }
-    return { lo, hi };
-  }
-
-  function calWeekLabel(days) {
-    const fmtD = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return days.length === 1
-      ? days[0].toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-      : `${fmtD(days[0])} – ${fmtD(days[days.length - 1])}, ${days[days.length - 1].getFullYear()}`;
-  }
-
-  function renderCalNav() {
-    const days = visibleDays();
-    const n = days.length;
-    return `
-      <div style="display:inline-flex; gap:6px; flex-shrink:0;">
-        <button class="btn btn-icon" onclick="shiftWeek(-${n})" aria-label="Previous ${n} days">${ico.chevL}</button>
-        <button class="btn" onclick="jumpToday()">Today</button>
-        <button class="btn btn-icon" onclick="shiftWeek(${n})" aria-label="Next ${n} days">${ico.chevR}</button>
-      </div>
-      <span class="week-label">${calWeekLabel(days)}</span>
-      <select class="field-select" onchange="state.calendarZoneIdx = Number(this.value); render();" aria-label="Display timezone">
-        ${ZONES.map((z, i) => `<option value="${i}" ${state.calendarZoneIdx === i ? 'selected' : ''}>Show in ${z.label} — ${z.iana.split('/')[1].replace('_', ' ')}</option>`).join('')}
-      </select>
-    `;
-  }
-
-  function renderCalendar(meetings) {
-    const targetZone = ZONES[state.calendarZoneIdx];
-    const days = visibleDays();
-    const dayCount = days.length;
-
-    const { lo, hi } = calHourRange(meetings, targetZone, days);
-    const hours = hi - lo;
-    const totalMin = hours * 60;
-    const pct = min => (min / totalMin) * 100;   // minutes -> % of column height
-
-    const conflictIds = getConflictingIds(meetings);
-    const now = new Date();
-    const nowParts = fromUTCFull(now, targetZone.iana);
-    const nowMin = nowParts.hour * 60 + nowParts.minute;
-    const todayStr = toDateStr(now);
-
-    return `
-      <div class="cal-card">
-        <div class="cal-scroll" id="calScroll">
-          <div class="cal-grid" style="--days:${dayCount}">
-            <div class="cal-corner"></div>
-            ${days.map(d => {
-              const isToday = toDateStr(d) === todayStr;
-              return `<div class="cal-dayhead ${isToday ? 'today' : ''}">
-                <span class="dow">${d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                <span class="dom">${d.getDate()}</span>
-              </div>`;
-            }).join('')}
-
-            <div class="cal-gutter">
-              ${Array.from({ length: hours }, (_, h) =>
-                `<div class="gutter-hour mono">${String(lo + h).padStart(2, '0')}</div>`).join('')}
-            </div>
-
-            ${days.map(d => {
-              const dayStr = toDateStr(d);
-              const isToday = dayStr === todayStr;
-              const dayMtgs = meetings
-                .filter(m => meetingLocalDay(m, targetZone).dayStr === dayStr)
-                .map(m => {
-                  const p = meetingLocalDay(m, targetZone);
-                  const s = p.hour * 60 + p.minute;
-                  return { m, p, s, e: s + (Number(m.duration) || 30) };
-                })
-                .sort((a, b) => a.s - b.s || a.e - b.e);
-
-              /* Lay overlapping meetings out side by side instead of stacking
-                 them, so a clash is actually visible. */
-              const laneEnds = [];
-              dayMtgs.forEach(item => {
-                let lane = laneEnds.findIndex(end => end <= item.s);
-                if (lane === -1) { lane = laneEnds.length; laneEnds.push(item.e); }
-                else laneEnds[lane] = item.e;
-                item.lane = lane;
-              });
-              const laneCount = Math.max(1, laneEnds.length);
-
-              return `<div class="cal-col ${isToday ? 'is-today' : ''}">
-                ${Array.from({ length: hours }, (_, h) =>
-                  `<div class="hr-line" style="top:${pct(h * 60)}%"></div>`).join('')}
-
-                ${isToday && nowMin >= lo * 60 && nowMin <= hi * 60
-                  ? `<div class="now-line" style="top:${pct(nowMin - lo * 60)}%"></div>` : ''}
-
-                ${dayMtgs.map(({ m, p, s: startMin, e: endMin, lane }) => {
-                  const member = MEMBERS.find(x => x.id === m.person_id) || {};
-                  const dur = endMin - startMin;
-                  const clock = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
-                  const endClock = `${String(Math.floor(endMin / 60) % 24).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
-                  // Keep the start edge truthful, give short meetings a readable
-                  // floor, and never let a block spill past the last hour (a
-                  // 23:30 + 45m demo crosses midnight).
-                  const topPct = pct(startMin - lo * 60);
-                  const hPct = Math.min(Math.max(pct(dur), pct(10)), 100 - topPct);
-                  const wPct = 100 / laneCount;
-                  return `<button class="cal-event ${conflictIds.has(m.id) ? 'conflict' : ''}"
-                    style="top:${topPct}%; height:${hPct}%;
-                           left:calc(${lane * wPct}% + 2px); right:auto; width:calc(${wPct}% - 4px);
-                           background:${member.color || 'var(--accent)'}"
-                    onclick="openMeetingModal('${m.id}')"
-                    title="${esc(member.name)} · ${esc(m.demo_topic)} · ${clock}–${endClock} ${targetZone.label}${conflictIds.has(m.id) ? ' · CLASHES' : ''}">
-                    <span class="ev-title">${esc(m.demo_topic)}</span>
-                    <span class="ev-sub">${clock} · ${esc(member.name)}</span>
-                  </button>`;
-                }).join('')}
-              </div>`;
-            }).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  /* Size the calendar to the space left on screen so the page never scrolls */
-  function fitCalendar() {
-    const scroll = document.getElementById('calScroll');
-    if (!scroll) return;
-
-    const top = scroll.getBoundingClientRect().top;
-    const bottomGap = 16;
-    const avail = Math.max(200, window.innerHeight - top - bottomGap);
-    scroll.style.setProperty('--cal-h', avail + 'px');
-
-    // Blocks too short for two lines of text switch to a compact style
-    scroll.querySelectorAll('.cal-event').forEach(ev => {
-      ev.classList.toggle('compact', ev.offsetHeight < 34);
-    });
-  }
-
-  /* Size the table to the space left on screen so the page never scrolls —
-     only the table itself scrolls, left-right and top-bottom. */
-  function fitTableScroll() {
-    const scroll = document.getElementById('tableScroll');
-    if (!scroll) return;
-
-    const top = scroll.getBoundingClientRect().top;
-    const bottomGap = 16;
-    const avail = Math.max(160, window.innerHeight - top - bottomGap);
-    scroll.style.setProperty('--tbl-h', avail + 'px');
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     MODAL
-     ══════════════════════════════════════════════════════════════════ */
-  function openMeetingModal(meetingId = null) {
-    if (meetingId) {
-      const existing = meetingsData.find(m => m.id === meetingId);
-      if (!existing) return;
-      if (!canManageMeeting(existing)) { alert('Only the person this meeting is scheduled by, or an admin, can edit it.'); return; }
-      state.activeModal = { ...existing };
+    if (state.editingId) {
+      var beingEdited = assignments.find(function (a) { return a.id === state.editingId; });
+      if (!beingEdited || !canManageAssignment(beingEdited)) {
+        alert('Only the assignee or an admin can edit this assignment.');
+        return;
+      }
+      apiFetch('/assignments/' + encodeURIComponent(state.editingId), { method: 'PATCH', body: payload })
+        .then(function (saved) {
+          assignments = assignments.map(function (a) { return a.id === saved.id ? saved : a; });
+          closeModal();
+        })
+        .catch(function (err) { alert(err.message || 'Could not save this assignment.'); });
     } else {
-      const defaultPersonId = (!IS_ADMIN && CURRENT_MEMBER) ? CURRENT_MEMBER.id : (MEMBERS[0] ? MEMBERS[0].id : '');
-      state.activeModal = {
-        demo_topic: '', person_id: defaultPersonId,
-        date: toDateStr(new Date()), time: '10:00', zone_index: 0, duration: 30,
-        status: 'Demo Scheduled',
-        poc_name: '', poc_state: '', poc_email: '', poc_phone: '', poc_country: '',
-        poc_state_name: '', poc_population_count: '', poc_county_name: '',
-        mom: '', meeting_taken_by: '', meeting_outcome: '', post_demo_actions: ''
-      };
+      apiFetch('/assignments', { method: 'POST', body: payload })
+        .then(function (saved) {
+          assignments = assignments.concat([saved]);
+          closeModal();
+        })
+        .catch(function (err) { alert(err.message || 'Could not save this assignment.'); });
     }
-    render();
-    setTimeout(() => { const el = document.getElementById('m_topic_select'); if (el) el.focus(); }, 30);
   }
 
-  function closeModal() { state.activeModal = null; render(); }
+  function deleteAssignment(id) {
+    var a = assignments.find(function (x) { return x.id === id; });
+    if (!a) return;
+    if (!canManageAssignment(a)) {
+      alert('Only the assignee or an admin can delete this assignment.');
+      return;
+    }
+    var who = memberById(a.assigned_to);
+    if (confirm('Remove this assignment' + (who ? ' for ' + who.name : '') + '?\n\nThis cannot be undone.')) {
+      apiFetch('/assignments/' + encodeURIComponent(id), { method: 'DELETE' })
+        .then(function () {
+          assignments = assignments.filter(function (x) { return x.id !== id; });
+          render();
+        })
+        .catch(function (err) { alert(err.message || 'Could not delete this assignment.'); });
+    }
+  }
+
+  function escToClose(e) { if (e.key === 'Escape') closeModal(); }
+
+  /* ══════════════════════════════════════════════════════════════════
+     RENDER
+     ══════════════════════════════════════════════════════════════════ */
+  function getFilteredAssignments() {
+    return state.activeFilter
+      ? assignments.filter(function (a) { return a.assigned_to === state.activeFilter; })
+      : assignments;
+  }
+
+  function renderChips() {
+    if (!MEMBERS.length) {
+      return '<div class="toolbar-row"><span class="filter-label">Team</span>' +
+        '<span class="field-hint">No approved team members yet — approve sign-ups from the bell on the Home page.</span></div>';
+    }
+    var chips = MEMBERS.map(function (m) {
+      var count = assignments.filter(function (a) { return a.assigned_to === m.id; }).length;
+      var pressed = state.activeFilter === null || state.activeFilter === m.id;
+      return '<button class="chip" aria-pressed="' + pressed + '" onclick="toggleFilter(\'' + m.id + '\')">' +
+               '<span class="chip-avatar" style="background:' + avatarColor(m.id) + '">' + esc(initials(m.name)) + '</span>' +
+               esc(m.name) +
+               '<span class="chip-count">' + count + '</span>' +
+             '</button>';
+    }).join('');
+    return '<div class="toolbar-row">' +
+             '<span class="filter-label">Team</span>' +
+             '<div class="chip-scroller">' + chips + '</div>' +
+             (state.activeFilter ? '<button class="link-btn" onclick="resetFilter()">Show all</button>' : '') +
+           '</div>';
+  }
+
+  function actionBtns(a) {
+    if (!canManageAssignment(a)) {
+      return '<span class="dash" title="Only the assignee or an admin can manage this assignment">—</span>';
+    }
+    return '<span class="actions-wrap">' +
+      '<button class="icon-btn edit" title="Edit" onclick="openAssignModal(\'' + a.id + '\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+      '<button class="icon-btn del" title="Delete" onclick="deleteAssignment(\'' + a.id + '\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg></button>' +
+    '</span>';
+  }
+
+  function renderTable() {
+    var rows = getFilteredAssignments();
+    if (!rows.length) {
+      return '<div class="card empty">' +
+               '<div class="empty-art">' +
+                 '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.2"/><path d="M9 2.6h6a1 1 0 0 1 1 1V6H8V3.6a1 1 0 0 1 1-1Z"/><path d="M8.5 12.4l2 2 4-4"/><path d="M8.5 17h5"/></svg>' +
+               '</div>' +
+               '<h4>' + (state.activeFilter ? 'No work assigned to this person yet' : 'No work assigned yet') + '</h4>' +
+               '<p>Click “Assign Work” above to give a team member their first task.</p>' +
+             '</div>';
+    }
+
+    return '<div class="table-card"><div class="table-scroll"><table class="tbl">' +
+      '<thead><tr>' +
+        '<th>Assigned To</th><th>Topic</th><th>Sub Topic</th><th>Country</th><th>State</th><th class="c">Actions</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+        rows.map(function (a) {
+          var m = memberById(a.assigned_to);
+          return '<tr>' +
+            '<td><span class="person-cell">' +
+              '<span class="avatar" style="background:' + avatarColor(a.assigned_to) + '">' + esc(initials(m ? m.name : '?')) + '</span>' +
+              '<span class="person-name">' + esc(m ? m.name : 'Unknown') + '</span>' +
+            '</span></td>' +
+            '<td>' + esc(a.topic) + '</td>' +
+            '<td>' + (a.sub_topic ? esc(a.sub_topic) : '<span class="dash">—</span>') + '</td>' +
+            '<td>' + esc(a.country) + '</td>' +
+            '<td>' + (a.state ? esc(a.state) : '<span class="dash">—</span>') + '</td>' +
+            '<td class="c">' + actionBtns(a) + '</td>' +
+          '</tr>';
+        }).join('') +
+      '</tbody></table></div></div>';
+  }
 
   function renderModal() {
-    const m = state.activeModal;
-    const isEdit = Boolean(m.id);
-    const fixedTopics = TOPIC_OPTIONS.slice(0, -1); // everything except "Others"
-    const topicIsOther = Boolean(m.demo_topic) && !fixedTopics.includes(m.demo_topic);
+    if (state.activeModal !== 'assign') return '';
+    var editing = state.editingId ? assignments.find(function (a) { return a.id === state.editingId; }) : null;
+    var countryVal = editing ? editing.country : '';
+    var stateOptions = countryVal ? statesForCountry(countryVal) : [];
 
-    const countryIsOther = Boolean(m.poc_country) && !COUNTRIES.includes(m.poc_country);
-    const stateListForRender = countryIsOther ? [] : statesForCountry(m.poc_country);
-    const stateMatch = stateListForRender.find(([name]) => name === m.poc_state_name);
-    const stateIsOther = Boolean(m.poc_state_name) && !stateMatch;
-    const codeIsOther = Boolean(m.poc_state) && !(stateMatch && stateMatch[1] === m.poc_state);
-
-    return `
-      <div class="overlay" onclick="if(event.target === this) closeModal()">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="${isEdit ? 'Edit meeting' : 'New meeting'}">
-          <div class="modal-head">
-            <div>
-              <h3>${isEdit ? 'Edit meeting' : 'Schedule a meeting'}</h3>
-              <p>${isEdit ? 'Update the demo details below' : 'Times convert across all 5 zones automatically'}</p>
-            </div>
-            <button class="pop-close" onclick="closeModal()" aria-label="Close">&times;</button>
-          </div>
-
-          <div class="modal-body">
-            <div class="fieldset-label">Meeting</div>
-
-            <div class="fgroup">
-              <label for="m_topic_select">Demo topic <span class="req-star">*</span></label>
-              <select class="control" id="m_topic_select" onchange="onTopicChange()">
-                <option value="">Select a topic</option>
-                ${TOPIC_OPTIONS.map(t => `<option value="${t}" ${(t === 'Others' ? topicIsOther : m.demo_topic === t) ? 'selected' : ''}>${t}</option>`).join('')}
-              </select>
-            </div>
-            <div class="fgroup" id="m_topic_other_wrap" ${topicIsOther ? '' : 'style="display:none"'}>
-              <label for="m_topic_other">Topic name <span class="req-star">*</span></label>
-              <input type="text" class="control" id="m_topic_other" value="${esc(topicIsOther ? m.demo_topic : '')}" placeholder="Enter the demo topic" />
-            </div>
-
-            <div class="grid-2">
-              <div class="fgroup">
-                <label for="m_person">Scheduled By <span class="req-star">*</span></label>
-                <select class="control" id="m_person" ${IS_ADMIN ? '' : 'disabled'}>
-                  ${MEMBERS.map(mem => `<option value="${mem.id}" ${m.person_id === mem.id ? 'selected' : ''}>${esc(mem.name)}</option>`).join('')}
-                </select>
-                ${IS_ADMIN ? '' : '<p class="field-hint">Only an admin can reassign this meeting.</p>'}
-              </div>
-              <div class="fgroup">
-                <label for="m_status">Status <span class="req-star">*</span></label>
-                <select class="control" id="m_status">
-                  ${['Demo Scheduled','Demo Completed','Demo Canceled'].map(s =>
-                    `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s}</option>`).join('')}
-                </select>
-              </div>
-            </div>
-
-            <div class="grid-3">
-              <div class="fgroup">
-                <label for="m_date">Date <span class="req-star">*</span></label>
-                <input type="date" class="control" id="m_date" value="${esc(m.date)}" />
-              </div>
-              <div class="fgroup">
-                <label for="m_time">Start time <span class="req-star">*</span></label>
-                <input type="time" class="control" id="m_time" value="${esc(m.time || '10:00')}" />
-              </div>
-              <div class="fgroup">
-                <label for="m_zone">Time zone <span class="req-star">*</span></label>
-                <select class="control" id="m_zone">
-                  ${ZONES.map((z, i) => `<option value="${i}" ${m.zone_index === i ? 'selected' : ''}>${z.label}</option>`).join('')}
-                </select>
-              </div>
-            </div>
-
-            <div class="fgroup">
-              <label for="m_duration">Duration <span class="req-star">*</span></label>
-              <select class="control" id="m_duration">
-                ${[15,30,45,60,90,120].map(d => `<option value="${d}" ${Number(m.duration) === d ? 'selected' : ''}>${d} minutes</option>`).join('')}
-              </select>
-            </div>
-
-            <div class="fieldset-label">Point of contact</div>
-
-            <div class="grid-2">
-              <div class="fgroup">
-                <label for="m_poc_name">Name <span class="req-star">*</span></label>
-                <input type="text" class="control" id="m_poc_name" value="${esc(m.poc_name)}" placeholder="Contact person" />
-              </div>
-              <div class="fgroup">
-                <label for="m_poc_phone">Phone <span class="req-star">*</span></label>
-                <input type="tel" class="control" id="m_poc_phone" value="${esc(m.poc_phone)}" placeholder="+1 (555) 000-0000" />
-              </div>
-            </div>
-
-            <div class="fgroup">
-              <label for="m_poc_email">Email <span class="req-star">*</span></label>
-              <input type="email" class="control" id="m_poc_email" value="${esc(m.poc_email)}" placeholder="name@company.com" />
-            </div>
-
-            <div class="fgroup">
-              <label for="m_country">Country <span class="req-star">*</span></label>
-              <select class="control" id="m_country" onchange="onCountryChange()">
-                <option value="">Select a country</option>
-                ${COUNTRIES.map(c => `<option value="${esc(c)}" ${!countryIsOther && m.poc_country === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
-                <option value="Others" ${countryIsOther ? 'selected' : ''}>Others</option>
-              </select>
-            </div>
-            <div class="fgroup" id="m_country_other_wrap" ${countryIsOther ? '' : 'style="display:none"'}>
-              <label for="m_country_other">Country name <span class="req-star">*</span></label>
-              <input type="text" class="control" id="m_country_other" value="${esc(countryIsOther ? m.poc_country : '')}" placeholder="Enter the country" />
-            </div>
-
-            <div class="grid-3">
-              <div class="fgroup">
-                <label for="m_poc_state_name">State <span class="req-star">*</span></label>
-                <select class="control" id="m_poc_state_name" onchange="onStateChange()">
-                  <option value="">Select a state</option>
-                  ${stateListForRender.map(([name]) => `<option value="${esc(name)}" ${!stateIsOther && m.poc_state_name === name ? 'selected' : ''}>${esc(name)}</option>`).join('')}
-                  <option value="Others" ${stateIsOther ? 'selected' : ''}>Others</option>
-                </select>
-              </div>
-              <div class="fgroup">
-                <label for="m_poc_state">State code <span class="req-star">*</span></label>
-                <select class="control" id="m_poc_state" onchange="onStateCodeChange()">
-                  <option value="">Select a code</option>
-                  ${stateMatch ? `<option value="${esc(stateMatch[1])}" ${!codeIsOther ? 'selected' : ''}>${esc(stateMatch[1])}</option>` : ''}
-                  <option value="Others" ${codeIsOther ? 'selected' : ''}>Others</option>
-                </select>
-              </div>
-              <div class="fgroup">
-                <label for="m_poc_population_count">Population <span class="field-hint" style="display:inline;text-transform:none;">(optional)</span></label>
-                <input type="text" class="control" id="m_poc_population_count" value="${esc(m.poc_population_count)}" placeholder="39,500,000" />
-              </div>
-            </div>
-            <div class="fgroup" id="m_poc_state_other_wrap" ${stateIsOther ? '' : 'style="display:none"'}>
-              <label for="m_poc_state_other">State name <span class="req-star">*</span></label>
-              <input type="text" class="control" id="m_poc_state_other" value="${esc(stateIsOther ? m.poc_state_name : '')}" placeholder="Enter the state / province" />
-            </div>
-            <div class="fgroup" id="m_poc_state_code_other_wrap" ${codeIsOther ? '' : 'style="display:none"'}>
-              <label for="m_poc_state_code_other">State code <span class="req-star">*</span></label>
-              <input type="text" class="control" id="m_poc_state_code_other" value="${esc(codeIsOther ? m.poc_state : '')}" placeholder="e.g. CA" />
-            </div>
-
-            <div class="fgroup">
-              <label for="m_poc_county_name">County / Company <span class="req-star">*</span></label>
-              <input type="text" class="control" id="m_poc_county_name" value="${esc(m.poc_county_name)}" placeholder="Los Angeles County" />
-            </div>
-          </div>
-
-          <div class="modal-foot">
-            ${isEdit ? `<button class="btn btn-danger-text" style="margin-right:auto" onclick="closeModal(); deleteMeeting('${m.id}')">${ico.trash} Delete</button>` : ''}
-            <button class="btn" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="submitModal()">${isEdit ? 'Save changes' : 'Create meeting'}</button>
-          </div>
-        </div>
-      </div>
-    `;
+    return '<div class="overlay" onclick="if(event.target===this) closeModal()">' +
+      '<div class="modal" role="dialog" aria-modal="true" aria-label="Assign work">' +
+        '<div class="modal-head"><h3>' + (editing ? 'Edit assignment' : 'Assign work') + '</h3>' +
+          '<button class="icon-btn" onclick="closeModal()" aria-label="Close">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<form onsubmit="saveAssignment(event)">' +
+          '<div class="modal-body">' +
+            '<div class="fgroup">' +
+              '<label for="a_assignedTo">Work Assigned To<span class="req-star">*</span></label>' +
+              '<select class="control" id="a_assignedTo" required' + (MEMBERS.length ? '' : ' disabled') + '>' +
+                '<option value="">' + (MEMBERS.length ? 'Select a team member' : 'No approved members yet') + '</option>' +
+                MEMBERS.map(function (m) { return '<option value="' + esc(m.id) + '"' + (editing && editing.assigned_to === m.id ? ' selected' : '') + '>' + esc(m.name) + '</option>'; }).join('') +
+              '</select>' +
+            '</div>' +
+            '<div class="fgroup">' +
+              '<label for="a_topic">Topic<span class="req-star">*</span></label>' +
+              '<select class="control" id="a_topic" required>' +
+                '<option value="">Select a topic</option>' +
+                TOPIC_OPTIONS.map(function (t) { return '<option value="' + esc(t) + '"' + (editing && editing.topic === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') +
+              '</select>' +
+            '</div>' +
+            '<div class="fgroup">' +
+              '<label for="a_subTopic">Sub Topic</label>' +
+              '<input class="control" type="text" id="a_subTopic" placeholder="Optional details" value="' + esc(editing ? editing.sub_topic : '') + '" />' +
+            '</div>' +
+            '<div class="grid-2">' +
+              '<div class="fgroup">' +
+                '<label for="a_country">Country<span class="req-star">*</span></label>' +
+                '<select class="control" id="a_country" required onchange="onAssignCountryChange()">' +
+                  '<option value="">Select a country</option>' +
+                  COUNTRIES.map(function (c) { return '<option value="' + esc(c) + '"' + (countryVal === c ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') +
+                '</select>' +
+              '</div>' +
+              '<div class="fgroup">' +
+                '<label for="a_state">State</label>' +
+                '<select class="control" id="a_state"' + (stateOptions.length ? '' : ' disabled') + '>' +
+                  '<option value="">' + (stateOptions.length ? 'Select a state' : (countryVal ? 'No states listed' : 'Select a country first')) + '</option>' +
+                  stateOptions.map(function (pair) { return '<option value="' + esc(pair[0]) + '"' + (editing && editing.state === pair[0] ? ' selected' : '') + '>' + esc(pair[0]) + '</option>'; }).join('') +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal-foot">' +
+            '<button type="button" class="btn" onclick="closeModal()">Cancel</button>' +
+            '<button type="submit" class="btn btn-primary">' + (editing ? 'Save changes' : 'Assign') + '</button>' +
+          '</div>' +
+        '</form>' +
+      '</div>' +
+    '</div>';
   }
 
-  // Demo topic: swap the free-text box in/out when "Others" is picked.
-  function onTopicChange() {
-    const sel = document.getElementById('m_topic_select');
-    const wrap = document.getElementById('m_topic_other_wrap');
-    if (sel && wrap) wrap.style.display = sel.value === 'Others' ? '' : 'none';
-  }
+  function render() {
+    document.getElementById('mainContent').innerHTML =
+      '<div class="toolbar">' + renderChips() + '</div>' +
+      renderTable() +
+      renderModal();
 
-  // Country -> State -> State code: each rebuilds the dropdown below it,
-  // and each has an "Others" option that swaps in a free-text box.
-  function onCountryChange() {
-    const country = document.getElementById('m_country').value;
-    const countryWrap = document.getElementById('m_country_other_wrap');
-    if (countryWrap) countryWrap.style.display = country === 'Others' ? '' : 'none';
-
-    const stateSel = document.getElementById('m_poc_state_name');
-    const list = country === 'Others' ? [] : statesForCountry(country);
-    stateSel.innerHTML = '<option value="">Select a state</option>' +
-      list.map(([name]) => `<option value="${esc(name)}">${esc(name)}</option>`).join('') +
-      '<option value="Others">Others</option>';
-    onStateChange();
-  }
-
-  function onStateChange() {
-    const country = document.getElementById('m_country').value;
-    const stateName = document.getElementById('m_poc_state_name').value;
-    const stateWrap = document.getElementById('m_poc_state_other_wrap');
-    if (stateWrap) stateWrap.style.display = stateName === 'Others' ? '' : 'none';
-
-    const codeSel = document.getElementById('m_poc_state');
-    const match = country === 'Others' ? null : statesForCountry(country).find(([name]) => name === stateName);
-    codeSel.innerHTML = '<option value="">Select a code</option>' +
-      (match ? `<option value="${esc(match[1])}" selected>${esc(match[1])}</option>` : '') +
-      '<option value="Others">Others</option>';
-    onStateCodeChange();
-  }
-
-  function onStateCodeChange() {
-    const codeSel = document.getElementById('m_poc_state');
-    const codeWrap = document.getElementById('m_poc_state_code_other_wrap');
-    if (codeSel && codeWrap) codeWrap.style.display = codeSel.value === 'Others' ? '' : 'none';
-  }
-
-  function submitModal() {
-    const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-
-    if (!MEMBERS.length) { alert('Add a team member before scheduling a meeting.'); return; }
-
-    const topicSelect = val('m_topic_select');
-    const topic = topicSelect === 'Others' ? val('m_topic_other') : topicSelect;
-    if (!topic) {
-      alert('Please choose a demo topic.');
-      document.getElementById('m_topic_select').focus();
-      return;
-    }
-
-    if (!val('m_person')) { alert('Please choose who is taking the meeting.'); return; }
-    if (!val('m_status')) { alert('Please choose a status.'); return; }
-    if (!val('m_date')) { alert('Please choose a date.'); return; }
-    if (!val('m_time')) { alert('Please choose a start time.'); return; }
-    if (val('m_zone') === '') { alert('Please choose a time zone.'); return; }
-    if (!val('m_duration')) { alert('Please choose a duration.'); return; }
-
-    const countrySelect = val('m_country');
-    const country = countrySelect === 'Others' ? val('m_country_other') : countrySelect;
-
-    const stateSelect = val('m_poc_state_name');
-    const stateName = stateSelect === 'Others' ? val('m_poc_state_other') : stateSelect;
-
-    const codeSelect = val('m_poc_state');
-    const stateCode = codeSelect === 'Others' ? val('m_poc_state_code_other') : codeSelect;
-
-    if (!country)   { alert('Please provide a country before saving.'); return; }
-    if (!stateName) { alert('Please provide a state before saving.'); return; }
-    if (!stateCode) { alert('Please provide a state code before saving.'); return; }
-
-    const fields = {
-      poc_name: ['m_poc_name', 'the point-of-contact name'],
-      poc_phone: ['m_poc_phone', 'a phone number'],
-      poc_email: ['m_poc_email', 'an email address'],
-      poc_county_name: ['m_poc_county_name', 'a county / company name'],
-    };
-    const values = {};
-    for (const key in fields) {
-      const [id, label] = fields[key];
-      const v = val(id);
-      if (!v) { alert(`Please provide ${label} before saving.`); return; }
-      values[key] = v;
-    }
-
-    saveMeeting({
-      ...state.activeModal,
-      demo_topic: topic,
-      person_id: val('m_person'),
-      status: val('m_status'),
-      date: val('m_date'),
-      time: val('m_time') || '10:00',
-      zone_index: Number(val('m_zone')),
-      duration: Number(val('m_duration')),
-      ...values,
-      poc_country: country,
-      poc_state_name: stateName,
-      poc_state: stateCode,
-      poc_population_count: val('m_poc_population_count'),
-    });
+    window.removeEventListener('keydown', escToClose);
+    if (state.activeModal === 'assign') window.addEventListener('keydown', escToClose);
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     GLOBAL LISTENERS
-     ══════════════════════════════════════════════════════════════════ */
-  // Re-render when crossing a responsive breakpoint (table <-> cards, calendar day count)
-  let resizeTimer = null;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      const b = currentBucket();
-      if (b !== state.bucket || state.view === 'calendar') {
-        state.bucket = b;
-        render();
-      } else {
-        fitCalendar();
-        fitTableScroll();
-      }
-    }, 140);
-  });
-
-  // Escape closes overlays; click outside closes month dropdown
-  document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape') return;
-    if (state.importPreview) { state.importPreview = null; render(); return; }
-    if (state.activeModal) { closeModal(); return; }
-    if (state.popovers.pocId || state.popovers.momId || state.popovers.actionsId || state.popovers.monthSelectorOpen) {
-      closeAllPopovers();
-    }
-  });
-
-  document.addEventListener('click', e => {
-    if (state.popovers.monthSelectorOpen && !e.target.closest('.month-wrap')) {
-      state.popovers.monthSelectorOpen = false;
-      render();
-    }
-  }, true);
-
-  // Theme changed on another InfoStride page / tab
-  window.addEventListener('storage', e => {
-    if (e.key === THEME_KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
-      applyTheme(e.newValue);
-      render();
-    }
-  });
-
-  /* ══════════════════════════════════════════════════════════════════
-     BOOTSTRAP — load the signed-in member, the team, and the meetings
+     BOOTSTRAP — load the signed-in member, the team, and the assignments
      from the backend before the first render.
      ══════════════════════════════════════════════════════════════════ */
-  function loadingShell(text, isError) {
-    return '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;'
-      + 'color:' + (isError ? 'var(--danger)' : 'var(--muted)') + ';font-size:13px;text-align:center;padding:20px;">'
-      + esc(text) + '</div>';
-  }
-
   function bootstrap() {
-    const app = document.getElementById('app');
-    app.innerHTML = loadingShell('Loading…');
+    var mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = '<div class="card empty"><h4>Loading…</h4></div>';
 
-    Promise.all([apiFetch('/auth/me'), apiFetch('/members'), apiFetch('/meetings')])
-      .then(([meRes, membersRes, meetingsRes]) => {
+    Promise.all([apiFetch('/auth/me'), apiFetch('/members'), apiFetch('/assignments')])
+      .then(function (results) {
+        var meRes = results[0], membersRes = results[1], assignmentsRes = results[2];
         IS_ADMIN = Boolean(meRes.member.is_admin);
         CURRENT_USER = { name: meRes.member.name, email: meRes.member.email, role: IS_ADMIN ? 'Admin' : 'Member' };
         MEMBERS = membersRes;
-        CURRENT_MEMBER = MEMBERS.find(m => m.id === meRes.member.id) || null;
-        meetingsData = meetingsRes;
+        CURRENT_MEMBER = MEMBERS.find(function (m) { return m.id === meRes.member.id; }) || null;
+        assignments = assignmentsRes;
         render();
       })
-      .catch(err => {
+      .catch(function (err) {
         if (err.status === 401) {
           window.InfoStrideAPI.clearToken();
           window.location.replace('Login.html');
           return;
         }
-        app.innerHTML = loadingShell('Could not load the board: ' + (err.message || 'Unknown error'), true);
+        mainContent.innerHTML = '<div class="card empty"><h4>Could not load this page</h4><p>' + esc(err.message || 'Unknown error') + '</p></div>';
       });
   }
+  bootstrap();
 
-  // Boot
-  initTheme();
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', bootstrap);
-  } else {
-    bootstrap();
+  /* ══════════════════════════════════════════════════════════════════
+     IMPORT / EXPORT — placeholders until asked for; the columns above
+     are now defined, so this is the next natural step.
+     ══════════════════════════════════════════════════════════════════ */
+  function triggerImport() {
+    document.getElementById('importFile').click();
+  }
+  function handleImportFile(input) {
+    if (!input.files || !input.files[0]) return;
+    alert('CSV import isn’t wired up yet.');
+    input.value = '';
+  }
+  function exportData() {
+    alert('CSV export isn’t wired up yet.');
   }
   </script>
 </body>

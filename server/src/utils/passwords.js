@@ -27,11 +27,13 @@ export async function verifyPassword(plain, storedHash) {
     return bcrypt.compare(plain, storedHash);
   }
 
-  // Legacy SHA-256 hex comparison (constant-time).
+  // Legacy SHA-256 hex comparison, constant-time regardless of input length —
+  // hashing both sides first to a fixed-size digest avoids the length check
+  // that would otherwise short-circuit before timingSafeEqual runs.
   const candidate = sha256Hex(plain);
-  const a = Buffer.from(candidate);
-  const b = Buffer.from(storedHash);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  const a = crypto.createHash('sha256').update(candidate).digest();
+  const b = crypto.createHash('sha256').update(storedHash).digest();
+  return crypto.timingSafeEqual(a, b);
 }
 
 /** True if a stored hash is in the legacy SHA-256 format (candidate for rehash). */

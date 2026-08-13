@@ -10,6 +10,15 @@ const router = Router();
 // A palette used to auto-assign a colour when the client doesn't supply one.
 const PALETTE = ['#818cf8', '#f472b6', '#34d399', '#fbbf24', '#60a5fa', '#a78bfa', '#f87171', '#2dd4bf'];
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+function validateColor(color) {
+  if (color !== undefined && !HEX_COLOR_RE.test(color)) {
+    throw new ApiError(400, 'color must be a 6-digit hex value, e.g. #818cf8');
+  }
+}
+
 /** GET /api/members — list all members (auth required). */
 router.get(
   '/',
@@ -49,7 +58,11 @@ router.post(
     const name = (req.body.name || '').trim();
     const email = (req.body.email || '').trim().toLowerCase();
     if (!name) throw new ApiError(400, 'Name is required');
-    if (!email) throw new ApiError(400, 'Email is required');
+    if (!EMAIL_RE.test(email)) throw new ApiError(400, 'A valid email is required');
+    validateColor(req.body.color);
+    if (req.body.password && req.body.password.length < 8) {
+      throw new ApiError(400, 'Password must be at least 8 characters');
+    }
 
     const row = {
       name,
@@ -76,6 +89,14 @@ router.patch(
     const targetId = req.params.id;
     const isSelf = req.user.sub === targetId;
     if (!req.user.is_admin && !isSelf) throw new ApiError(403, 'Not allowed to edit this member');
+
+    validateColor(req.body.color);
+    if (req.body.email !== undefined && !EMAIL_RE.test(String(req.body.email).trim())) {
+      throw new ApiError(400, 'A valid email is required');
+    }
+    if (req.body.password && req.body.password.length < 8) {
+      throw new ApiError(400, 'Password must be at least 8 characters');
+    }
 
     const patch = {};
     if (req.body.name !== undefined) patch.name = String(req.body.name).trim();

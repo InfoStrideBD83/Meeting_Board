@@ -13,6 +13,7 @@ import pendingRequestRoutes from './routes/pendingRequests.js';
 import topicRoutes from './routes/topics.js';
 import allotmentRoutes from './routes/allotments.js';
 import misEntryRoutes from './routes/misEntries.js';
+import assignmentRoutes from './routes/assignments.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLIENT_DIR = path.resolve(__dirname, '../../client');
@@ -39,6 +40,7 @@ app.use('/api/pending-requests', pendingRequestRoutes);
 app.use('/api/topics', topicRoutes);
 app.use('/api/allotments', allotmentRoutes);
 app.use('/api/mis-entries', misEntryRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 // ── Static frontend (serves the client/ pages) ──────────────
 app.use(express.static(CLIENT_DIR));
