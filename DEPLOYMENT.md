@@ -30,9 +30,9 @@ Config lives in [`render.yaml`](./render.yaml) (a Render Blueprint).
 4. Deploy. Verify: `https://<your-service>.onrender.com/api/health` returns
    `{ "status": "ok", ... }`.
 
-> Note the actual service URL Render gives you. The default is
-> `https://infostride-meeting-board-api.onrender.com` — if yours differs, update
-> the `destination` in `client/vercel.json` (step 2 below).
+> Note the actual service URL Render gives you (currently
+> `https://meeting-board.onrender.com`). If it ever changes, update the
+> `destination` in `client/vercel.json` (step 2 below).
 
 ---
 

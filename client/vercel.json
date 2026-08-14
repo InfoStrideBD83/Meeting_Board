@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://infostride-meeting-board-api.onrender.com/api/:path*"
+      "destination": "https://meeting-board.onrender.com/api/:path*"
     },
     { "source": "/", "destination": "/Login.html" }
   ]
