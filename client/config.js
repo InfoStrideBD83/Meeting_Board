@@ -1,12 +1,15 @@
 /* ══════════════════════════════════════════════════════════════════════
    InfoStride API config — shared by every page.
 
-   Local dev (server serves this client/ folder itself, same origin):
-     leave API_BASE as '/api' — no change needed.
+   API_BASE stays '/api' in every environment:
 
-   Deployed (frontend on Vercel, backend on Render — different origins):
-     set API_BASE to your Render service's full URL + '/api', e.g.
-     'https://infostride-meeting-board-api.onrender.com/api'
+   Local dev — the server serves this client/ folder itself (same origin),
+     so '/api' hits the backend directly.
+
+   Deployed — frontend on Vercel, backend on Render. client/vercel.json
+     rewrites '/api/*' to the Render service, so the browser still sees a
+     same-origin '/api' call (no CORS, no per-environment edits here).
+     If your Render URL differs from the default, update it in vercel.json.
    ══════════════════════════════════════════════════════════════════════ */
 var API_BASE = '/api';
 
