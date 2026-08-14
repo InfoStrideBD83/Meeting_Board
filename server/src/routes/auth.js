@@ -10,6 +10,18 @@ const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EMPLOYEE_ID_RE = /^\d{5}$/;
 
+/**
+ * Escape ILIKE wildcards so an email is matched literally.
+ *
+ * Rows created before this backend normalized emails to lowercase are stored
+ * with their original casing (e.g. "Rehaan.goel@infostride.com"). Looking them
+ * up with `.eq('email', <lowercased>)` would miss those members and lock them
+ * out, so authentication lookups match case-insensitively via ILIKE instead.
+ */
+function emailFilter(email) {
+  return email.replace(/([\\%_])/g, '\\$1');
+}
+
 // Login/signup are the only unauthenticated, guessable-credential endpoints
 // here, so they're the ones worth throttling against brute force / spam.
 const authLimiter = rateLimit({
@@ -207,7 +219,7 @@ router.post(
     const { data: member, error } = await supabase
       .from('members')
       .select('*')
-      .eq('email', email)
+      .ilike('email', emailFilter(email))
       .maybeSingle();
     if (error) throw error;
 
@@ -216,7 +228,7 @@ router.post(
       const { data: pending } = await supabase
         .from('pending_requests')
         .select('id')
-        .eq('email', email)
+        .ilike('email', emailFilter(email))
         .maybeSingle();
       if (pending) throw new ApiError(403, 'Your account is awaiting admin approval');
       throw new ApiError(401, 'Invalid email or password');

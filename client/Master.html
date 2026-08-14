@@ -572,14 +572,17 @@
   }
 
   .apps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: clamp(12px, 1.8vw, 20px);
     width: 100%; max-width: 1387px;
   }
 
   .app-card {
     position: relative;
+    flex: 0 1 calc(25% - 15px);
+    min-width: 240px;
     display: flex; flex-direction: column;
     gap: 13px;
     padding: 13px 13px 15px;
@@ -745,8 +748,8 @@
      RESPONSIVE
      ══════════════════════════════════════════════════════════════ */
   @media (max-width: 860px) {
-    .apps { grid-template-columns: 1fr; gap: 12px; }
-    .app-card { flex-direction: row; align-items: center; gap: 14px; padding: 12px; }
+    .apps { flex-direction: column; gap: 12px; }
+    .app-card { flex: 1 1 auto; flex-direction: row; align-items: center; gap: 14px; padding: 12px; }
     .card-preview { width: 132px; flex-shrink: 0; }
     .card-foot { flex: 1; min-width: 0; padding: 0; }
   }
@@ -822,6 +825,7 @@
     <div class="header-spacer"></div>
 
     <div class="header-actions">
+<!-- Pending sign-in / notification icons removed per request
       <div class="notif-wrap" id="approvalWrap" hidden>
         <button id="approvalBtn" class="notif-btn" type="button" aria-haspopup="true" aria-expanded="false"
                 aria-label="Pending sign-ups" title="Pending sign-ups">
@@ -844,6 +848,7 @@
           <div id="notifList"></div>
         </div>
       </div>
+      -->
       <button id="themeToggle" class="theme-toggle" type="button" role="switch"
               aria-checked="false" aria-label="Switch to light mode" title="Toggle light / dark mode">
         <span class="theme-toggle-icons">
@@ -966,17 +971,18 @@
       </span>
     </a>
 
+<!-- Assignee card removed per request
     <a class="app-card c-assignee" href="Assignee.html">
       <span class="card-preview">
       <svg viewBox="0 0 200 108" aria-hidden="true">
-        <!-- desk -->
+        desk
         <rect x="24" y="88" width="152" height="5" rx="2.5" class="art-soft"/>
 
-        <!-- person, sitting behind the screen -->
+        person, sitting behind the screen
         <path d="M76 46c0-14 11-22 24-22s24 8 24 22" fill="var(--accent)" opacity=".55"/>
         <circle cx="100" cy="23" r="11" fill="var(--map-pst)" opacity=".9"/>
 
-        <!-- laptop screen -->
+        laptop screen
         <rect x="70" y="40" width="60" height="40" rx="4" class="art-panel" stroke="var(--border)" stroke-width="1"/>
         <circle cx="76" cy="46" r="1.8" fill="var(--danger)"/>
         <circle cx="82" cy="46" r="1.8" fill="var(--warn)"/>
@@ -990,14 +996,14 @@
         <circle cx="77" cy="74" r="2.2" fill="var(--success)"/>
         <rect x="82" y="72.3" width="27" height="3.4" rx="1.7" class="art-muted" opacity=".5"/>
 
-        <!-- keyboard base -->
+        keyboard base
         <path d="M62 80 L138 80 L146 88 L54 88 Z" class="art-faint" opacity=".8"/>
 
-        <!-- typing hands -->
+        typing hands
         <circle class="art-hand h1" cx="82" cy="82" r="3" fill="var(--accent)"/>
         <circle class="art-hand h2" cx="118" cy="82" r="3" fill="var(--map-pst)"/>
 
-        <!-- "task assigned" ping -->
+        "task assigned" ping
         <circle cx="152" cy="28" r="9" fill="var(--success)" opacity=".16"/>
         <circle class="art-ping" cx="152" cy="28" r="4" fill="var(--success)" opacity="0"/>
         <path d="M148.4 28l2.3 2.6 4.9-5.6" stroke="var(--success)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1009,6 +1015,8 @@
         <span class="app-arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
       </span>
     </a>
+    -->
+
 
     <a class="app-card c-timer" href="US Timer.html">
       <span class="card-preview">
