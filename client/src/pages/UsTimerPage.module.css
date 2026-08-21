@@ -1,0 +1,321 @@
+.page {
+  --bg-0:#090d15;
+  --bg-1:#131924;
+  --glow-1:rgba(99,102,241,0.13);
+  --glow-2:rgba(20,184,166,0.07);
+
+  --text:#e9edf6;
+  --text-2:#c3cbdb;
+  --muted:#939cb2;
+  --faint:#626c82;
+
+  --brand:#818cf8;
+  --accent:#fbbf24;
+  --accent-soft:#fcd34d;
+  --cool:#818cf8;
+
+  --line:#27303f;
+  --panel:#1a2130;
+
+  --clock-size:clamp(132px,18vw,196px);
+  --time-size:clamp(32px,5vw,52px);
+
+  --face-fill:rgba(255,255,255,0.02);
+  --tick:rgba(255,255,255,0.30);
+  --ring-day:rgba(251,191,36,0.34);
+  --ring-night:rgba(129,140,248,0.34);
+  --feature-fg:var(--accent);
+  --time-glow:0 0 36px rgba(251,191,36,.26);
+  --time-glow-night:0 0 36px rgba(129,140,248,.30);
+  --halo-day:rgba(251,191,36,.16);
+  --halo-night:rgba(129,140,248,.18);
+  --badge-bg:rgba(251,191,36,.13);
+  --badge-border:rgba(251,191,36,.30);
+  --badge-bg-night:rgba(129,140,248,.15);
+  --badge-border-night:rgba(129,140,248,.38);
+  --brand-bg:rgba(129,140,248,.15);
+  --brand-border:rgba(129,140,248,.38);
+  --panel-glass:rgba(19,25,36,.82);
+  --fx-teal:rgba(20,184,166,.14);
+  --fx-beam:rgba(255,255,255,.11);
+  --fx-rule:rgba(255,255,255,.035);
+  color-scheme:dark;
+
+  /* Leaves room at the bottom for the app-wide fixed marquee footer. */
+  height: calc(100vh - var(--footer-h));
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 520px at 88% -12%, var(--glow-1), transparent 70%),
+    radial-gradient(700px 460px at 4% 4%, var(--glow-2), transparent 70%),
+    linear-gradient(160deg, var(--bg-0), var(--bg-1));
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  transition: color .3s ease;
+}
+
+:global(html[data-theme="light"]) .page {
+  --bg-0:#f1f4fa;
+  --bg-1:#e9edf6;
+  --glow-1:rgba(99,102,241,0.11);
+  --glow-2:rgba(13,148,136,0.06);
+
+  --text:#111726;
+  --text-2:#33405a;
+  --muted:#5c6579;
+  --faint:#8d97ab;
+
+  --brand:#4f46e5;
+  --accent:#b45309;
+  --accent-soft:#92400e;
+  --cool:#4f46e5;
+
+  --line:#dce2ee;
+  --panel:#f5f7fc;
+
+  --face-fill:rgba(17,23,38,0.015);
+  --tick:rgba(17,23,38,0.34);
+  --ring-day:rgba(180,83,9,0.40);
+  --ring-night:rgba(79,70,229,0.34);
+  --feature-fg:#b45309;
+  --time-glow:none;
+  --time-glow-night:none;
+  --halo-day:rgba(180,83,9,.14);
+  --halo-night:rgba(79,70,229,.14);
+  --badge-bg:rgba(180,83,9,.11);
+  --badge-border:rgba(180,83,9,.32);
+  --badge-bg-night:rgba(79,70,229,.09);
+  --badge-border-night:rgba(79,70,229,.30);
+  --brand-bg:rgba(79,70,229,.09);
+  --brand-border:rgba(79,70,229,.30);
+  --panel-glass:rgba(255,255,255,.84);
+  --fx-teal:rgba(13,148,136,.11);
+  --fx-beam:rgba(79,70,229,.10);
+  --fx-rule:rgba(17,23,38,.035);
+  color-scheme:light;
+}
+
+.stage {
+  position: relative;
+  width: 100%; max-width: 1200px; margin: 0 auto; padding: clamp(18px,4vw,56px);
+  transform-origin: top center;
+}
+
+/* ── ambient 3D backdrop ──────────────────────────────────────── */
+.bg3d {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+  perspective: 1600px;
+}
+.bg3dFloat {
+  position: absolute; left: var(--x); top: var(--y);
+  animation: bg3dFloat var(--fdur, 12s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+.bg3dCube {
+  width: var(--size); height: var(--size);
+  transform-style: preserve-3d;
+  animation: bg3dSpin var(--dur, 46s) linear infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: var(--op, .1);
+  filter: blur(var(--blur, .3px));
+}
+.bg3dFace {
+  position: absolute; inset: 0;
+  border: 1px solid var(--brand-border);
+  background: linear-gradient(135deg, var(--brand-bg), transparent 75%);
+}
+.hueTeal .bg3dFace {
+  border-color: var(--fx-teal);
+  background: linear-gradient(135deg, var(--fx-teal), transparent 75%);
+}
+.fFront  { transform: translateZ(calc(var(--size) / 2)); }
+.fBack   { transform: translateZ(calc(var(--size) / -2)) rotateY(180deg); }
+.fRight  { transform: rotateY(90deg)  translateZ(calc(var(--size) / 2)); }
+.fLeft   { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
+.fTop    { transform: rotateX(90deg)  translateZ(calc(var(--size) / 2)); }
+.fBottom { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
+@keyframes bg3dSpin {
+  from { transform: rotateX(0deg) rotateY(0deg); }
+  to   { transform: rotateX(360deg) rotateY(360deg); }
+}
+@keyframes bg3dFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-22px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg3dFloat, .bg3dCube { animation: none !important; }
+}
+@media (max-width: 860px) {
+  .hideSm { display: none; }
+}
+
+/* ── header (this page's own token names, not the shared header) ── */
+.appHeader {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--panel-glass);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  border-bottom: 1px solid var(--line);
+  isolation: isolate;
+}
+.headerFx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.fxAurora, .fxBeam, .fxLine, .fxGrid { position: absolute; display: block; }
+.fxAurora {
+  top: -420%; left: -30%; width: 160%; height: 900%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg, var(--brand-bg) 42deg, transparent 96deg,
+    var(--fx-teal) 168deg, transparent 222deg,
+    var(--brand-bg) 300deg, transparent 360deg);
+  animation: fxAurora 34s linear infinite;
+  filter: blur(30px);
+  opacity: .8;
+}
+@keyframes fxAurora { to { transform: rotate(360deg); } }
+.fxGrid {
+  inset: 0;
+  background-image: linear-gradient(90deg, var(--fx-rule) 1px, transparent 1px);
+  background-size: 46px 100%;
+  opacity: .5;
+  animation: fxGrid 12s linear infinite;
+}
+@keyframes fxGrid { to { background-position: 46px 0; } }
+.fxBeam {
+  top: 0; bottom: 0; left: 0; width: 24%;
+  background: linear-gradient(100deg, transparent, var(--fx-beam) 48%, transparent);
+  filter: blur(3px);
+  transform: translateX(-160%);
+  animation: fxBeam 8.5s ease infinite;
+}
+@keyframes fxBeam {
+  0%        { transform: translateX(-160%); }
+  58%, 100% { transform: translateX(520%); }
+}
+.fxLine {
+  left: 0; bottom: 0; width: 34%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand), transparent);
+  box-shadow: 0 0 8px var(--brand-border);
+  animation: fxLine 7s linear infinite;
+}
+@keyframes fxLine {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateX(320%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fxAurora, .fxBeam, .fxLine, .fxGrid { animation: none !important; }
+  .fxBeam { opacity: 0; }
+}
+.headerInner {
+  position: relative; z-index: 1;
+  max-width: 1760px; margin: 0 auto;
+  min-height: 62px;
+  padding: 10px clamp(12px, 2.2vw, 28px);
+  display: flex; align-items: center; gap: 14px;
+}
+.brand { display: flex; align-items: center; gap: 11px; min-width: 0; flex-shrink: 0; color: inherit; }
+.brandLogo { height: 27px; width: auto; display: block; flex-shrink: 0; -webkit-user-select: none; user-select: none; }
+.brandLogo:global(.onLight) { display: none; }
+:global(html[data-theme="light"]) .brandLogo:global(.onDark) { display: none; }
+:global(html[data-theme="light"]) .brandLogo:global(.onLight) { display: block; }
+.headerSpacer { flex: 1 1 auto; }
+
+/* The shared workspace switcher and home button (global CSS, used on
+   every page) read --accent/--accent-soft/--accent-line — but on this
+   page those names are already taken for the clock's day/sun color
+   (amber). Re-point them, scoped to just these two, at this page's own
+   --brand tokens, which already hold the app's real indigo brand accent
+   in both themes. */
+.page :global(.switcher-wrap), .page :global(.home-btn) {
+  --accent: var(--brand);
+  --accent-soft: var(--brand-bg);
+  --accent-line: var(--brand-border);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 14px; min-height: 36px;
+  border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--text);
+  font-size: 12.5px; font-weight: 600; font-family: inherit;
+  cursor: pointer; text-decoration: none;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.btn:hover { border-color: var(--brand-border); background: var(--bg-1); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btnIcon { padding: 8px; width: 36px; }
+
+/* ── shared digital + badge ───────────────────────────────────── */
+.tTime {
+  font-family: "JetBrains Mono", monospace; font-weight: 500;
+  line-height: 1; letter-spacing: .01em; font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tTime :global(.sec) { color: var(--faint); font-size: .62em; }
+.tTime :global(.ap) { color: var(--muted); font-size: .5em; margin-left: .18em; letter-spacing: .04em; }
+
+.badge {
+  display: inline-block;
+  font-family: "JetBrains Mono", monospace; font-weight: 700;
+  font-size: 12px; letter-spacing: .06em;
+  padding: 5px 12px; border-radius: 7px;
+  color: var(--accent-soft); background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+}
+.isNight .badge {
+  color: var(--cool); background: var(--badge-bg-night);
+  border-color: var(--badge-border-night);
+}
+
+/* ── analog clock ─────────────────────────────────────────────── */
+.clockSvg { width: 100%; height: 100%; display: block; overflow: visible; }
+.clFace { fill: var(--face-fill); stroke: var(--ring-day); stroke-width: 1.4; }
+.tick { stroke: var(--tick); }
+.clH { stroke: var(--text); stroke-width: 3.2; }
+.clM { stroke: var(--text); stroke-width: 2.2; }
+.clS { stroke: var(--accent); stroke-width: 1.1; }
+.clSTail { fill: var(--accent); }
+.clGear { fill: none; stroke: var(--accent); stroke-width: 0.9; opacity: .5; stroke-linejoin: round; }
+.clGearHole { fill: var(--face-fill); stroke: var(--accent); stroke-width: 0.7; opacity: .5; }
+.clCap { fill: var(--accent); }
+.isNight .clFace { stroke: var(--ring-night); }
+.isNight .clS, .isNight .clSTail { stroke: var(--cool); fill: var(--cool); }
+.isNight .clGear, .isNight .clGearHole { stroke: var(--cool); }
+.isNight .clCap { fill: var(--cool); }
+
+/* ── featured (IST) ───────────────────────────────────────────── */
+.feature { text-align: center; padding: 34px 4px 32px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+.featureClock { width: var(--clock-size); aspect-ratio: 1; margin: 0 auto 22px; filter: drop-shadow(0 0 26px var(--halo-day)); }
+.feature.isNight .featureClock { filter: drop-shadow(0 0 26px var(--halo-night)); }
+.featureTime { font-size: var(--time-size); color: var(--feature-fg); text-shadow: var(--time-glow); }
+.featureTime :global(.sec) { color: var(--accent-soft); opacity: .72; }
+.feature.isNight .featureTime { color: var(--cool); text-shadow: var(--time-glow-night); }
+.feature.isNight .featureTime :global(.sec) { color: var(--cool); opacity: .62; }
+.featureCity { font-size: 18px; font-weight: 500; margin: 18px 0 10px; }
+.featureMeta {
+  font-size: 12.5px; color: var(--muted); letter-spacing: .05em;
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; align-items: center;
+}
+.dotsep { color: var(--faint); }
+
+/* ── 4-zone row ───────────────────────────────────────────────── */
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(10px, 2.4vw, 26px); padding-top: 34px; }
+.card { text-align: center; }
+.cardClock { width: var(--clock-size); aspect-ratio: 1; margin: 0 auto 16px; }
+.cardTime { font-size: var(--time-size); }
+.card .badge { margin-top: 12px; }
+.cardCity { font-size: 13px; color: var(--text); margin-top: 8px; letter-spacing: .01em; }
+.cardSub {
+  font-size: 11px; color: var(--faint); margin-top: 6px;
+  letter-spacing: .06em; text-transform: uppercase; font-variant-numeric: tabular-nums;
+}
+.cardSub :global(.next) { color: var(--brand); }
+
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 42px 18px; }
+}
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; gap: 40px; }
+}

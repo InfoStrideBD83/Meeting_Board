@@ -6,8 +6,8 @@ import { requireAuth } from '../middleware/auth.js';
 const router = Router();
 
 // Columns that exist on the meetings table (see supabase_schema.sql).
-// Anything the frontend sends outside this set (e.g. client id "m_123",
-// poc_country) is ignored so inserts/updates never fail on unknown columns.
+// Anything the frontend sends outside this set (e.g. client id "m_123")
+// is ignored so inserts/updates never fail on unknown columns.
 const WRITABLE = [
   'demo_topic',
   'person_id',
@@ -18,6 +18,7 @@ const WRITABLE = [
   'source',
   'status',
   'poc_name',
+  'poc_country',
   'poc_state',
   'poc_email',
   'poc_phone',

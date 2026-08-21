@@ -69,6 +69,7 @@ router.post(
       email,
       color: req.body.color || PALETTE[Math.floor(Math.random() * PALETTE.length)],
       is_admin: Boolean(req.body.is_admin),
+      employee_id: req.body.employee_id ? String(req.body.employee_id).trim() : null,
     };
     if (req.body.password) row.password_hash = await hashPassword(req.body.password);
 
@@ -104,6 +105,10 @@ router.patch(
     if (req.body.email !== undefined) patch.email = String(req.body.email).trim().toLowerCase();
     // Only admins can toggle admin status.
     if (req.body.is_admin !== undefined && req.user.is_admin) patch.is_admin = Boolean(req.body.is_admin);
+    // Only admins can change employee_id.
+    if (req.body.employee_id !== undefined && req.user.is_admin) {
+      patch.employee_id = req.body.employee_id ? String(req.body.employee_id).trim() : null;
+    }
     if (req.body.password) patch.password_hash = await hashPassword(req.body.password);
 
     if (Object.keys(patch).length === 0) throw new ApiError(400, 'No editable fields provided');
@@ -115,7 +120,10 @@ router.patch(
       .select('*')
       .maybeSingle();
     if (error) {
-      if (error.code === '23505') throw new ApiError(409, 'A member with this email already exists');
+      if (error.code === '23505') {
+        const field = String(error.message).includes('employee_id') ? 'employee ID' : 'email';
+        throw new ApiError(409, `A member with this ${field} already exists`);
+      }
       throw error;
     }
     if (!data) throw new ApiError(404, 'Member not found');

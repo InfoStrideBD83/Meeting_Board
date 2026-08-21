@@ -40,20 +40,24 @@ Config lives in [`render.yaml`](./render.yaml) (a Render Blueprint).
 
 Config lives in [`client/vercel.json`](./client/vercel.json).
 
+The client is a Vite + React SPA (see `client/src/`); `client/vercel.json` sets
+the build command (`npm run build`) and output directory (`dist`) for you.
+
 1. Confirm the `/api/*` rewrite `destination` in `client/vercel.json` matches your
    real Render URL from step 1.
 2. Vercel dashboard → **Add New** → **Project** → import this repo.
-3. Set **Root Directory** to `client`. No build command or framework is
-   needed — it's a static site (leave build empty / "Other").
-4. Deploy. Open the Vercel URL; it loads `Login.html` and all `/api` calls are
-   transparently proxied to Render.
+3. Set **Root Directory** to `client`. Framework preset "Vite" (or "Other" —
+   `vercel.json`'s `buildCommand`/`outputDirectory` cover it either way).
+4. Deploy. Open the Vercel URL; the React Router SPA loads, redirects to
+   `/login` if you're not signed in, and all `/api` calls are transparently
+   proxied to Render.
 5. Make sure Render's `FRONTEND_URL` (step 1) matches this Vercel domain.
 
 ---
 
 ## Local development
 
-Unchanged — the Render/Vercel config doesn't affect it:
+Backend:
 
 ```bash
 cd server
@@ -62,5 +66,22 @@ npm install
 npm run dev
 ```
 
-The server serves `client/` itself at <http://localhost:4000>, and `/api` hits
-the backend directly (no proxy needed locally).
+Frontend — two ways to run it, pick one:
+
+- **Fast iteration (recommended):** Vite's dev server with hot reload, proxying
+  `/api` to the Express server above (see `client/vite.config.js`):
+  ```bash
+  cd client
+  npm install
+  npm run dev            # http://localhost:5173, requires the backend running too
+  ```
+- **Production-like:** build once and let Express serve the static bundle
+  directly (matches what happens in production on Render/Vercel):
+  ```bash
+  cd client
+  npm install
+  npm run build           # writes client/dist
+  ```
+  Then open the backend's own URL (e.g. <http://localhost:4000>) — it serves
+  `client/dist` with an SPA fallback, so every route (including a hard refresh
+  on `/meetings`) resolves correctly.

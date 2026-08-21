@@ -1,0 +1,88 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(6, 9, 16, .62);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fade .2s var(--ease);
+}
+html[data-theme="light"] .overlay { background: rgba(24, 39, 75, .35); }
+
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 460px;
+  max-height: 92dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: pop .22s var(--ease);
+}
+.modalHead {
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  background: var(--panel-2);
+}
+.modalHead h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -.2px; }
+.modalBody { padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+
+.fgroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fgroup > label {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.reqStar { color: var(--err); margin-left: 2px; font-weight: 700; }
+.control {
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  transition: border-color .16s var(--ease), box-shadow .16s var(--ease);
+}
+.control::placeholder { color: var(--faint); }
+.control:focus {
+  outline: none; border-color: var(--accent);
+  background: var(--panel);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.gridTwo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.checkRow {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text-2); font-weight: 600;
+  cursor: pointer; user-select: none;
+}
+.checkRow input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+
+.hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+.errMsg {
+  font-size: 12.5px; padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--err-soft); color: var(--err); border: 1px solid var(--err-line);
+}
+
+.modalFoot {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  background: var(--panel-2);
+}
+
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
+
+@media (max-width: 420px) {
+  .gridTwo { grid-template-columns: 1fr; }
+}

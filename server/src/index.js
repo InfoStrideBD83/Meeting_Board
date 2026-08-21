@@ -16,7 +16,9 @@ import misEntryRoutes from './routes/misEntries.js';
 import assignmentRoutes from './routes/assignments.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLIENT_DIR = path.resolve(__dirname, '../../client');
+// The client is now a Vite-built React SPA; CLIENT_DIR points at its build
+// output, not the source tree.
+const CLIENT_DIR = path.resolve(__dirname, '../../client/dist');
 
 const app = express();
 
@@ -42,13 +44,17 @@ app.use('/api/allotments', allotmentRoutes);
 app.use('/api/mis-entries', misEntryRoutes);
 app.use('/api/assignments', assignmentRoutes);
 
-// ── Static frontend (serves the client/ pages) ──────────────
+// ── Static frontend (serves the built React SPA) ────────────
 app.use(express.static(CLIENT_DIR));
-app.get('/', (_req, res) => res.sendFile(path.join(CLIENT_DIR, 'Login.html')));
 
 // ── 404 + error handling ────────────────────────────────────
-// JSON 404 for unmatched /api/* paths; everything else already tried static.
+// JSON 404 for unmatched /api/* paths.
 app.use('/api', notFound);
+
+// SPA fallback — any other GET (e.g. a hard refresh on /meetings) gets
+// index.html so React Router can render the right route client-side.
+app.get('*', (_req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
+
 app.use(errorHandler);
 
 app.listen(config.port, () => {

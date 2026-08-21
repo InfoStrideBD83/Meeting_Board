@@ -1,0 +1,42 @@
+/* ── Conflict banner — ported from Meeting Board.html's .banner rules ── */
+.banner {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--r-lg);
+  padding: 13px 15px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: slideDown 0.25s var(--ease);
+}
+.banner > svg { color: var(--danger); flex-shrink: 0; margin-top: 1px; }
+.bannerBody { flex: 1; min-width: 0; }
+.bannerTitle {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.bannerList { list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.bannerList li { color: var(--text-2); }
+.bannerList b { font-weight: 650; }
+.bannerList .date { color: var(--muted); font-size: 11.5px; }
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid; place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.iconBtn:hover { background: var(--panel-2); color: var(--text); }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

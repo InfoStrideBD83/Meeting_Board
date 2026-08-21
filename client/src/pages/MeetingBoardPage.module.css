@@ -1,0 +1,231 @@
+/* ══════════════════════════════════════════════════════════════
+   SEGMENTED VIEW SWITCH (Table / Calendar) — page-local, since no
+   other ported page has this control (not part of theme.css)
+   ══════════════════════════════════════════════════════════════ */
+.segmented {
+  display: inline-flex;
+  background: var(--panel-2);
+  padding: 3px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+.seg {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 14px;
+  font-size: 12.5px; font-weight: 600;
+  font-family: var(--font-ui);
+  border: none; background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 7px;
+  transition: color .18s var(--ease), background .18s var(--ease);
+  white-space: nowrap;
+}
+.seg:hover { color: var(--text); }
+.seg[aria-selected="true"] {
+  background: var(--panel);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN / LAYOUT
+   ══════════════════════════════════════════════════════════════ */
+.main {
+  position: relative;
+  z-index: 1;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: clamp(14px, 2vw, 24px) clamp(12px, 2.2vw, 28px) 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.6vw, 20px);
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+}
+
+.pageHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.pageTitle { font-size: clamp(19px, 2.4vw, 25px); font-weight: 750; letter-spacing: -.6px; }
+
+/* ── Toolbar ────────────────────────────────────────────────── */
+.toolbar {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.toolbarRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.toolbarDivider { height: 1px; background: var(--border-soft); margin: 0 -14px; }
+
+.searchWrap { position: relative; flex: 1 1 220px; min-width: 180px; max-width: 380px; }
+.searchWrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
+.searchInput {
+  width: 100%;
+  height: 36px;
+  padding: 0 34px 0 33px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  transition: border-color .18s var(--ease), background .18s var(--ease);
+}
+.searchInput::placeholder { color: var(--faint); }
+.searchInput:focus { outline: none; border-color: var(--accent); background: var(--panel); box-shadow: 0 0 0 3px var(--accent-soft); }
+.searchClear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; border: none; border-radius: 50%;
+  background: var(--panel-3); color: var(--muted);
+  cursor: pointer; display: grid; place-items: center;
+  font-size: 14px; line-height: 1;
+}
+.searchClear:hover { color: var(--text); }
+
+/* Month selector */
+.monthWrap { position: relative; flex-shrink: 0; }
+.monthBar {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 3px;
+}
+.monthNav {
+  width: 28px; height: 28px;
+  border-radius: 7px; border: none;
+  background: transparent; color: var(--muted);
+  cursor: pointer; display: grid; place-items: center;
+  transition: all .15s var(--ease);
+}
+.monthNav:hover { background: var(--panel-3); color: var(--text); }
+.monthTrigger {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: none;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 12.5px; font-weight: 650;
+  padding: 5px 10px; cursor: pointer; border-radius: 7px;
+  white-space: nowrap;
+}
+.monthTrigger:hover { background: var(--panel-3); }
+.monthDropdown {
+  position: absolute;
+  top: calc(100% + 8px); right: 0;
+  z-index: 130;
+  width: 268px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 13px;
+  animation: pop .16s var(--ease);
+}
+.yearHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; font-weight: 700; font-size: 13.5px; }
+.monthGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 11px; }
+.monthGridBtn {
+  padding: 8px 4px; border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--panel-2); color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.monthGridBtn:hover { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
+.monthGridBtn[aria-current="true"] { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+
+/* Member filter chips */
+.filterLabel {
+  font-size: 11px; font-weight: 700; color: var(--faint);
+  text-transform: uppercase; letter-spacing: .6px;
+  margin-right: 2px; white-space: nowrap;
+}
+.chipScroller { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 auto; min-width: 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 12px 6px 8px;
+  border-radius: var(--r-pill);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer; user-select: none;
+  transition: all .16s var(--ease);
+  font-family: var(--font-ui);
+}
+.chip:hover { border-color: var(--border-strong); color: var(--text); }
+.chip[aria-pressed="false"] { opacity: .42; }
+.chipAvatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 9.5px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -.2px;
+}
+.chipCount {
+  font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 600;
+  background: var(--panel-3); color: var(--muted);
+  border-radius: var(--r-pill);
+  padding: 1px 6px;
+}
+.linkBtn {
+  background: none; border: none;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 12px; font-weight: 650;
+  cursor: pointer; padding: 4px 6px; border-radius: 6px;
+  white-space: nowrap;
+}
+.linkBtn:hover { background: var(--accent-soft); }
+
+@keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  .segmented { order: 3; flex: 1 1 100%; }
+  .seg { flex: 1; justify-content: center; }
+}
+
+@media (max-width: 767px) {
+  .main { gap: 12px; padding-left: 12px; padding-right: 12px; }
+  .pageHead { align-items: flex-start; }
+
+  .toolbar { padding: 11px; border-radius: var(--r-lg); }
+  .searchWrap { flex: 1 1 100%; max-width: none; }
+  .monthWrap { flex: 1 1 100%; }
+  .monthBar { width: 100%; justify-content: space-between; }
+  .monthTrigger { flex: 1; justify-content: center; }
+  .monthDropdown { left: 0; right: 0; width: auto; }
+  .filterLabel { flex: 1 1 100%; }
+
+  .chipScroller {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    margin: 0 -11px;
+    padding-left: 11px; padding-right: 11px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, transparent 0, #000 11px, #000 calc(100% - 18px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 11px, #000 calc(100% - 18px), transparent 100%);
+  }
+  .chipScroller::-webkit-scrollbar { height: 0; }
+  .chip { flex-shrink: 0; scroll-snap-align: start; }
+
+  /* Calendar view reclaims the search box's space on small screens,
+     same as the original's `body.cal-mode .search-wrap { display:none }` */
+  .searchWrap.calHidden { display: none; }
+}

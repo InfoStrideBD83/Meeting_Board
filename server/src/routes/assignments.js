@@ -6,11 +6,26 @@ import { requireAuth } from '../middleware/auth.js';
 const router = Router();
 
 const TOPIC_OPTIONS = ['EMStride', 'HRIS', 'CMS', 'AI', 'Others'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validate(row) {
   if (row.topic !== undefined && !TOPIC_OPTIONS.includes(row.topic)) {
     throw new ApiError(400, `topic must be one of: ${TOPIC_OPTIONS.join(', ')}`);
   }
+  if (row.country !== undefined && !row.country) {
+    throw new ApiError(400, 'country cannot be empty');
+  }
+  if (row.assigned_to !== undefined && !UUID_RE.test(row.assigned_to)) {
+    throw new ApiError(400, 'assigned_to must be a valid member id');
+  }
+}
+
+/** Confirms assigned_to refers to a real member, so a bad id fails with a
+ *  clean 400 instead of the DB's raw foreign-key-violation error. */
+async function assertMemberExists(id) {
+  const { data, error } = await supabase.from('members').select('id').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new ApiError(400, 'assigned_to must be an existing member');
 }
 
 /**
@@ -51,6 +66,7 @@ router.post(
       created_by: req.user.sub,
     };
     validate(row);
+    await assertMemberExists(row.assigned_to);
 
     const { data, error } = await supabase.from('assignments').insert(row).select('*').single();
     if (error) throw error;
@@ -86,6 +102,7 @@ router.patch(
     if (req.body.state !== undefined) patch.state = req.body.state || null;
     if (Object.keys(patch).length === 0) throw new ApiError(400, 'No editable fields provided');
     validate(patch);
+    if (patch.assigned_to !== undefined) await assertMemberExists(patch.assigned_to);
 
     const { data, error } = await supabase
       .from('assignments')
