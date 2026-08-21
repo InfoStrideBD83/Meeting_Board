@@ -16,7 +16,12 @@ Config lives in [`render.yaml`](./render.yaml) (a Render Blueprint).
 1. Push this repo to GitHub.
 2. Render dashboard → **New +** → **Blueprint** → select this repo.
    Render reads `render.yaml` and creates the `infostride-meeting-board-api`
-   web service (root dir `server/`, `npm install` → `npm start`).
+   web service (root dir `server/`). The build command installs the server's
+   own deps, then builds the React client (`client/dist`) too, since
+   `server/src/index.js` serves that build as a fallback — this matters even
+   if Vercel is your primary frontend host, since Render's own URL should
+   still work standalone (e.g. for the health check, or if Vercel isn't set
+   up yet).
 3. In the service's **Environment** tab, fill in the secrets marked `sync: false`:
 
    | Variable                    | Value                                                       |

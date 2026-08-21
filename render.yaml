@@ -9,7 +9,10 @@ services:
     runtime: node
     rootDir: server
     plan: free
-    buildCommand: npm install
+    # Builds the server's own deps, then builds the React client (client/dist)
+    # that server/src/index.js serves — Render's rootDir only covers server/,
+    # so the client build has to be triggered explicitly here too.
+    buildCommand: npm install && cd ../client && npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
