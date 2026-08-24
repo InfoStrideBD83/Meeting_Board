@@ -502,6 +502,22 @@ html[data-theme="light"] .tt-sun  { opacity: 1; transform: rotate(0deg) scale(1)
   .profile-btn { padding: 4px; max-width: none; }
 }
 
+/* ── Route-level loading fallback (shown only while a lazy-loaded
+   page's chunk is fetching — usually so brief it never appears) ── */
+.page-loader {
+  min-height: 100vh; min-height: 100dvh;
+  display: grid; place-items: center;
+  background-color: var(--bg);
+}
+.page-loader-spin {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--border-soft);
+  border-top-color: var(--accent);
+  animation: pageLoaderSpin .8s linear infinite;
+}
+@keyframes pageLoaderSpin { to { transform: rotate(360deg); } }
+
 /* ══════════════════════════════════════════════════════════════
    FOOTER — a persistent, theme-matched marquee with company contact
    details, mounted once at the app root (App.jsx) so every page gets
