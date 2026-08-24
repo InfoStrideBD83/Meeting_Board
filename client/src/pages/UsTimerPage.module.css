@@ -216,9 +216,11 @@
   padding: 10px clamp(12px, 2.2vw, 28px);
   display: flex; align-items: center; gap: 14px;
 }
-/* The logo is the same animated 3D <Logo3D variant="header"> used
-   elsewhere, not a static image — see Logo3D.jsx/.css. */
 .brand { display: flex; align-items: center; gap: 11px; min-width: 0; flex-shrink: 0; color: inherit; }
+.brandLogo { height: 27px; width: auto; display: block; flex-shrink: 0; -webkit-user-select: none; user-select: none; }
+.brandLogo:global(.onLight) { display: none; }
+:global(html[data-theme="light"]) .brandLogo:global(.onDark) { display: none; }
+:global(html[data-theme="light"]) .brandLogo:global(.onLight) { display: block; }
 .headerSpacer { flex: 1 1 auto; }
 
 /* The shared workspace switcher and home button (global CSS, used on

@@ -175,9 +175,13 @@
 .headerSpacer { flex: 1; }
 .headerActions { display: flex; align-items: center; gap: 10px; }
 
-/* The logo is the same animated 3D <Logo3D variant="header"> used
-   elsewhere, not a static image — see Logo3D.jsx/.css. */
-.brand { display: flex; align-items: center; flex-shrink: 0; }
+.brandLogo {
+  height: 27px; width: auto; display: block; flex-shrink: 0;
+  -webkit-user-select: none; user-select: none;
+}
+.brandLogo:global(.onDark) { display: none; }
+:global(html[data-theme="dark"]) .brandLogo:global(.onLight) { display: none; }
+:global(html[data-theme="dark"]) .brandLogo:global(.onDark) { display: block; }
 
 /* ---- detail card ---- */
 .card {
