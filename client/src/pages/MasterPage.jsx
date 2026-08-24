@@ -12,6 +12,30 @@ import { Logo3D } from '../components/Logo3D.jsx';
 import { firstName } from '../utils/avatarColor.js';
 import styles from './MasterPage.module.css';
 
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Pointer-tracked 3D tilt for the workspace cards — real perspective/
+ *  rotateX/rotateY driven by cursor position, not just a flat CSS hover.
+ *  Paired with translateZ-layered children (see .cardPreview/.appIcon/
+ *  .appArrow in MasterPage.module.css) so the icon and arrow visibly pop
+ *  toward the viewer as the card tilts. */
+function handleCardTilt(e) {
+  if (prefersReducedMotion()) return;
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top) / rect.height;
+  const rx = (0.5 - py) * 14;
+  const ry = (px - 0.5) * 16;
+  card.style.transform = `translateY(-6px) perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+}
+
+function resetCardTilt(e) {
+  e.currentTarget.style.transform = '';
+}
+
 function todayStr() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -223,7 +247,7 @@ export function MasterPage() {
         <div className={`${styles.appsLabel} reveal d2`}>Open a workspace</div>
 
         <nav className={`${styles.apps} reveal d2`} aria-label="Applications">
-          <Link className={`${styles.appCard} ${styles.cBoard}`} to="/meetings">
+          <Link className={`${styles.appCard} ${styles.cBoard}`} to="/meetings" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
             <span className={styles.cardPreview}>
               <svg viewBox="0 0 200 108" aria-hidden="true">
                 <rect x="0" y="0" width="200" height="108" fill="none"/>
@@ -286,7 +310,7 @@ export function MasterPage() {
             </span>
           </Link>
 
-          <Link className={`${styles.appCard} ${styles.cCalendar}`} to="/calendar">
+          <Link className={`${styles.appCard} ${styles.cCalendar}`} to="/calendar" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
             <span className={styles.cardPreview}>
               <svg viewBox="0 0 200 108" aria-hidden="true">
                 <rect x="10" y="10" width="180" height="88" rx="6" className={styles.artPanel} stroke="var(--border)" strokeWidth="1"/>
@@ -313,7 +337,7 @@ export function MasterPage() {
             </span>
           </Link>
 
-          <Link className={`${styles.appCard} ${styles.cAssignee}`} to="/assignee">
+          <Link className={`${styles.appCard} ${styles.cAssignee}`} to="/assignee" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
             <span className={styles.cardPreview}>
               <svg viewBox="0 0 200 108" aria-hidden="true">
                 <rect x="24" y="88" width="152" height="5" rx="2.5" className={styles.artSoft}/>
@@ -345,7 +369,7 @@ export function MasterPage() {
             </span>
           </Link>
 
-          <Link className={`${styles.appCard} ${styles.cTimer}`} to="/timer">
+          <Link className={`${styles.appCard} ${styles.cTimer}`} to="/timer" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
             <span className={styles.cardPreview}>
               <svg viewBox="0 0 200 108" aria-hidden="true">
                 <g>
@@ -389,7 +413,7 @@ export function MasterPage() {
             </span>
           </Link>
 
-          <Link className={`${styles.appCard} ${styles.cMap}`} to="/map">
+          <Link className={`${styles.appCard} ${styles.cMap}`} to="/map" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
             <span className={styles.cardPreview}>
               <svg viewBox="0 0 200 108" aria-hidden="true">
                 <defs>

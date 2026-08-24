@@ -84,6 +84,25 @@ export function Logo3D({ variant = 'default' }) {
     group.rotation.set(-0.06, -0.5, 0);
     scene.add(group);
 
+    // A small ring of orbiting shards around the mark — purely decorative
+    // extra 3D motion, independent of the chevrons' own rotation.
+    const orbGeo = new THREE.OctahedronGeometry(0.1, 0);
+    const orbCount = 7;
+    const orbMats = [];
+    const orbs = Array.from({ length: orbCount }, (_, i) => {
+      const mat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(cols[i % 2]).convertSRGBToLinear(),
+        metalness: 0.5, roughness: 0.3, transparent: true, opacity: 0.85,
+      });
+      orbMats.push(mat);
+      const mesh = new THREE.Mesh(orbGeo, mat);
+      const radius = 2.6 + (i % 3) * 0.55;
+      const heightPhase = (i / orbCount) * Math.PI * 2;
+      const speed = 0.16 + (i % 4) * 0.05;
+      scene.add(mesh);
+      return { mesh, radius, phase: heightPhase, speed, bobPhase: i * 1.3 };
+    });
+
     const key = new THREE.DirectionalLight(0xffffff, 0.85);
     const fill = new THREE.DirectionalLight(0xc7d2fe, 0.42);
     const rim = new THREE.DirectionalLight(0x818cf8, 0.75);
@@ -108,6 +127,9 @@ export function Logo3D({ variant = 'default' }) {
       const c = themeColours();
       for (let i = 0; i < mats.length; i++) {
         mats[i].color.set(new THREE.Color(c[i]).convertSRGBToLinear());
+      }
+      for (let i = 0; i < orbMats.length; i++) {
+        orbMats[i].color.set(new THREE.Color(c[i % 2]).convertSRGBToLinear());
       }
       setLights();
     };
@@ -143,6 +165,17 @@ export function Logo3D({ variant = 'default' }) {
         group.position.y = Math.sin(t * 1.05) * 0.11;
       }
 
+      orbs.forEach((o) => {
+        const angle = o.phase + t * o.speed * (reduce ? 0 : 1);
+        o.mesh.position.set(
+          Math.cos(angle) * o.radius,
+          Math.sin(t * 0.6 + o.bobPhase) * 0.5,
+          Math.sin(angle) * o.radius * 0.55 - 1.4,
+        );
+        o.mesh.rotation.x = t * 0.8 + o.bobPhase;
+        o.mesh.rotation.y = t * 0.6;
+      });
+
       renderer.render(scene, camera);
       rafId = requestAnimationFrame(frame);
     }
@@ -165,7 +198,9 @@ export function Logo3D({ variant = 'default' }) {
       mount.removeEventListener('pointerleave', onPointerLeave);
       themeRepaintRef.current = null;
       geo.dispose();
+      orbGeo.dispose();
       mats.forEach((m) => m.dispose());
+      orbMats.forEach((m) => m.dispose());
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
     };
