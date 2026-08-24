@@ -170,6 +170,7 @@
   min-height: 62px;
   padding: 10px clamp(12px, 2.2vw, 28px);
   display: flex; align-items: center; gap: 14px;
+  perspective: 400px;
 }
 
 .headerSpacer { flex: 1; }
@@ -178,6 +179,18 @@
 .brandLogo {
   height: 27px; width: auto; display: block; flex-shrink: 0;
   -webkit-user-select: none; user-select: none;
+  transform-style: preserve-3d;
+  animation: brandLogoSway 6s ease-in-out infinite;
+  transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+}
+.brandLogo:hover { animation-play-state: paused; transform: rotateY(20deg) scale(1.05); }
+@keyframes brandLogoSway {
+  0%, 100% { transform: rotateY(-12deg); }
+  50%      { transform: rotateY(12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brandLogo { animation: none; }
+  .brandLogo:hover { transform: none; }
 }
 .brandLogo:global(.onDark) { display: none; }
 :global(html[data-theme="dark"]) .brandLogo:global(.onLight) { display: none; }

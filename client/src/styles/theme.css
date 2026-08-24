@@ -227,10 +227,26 @@ body {
 .brand {
   display: flex; align-items: center; gap: 11px;
   min-width: 0; flex-shrink: 0; color: inherit;
+  perspective: 400px;
 }
 .brand-logo {
   height: 27px; width: auto; display: block; flex-shrink: 0;
   -webkit-user-select: none; user-select: none;
+  transform-style: preserve-3d;
+  animation: brandLogoSway 6s ease-in-out infinite;
+  transition: transform .25s var(--ease);
+}
+.brand:hover .brand-logo {
+  animation-play-state: paused;
+  transform: rotateY(20deg) scale(1.05);
+}
+@keyframes brandLogoSway {
+  0%, 100% { transform: rotateY(-12deg); }
+  50%      { transform: rotateY(12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo { animation: none; }
+  .brand:hover .brand-logo { transform: none; }
 }
 html[data-theme="light"] .brand-logo.on-dark  { display: none; }
 html[data-theme="dark"]  .brand-logo.on-light { display: none; }
