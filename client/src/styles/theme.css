@@ -223,35 +223,13 @@ body {
 .header-spacer { flex: 1; }
 .header-actions { display: flex; align-items: center; gap: 10px; }
 
-/* ── Brand (home link + logo, on every non-dashboard page's header) ── */
+/* ── Brand (home link + logo, on every non-dashboard page's header) ──
+   The logo itself is now the same animated 3D <Logo3D variant="header">
+   used on the dashboard/login/signup hero, not a static image — see
+   Logo3D.jsx/.css for its markup and animation. */
 .brand {
   display: flex; align-items: center; gap: 11px;
   min-width: 0; flex-shrink: 0; color: inherit;
-  perspective: 400px;
-}
-.brand-logo {
-  height: 27px; width: auto; display: block; flex-shrink: 0;
-  -webkit-user-select: none; user-select: none;
-  transform-style: preserve-3d;
-  animation: brandLogoSway 6s ease-in-out infinite;
-  transition: transform .25s var(--ease);
-}
-.brand:hover .brand-logo {
-  animation-play-state: paused;
-  transform: rotateY(20deg) scale(1.05);
-}
-@keyframes brandLogoSway {
-  0%, 100% { transform: rotateY(-12deg); }
-  50%      { transform: rotateY(12deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .brand-logo { animation: none; }
-  .brand:hover .brand-logo { transform: none; }
-}
-html[data-theme="light"] .brand-logo.on-dark  { display: none; }
-html[data-theme="dark"]  .brand-logo.on-light { display: none; }
-@media (max-width: 767px) {
-  .brand-logo { height: 23px; }
 }
 
 /* ── Generic buttons (used throughout the sub-pages' headers/toolbars) ── */

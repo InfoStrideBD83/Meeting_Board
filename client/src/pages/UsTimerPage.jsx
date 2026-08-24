@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState, createRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AppSwitcher } from '../components/AppSwitcher.jsx';
+import { HeaderLogo } from '../components/HeaderLogo.jsx';
 import styles from './UsTimerPage.module.css';
-import logoLight from '../../assets/logo-light.png';
-import logoDark from '../../assets/logo-dark-cropped.png';
 
 const FEATURE = { label: 'IST', city: 'New Delhi', tz: 'Asia/Kolkata' };
 const ROW = [
@@ -270,8 +269,7 @@ export function UsTimerPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
           </Link>
           <div className={styles.brand}>
-            <img className={`${styles.brandLogo} onLight`} src={logoLight} alt="InfoStride" width="2560" height="349" />
-            <img className={`${styles.brandLogo} onDark`} src={logoDark} alt="InfoStride" width="853" height="120" />
+            <HeaderLogo />
           </div>
           <div className={styles.headerSpacer} />
           <AppSwitcher />

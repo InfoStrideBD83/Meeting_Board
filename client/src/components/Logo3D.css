@@ -90,3 +90,26 @@ html[data-theme="dark"]  .wordmark.on-light { display: none; }
 .logo-stage--signup .wordmark {
   height: clamp(20px, 2.6vw, 27px); margin-top: clamp(5px, 1vw, 10px);
 }
+
+/* Compact horizontal lockup for the top-left header (Meeting Board,
+   Assignee, US Timer, US Map) — the same live 3D mark, just small and
+   side-by-side with the wordmark instead of stacked in a big hero. */
+.logo-stage--header {
+  flex-direction: row;
+  width: auto; max-width: none;
+  margin: 0;
+  gap: 9px;
+}
+.logo-stage--header .logo-glow,
+.logo-stage--header .logo-floor { display: none; }
+.logo-stage--header .logo-mount {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+}
+.logo-stage--header .wordmark {
+  height: 22px; margin-top: 0;
+}
+@media (max-width: 767px) {
+  .logo-stage--header .logo-mount { width: 26px; height: 26px; }
+  .logo-stage--header .wordmark { height: 19px; }
+}
