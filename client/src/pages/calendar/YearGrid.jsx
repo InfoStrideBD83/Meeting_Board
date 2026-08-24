@@ -1,12 +1,18 @@
 import { MONTH_SHORT } from '../meetingBoard/dateUtils.js';
 import styles from './YearGrid.module.css';
 
+// Monday–Saturday only, matching the week/month views — Sundays are
+// skipped entirely rather than shown as a column.
 function miniMonthCells(month, year) {
-  const startOffset = new Date(year, month, 1).getDay();
+  const firstWeekday = new Date(year, month, 1).getDay(); // 0=Sun..6=Sat
+  const leadingBlanks = firstWeekday === 0 ? 0 : firstWeekday - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  for (let i = 0; i < leadingBlanks; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (new Date(year, month, d).getDay() === 0) continue;
+    cells.push(d);
+  }
   return cells;
 }
 

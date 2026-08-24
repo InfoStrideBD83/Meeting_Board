@@ -3,13 +3,15 @@ import { CST_ZONE_IDX } from './slotUtils.js';
 import styles from './MonthGrid.module.css';
 
 const CST = ZONES[CST_ZONE_IDX];
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** A standard month grid. Each day shows how many meetings (CST-local)
- *  fall on it; clicking a day jumps into the week view for that week. */
+/** A standard month grid, Monday–Saturday (no Sunday column). Each day
+ *  shows how many meetings (CST-local) fall on it; clicking a day jumps
+ *  into the week view for that week. */
 export function MonthGrid({ month, year, meetings, onSelectDay }) {
   const todayStr = toDateStr(new Date());
-  const startOffset = new Date(year, month, 1).getDay();
+  const firstWeekday = new Date(year, month, 1).getDay(); // 0=Sun..6=Sat
+  const leadingBlanks = firstWeekday === 0 ? 0 : firstWeekday - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const counts = {};
@@ -19,9 +21,12 @@ export function MonthGrid({ month, year, meetings, onSelectDay }) {
   });
 
   const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  while (cells.length % 7 !== 0) cells.push(null);
+  for (let i = 0; i < leadingBlanks; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (new Date(year, month, d).getDay() === 0) continue; // skip Sundays entirely
+    cells.push(d);
+  }
+  while (cells.length % 6 !== 0) cells.push(null);
 
   return (
     <div className={styles.wrap}>

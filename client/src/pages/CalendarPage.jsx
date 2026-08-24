@@ -38,7 +38,10 @@ export function CalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMeeting, setModalMeeting] = useState(null);
 
-  const days = useMemo(() => visibleDays(weekStart, 7), [weekStart]);
+  // weekStart itself stays Sunday-anchored (matches the shared week-math
+  // everywhere else in the app); Sunday just isn't a bookable day, so it's
+  // dropped from what's actually displayed here.
+  const days = useMemo(() => visibleDays(weekStart, 7).slice(1), [weekStart]);
 
   const bootstrap = useCallback(() => {
     setLoading(true);
