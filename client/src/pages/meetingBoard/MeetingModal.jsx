@@ -85,6 +85,15 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
     setTimeout(() => { document.getElementById('m_topic_select')?.focus(); }, 30);
   }, []);
 
+  // Lock background scroll while the modal is open — on a long form, an
+  // unlocked page behind it makes it easy to end up scrolling/clicking the
+  // backdrop by mistake, which closes the modal.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   function set(patch) { setForm((f) => ({ ...f, ...patch })); }
 
   function onCountryChange(value) {
@@ -119,15 +128,11 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
     const country = form.countrySelect === 'Others' ? form.countryOther.trim() : form.countrySelect;
     const stateName = form.stateNameSelect === 'Others' ? form.stateNameOther.trim() : form.stateNameSelect;
     const stateCode = form.stateCodeSelect === 'Others' ? form.stateCodeOther.trim() : form.stateCodeSelect;
-    if (!country) { alert('Please provide a country before saving.'); return; }
-    if (!stateName) { alert('Please provide a state before saving.'); return; }
-    if (!stateCode) { alert('Please provide a state code before saving.'); return; }
 
     const requiredText = [
       [form.pocName, 'the point-of-contact name'],
       [form.pocPhone, 'a phone number'],
       [form.pocEmail, 'an email address'],
-      [form.pocCountyName, 'a county / company name'],
     ];
     for (const [v, label] of requiredText) {
       if (!v.trim()) { alert(`Please provide ${label} before saving.`); return; }
@@ -245,7 +250,7 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
             </div>
 
             <div className={styles.fgroup}>
-              <label htmlFor="m_country">Country <span className={styles.reqStar}>*</span></label>
+              <label htmlFor="m_country">Country <span className={styles.fieldHint} style={{ display: 'inline', textTransform: 'none' }}>(optional)</span></label>
               <select id="m_country" className={styles.control} value={form.countrySelect} onChange={(e) => onCountryChange(e.target.value)}>
                 <option value="">Select a country</option>
                 {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -254,14 +259,14 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
             </div>
             {form.countrySelect === 'Others' && (
               <div className={styles.fgroup}>
-                <label htmlFor="m_country_other">Country name <span className={styles.reqStar}>*</span></label>
+                <label htmlFor="m_country_other">Country name</label>
                 <input id="m_country_other" type="text" className={styles.control} value={form.countryOther} onChange={(e) => set({ countryOther: e.target.value })} placeholder="Enter the country" />
               </div>
             )}
 
             <div className={styles.gridThree}>
               <div className={styles.fgroup}>
-                <label htmlFor="m_poc_state_name">State <span className={styles.reqStar}>*</span></label>
+                <label htmlFor="m_poc_state_name">State <span className={styles.fieldHint} style={{ display: 'inline', textTransform: 'none' }}>(optional)</span></label>
                 <select id="m_poc_state_name" className={styles.control} value={form.stateNameSelect} onChange={(e) => onStateNameChange(e.target.value)}>
                   <option value="">Select a state</option>
                   {stateList.map(([name]) => <option key={name} value={name}>{name}</option>)}
@@ -269,7 +274,7 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
                 </select>
               </div>
               <div className={styles.fgroup}>
-                <label htmlFor="m_poc_state_code">State code <span className={styles.reqStar}>*</span></label>
+                <label htmlFor="m_poc_state_code">State code <span className={styles.fieldHint} style={{ display: 'inline', textTransform: 'none' }}>(optional)</span></label>
                 <select id="m_poc_state_code" className={styles.control} value={form.stateCodeSelect} onChange={(e) => set({ stateCodeSelect: e.target.value, stateCodeOther: '' })}>
                   <option value="">Select a code</option>
                   {stateMatch && <option value={stateMatch[1]}>{stateMatch[1]}</option>}
@@ -283,19 +288,19 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
             </div>
             {form.stateNameSelect === 'Others' && (
               <div className={styles.fgroup}>
-                <label htmlFor="m_poc_state_other">State name <span className={styles.reqStar}>*</span></label>
+                <label htmlFor="m_poc_state_other">State name</label>
                 <input id="m_poc_state_other" type="text" className={styles.control} value={form.stateNameOther} onChange={(e) => set({ stateNameOther: e.target.value })} placeholder="Enter the state / province" />
               </div>
             )}
             {form.stateCodeSelect === 'Others' && (
               <div className={styles.fgroup}>
-                <label htmlFor="m_poc_state_code_other">State code <span className={styles.reqStar}>*</span></label>
+                <label htmlFor="m_poc_state_code_other">State code</label>
                 <input id="m_poc_state_code_other" type="text" className={styles.control} value={form.stateCodeOther} onChange={(e) => set({ stateCodeOther: e.target.value })} placeholder="e.g. CA" />
               </div>
             )}
 
             <div className={styles.fgroup}>
-              <label htmlFor="m_poc_county_name">County / Company <span className={styles.reqStar}>*</span></label>
+              <label htmlFor="m_poc_county_name">County / Company <span className={styles.fieldHint} style={{ display: 'inline', textTransform: 'none' }}>(optional)</span></label>
               <input id="m_poc_county_name" type="text" className={styles.control} value={form.pocCountyName} onChange={(e) => set({ pocCountyName: e.target.value })} placeholder="Los Angeles County" />
             </div>
           </div>
