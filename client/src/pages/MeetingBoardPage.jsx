@@ -460,6 +460,7 @@ export function MeetingBoardPage() {
           meeting={editingMeeting}
           members={members}
           isAdmin={isAdmin}
+          currentMemberId={currentMember && currentMember.id}
           onSave={saveMeeting}
           onClose={closeModal}
           onDelete={deleteMeeting}

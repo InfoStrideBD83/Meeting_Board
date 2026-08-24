@@ -73,9 +73,9 @@ function buildInitialForm(initial, defaultPersonId) {
    -> State code cascade (and the Topic "Others" toggle) through normal
    React state, the same pattern AssigneePage's own country/state
    cascade already uses. */
-export function MeetingModal({ meeting, members, isAdmin, onSave, onClose, onDelete }) {
+export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSave, onClose, onDelete }) {
   const isEdit = Boolean(meeting && meeting.id);
-  const defaultPersonId = members[0] ? members[0].id : '';
+  const defaultPersonId = currentMemberId || (members[0] ? members[0].id : '');
   const [form, setForm] = useState(() => buildInitialForm(meeting, defaultPersonId));
 
   // Escape-to-close is handled centrally by the parent page (matching the
