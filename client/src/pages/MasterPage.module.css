@@ -198,6 +198,7 @@
 .cTimer    { --tint: var(--warn-soft);    --tint-fg: var(--warn);    --tint-line: color-mix(in srgb, var(--warn) 40%, transparent); }
 .cMap      { --tint: var(--success-soft); --tint-fg: var(--success); --tint-line: color-mix(in srgb, var(--success) 40%, transparent); }
 .cAssignee { --tint: color-mix(in srgb, var(--map-pst) 15%, transparent); --tint-fg: var(--map-pst); --tint-line: color-mix(in srgb, var(--map-pst) 40%, transparent); }
+.cCalendar { --tint: color-mix(in srgb, var(--map-cst) 15%, transparent); --tint-fg: var(--map-cst); --tint-line: color-mix(in srgb, var(--map-cst) 40%, transparent); }
 
 /* ── Preview artwork — shared bits ────────────────────────────── */
 .artPanel  { fill: var(--panel); }

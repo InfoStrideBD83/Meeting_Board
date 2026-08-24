@@ -387,6 +387,7 @@ html[data-theme="dark"]  .brand-logo.on-light { display: none; }
 .switcher-timer    { --tint: var(--warn-soft);    --tint-fg: var(--warn);    --tint-line: color-mix(in srgb, var(--warn) 40%, transparent); }
 .switcher-map      { --tint: var(--success-soft); --tint-fg: var(--success); --tint-line: color-mix(in srgb, var(--success) 40%, transparent); }
 .switcher-assignee { --tint: color-mix(in srgb, var(--map-pst) 15%, transparent); --tint-fg: var(--map-pst); --tint-line: color-mix(in srgb, var(--map-pst) 40%, transparent); }
+.switcher-calendar { --tint: color-mix(in srgb, var(--map-cst) 15%, transparent); --tint-fg: var(--map-cst); --tint-line: color-mix(in srgb, var(--map-cst) 40%, transparent); }
 
 /* ── Theme toggle ──────────────────────────────────────────────────
    A round icon button (matches the header's notif-btn sizing) whose

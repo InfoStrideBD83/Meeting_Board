@@ -9,6 +9,12 @@ const APPS = [
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 4.5v-2M16 4.5v-2M7.5 13.5h4M7.5 17h7"/></svg>,
   },
   {
+    to: '/calendar',
+    label: 'Calendar',
+    tint: 'switcher-calendar',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 10h18M8 2.5v4M16 2.5v4"/></svg>,
+  },
+  {
     to: '/assignee',
     label: 'Assignee',
     tint: 'switcher-assignee',

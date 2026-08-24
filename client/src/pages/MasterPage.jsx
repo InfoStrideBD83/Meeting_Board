@@ -286,6 +286,34 @@ export function MasterPage() {
             </span>
           </Link>
 
+          <Link className={`${styles.appCard} ${styles.cCalendar}`} to="/calendar">
+            <span className={styles.cardPreview}>
+              <svg viewBox="0 0 200 108" aria-hidden="true">
+                <rect x="10" y="10" width="180" height="88" rx="6" className={styles.artPanel} stroke="var(--border)" strokeWidth="1"/>
+                <rect x="10" y="10" width="180" height="18" rx="6" fill="var(--map-cst)" opacity=".22"/>
+                <line x1="10" y1="28" x2="190" y2="28" stroke="var(--border-soft)" strokeWidth="1"/>
+                <text x="100" y="21.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--map-cst)">8:00 AM – 1:00 PM CST</text>
+                <g stroke="var(--border-soft)" strokeWidth="1">
+                  <line x1="46" y1="28" x2="46" y2="98"/><line x1="82" y1="28" x2="82" y2="98"/>
+                  <line x1="118" y1="28" x2="118" y2="98"/><line x1="154" y1="28" x2="154" y2="98"/>
+                  <line x1="10" y1="46" x2="190" y2="46"/><line x1="10" y1="64" x2="190" y2="64"/><line x1="10" y1="82" x2="190" y2="82"/>
+                </g>
+                <rect x="48" y="48" width="32" height="14" rx="4" fill="var(--map-cst)" opacity=".8"/>
+                <rect x="120" y="30" width="32" height="14" rx="4" fill="var(--accent)" opacity=".8"/>
+                <rect x="84" y="66" width="32" height="30" rx="4" fill="var(--warn)" opacity=".75"/>
+                <g className={styles.artPing}>
+                  <circle cx="156" cy="73" r="8" fill="var(--success)" opacity=".18"/>
+                  <circle cx="156" cy="73" r="3.4" fill="var(--success)"/>
+                </g>
+              </svg>
+            </span>
+            <span className={styles.cardFoot}>
+              <span className={styles.appIcon}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 10h18M8 2.5v4M16 2.5v4"/></svg></span>
+              <span className={styles.appTitle}>Calendar</span>
+              <span className={styles.appArrow}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
+            </span>
+          </Link>
+
           <Link className={`${styles.appCard} ${styles.cAssignee}`} to="/assignee">
             <span className={styles.cardPreview}>
               <svg viewBox="0 0 200 108" aria-hidden="true">
