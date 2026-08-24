@@ -173,7 +173,7 @@ export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSav
           <button type="button" className={styles.popClose} onClick={onClose} aria-label="Close">&times;</button>
         </div>
 
-        <form onSubmit={submit}>
+        <form className={styles.formShell} onSubmit={submit}>
           <div className={styles.modalBody}>
             <div className={styles.fieldsetLabel}>Meeting</div>
 

@@ -35,8 +35,21 @@
 .modalHead h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -.2px; }
 .modalHead p { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
+/* The bare <form> wrapping modalBody/modalFoot is a flex child of
+   .modal, but flex items default to min-height:auto and won't shrink
+   below their content's natural height — without this, modalBody's own
+   overflow-y:auto never actually gets a bounded height to scroll within,
+   and .modal's overflow:hidden just clips the rest of the form instead. */
+.formShell {
+  display: flex; flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 .modalBody {
   padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;
+  flex: 1 1 auto;
+  min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
 }
@@ -103,6 +116,7 @@ select.control:disabled { opacity: .55; cursor: not-allowed; }
   border-top: 1px solid var(--border);
   display: flex; align-items: center; justify-content: flex-end; gap: 10px;
   background: var(--panel-2);
+  flex-shrink: 0;
 }
 .dangerText { color: var(--danger); margin-right: auto; }
 .dangerText:hover { border-color: var(--danger-line); background: var(--danger-soft); }
