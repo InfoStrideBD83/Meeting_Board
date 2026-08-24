@@ -216,7 +216,12 @@ export function UsMapPage() {
       return sp;
     }
 
-    MAP.s.forEach((st) => {
+    // A single bright, additive-blended border colour for every state — the
+    // "illuminated circuit" glow — rather than each state's own muted zone
+    // tint, so borders read as a consistent lit network across the map.
+    const BORDER_GLOW = new THREE.Color(0x60d1ff).convertSRGBToLinear();
+
+    MAP.s.forEach((st, stIdx) => {
       const zone = ZONES[ZONE_OF[st.i]];
       const top = new THREE.Color(zone.top).convertSRGBToLinear();
       const side = top.clone().offsetHSL(0, 0.03, -0.16);
@@ -232,7 +237,10 @@ export function UsMapPage() {
       materials.push(topMat, sideMat);
 
       const g = new THREE.Group();
-      g.userData = { id: st.i, name: st.n, lift: 0, topMat, sideMat };
+      // `phase` staggers each state's idle glow pulse (see the frame loop)
+      // so the whole map doesn't breathe in lockstep — reads as scattered
+      // lights coming up across the country instead of one uniform flash.
+      g.userData = { id: st.i, name: st.n, lift: 0, topMat, sideMat, lineMats: [], phase: stIdx * 0.73 };
 
       st.r.forEach((flat) => {
         const shape = new THREE.Shape();
@@ -251,8 +259,12 @@ export function UsMapPage() {
         for (let j = 0; j < flat.length; j += 2) pts.push(new THREE.Vector3(flat[j], flat[j + 1], DEPTH + 0.03));
         const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
         geometries.push(lineGeo);
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x3b4762, transparent: true, opacity: 0.45 });
+        const lineMat = new THREE.LineBasicMaterial({
+          color: BORDER_GLOW, transparent: true, opacity: 0.4,
+          blending: THREE.AdditiveBlending, depthWrite: false,
+        });
         materials.push(lineMat);
+        g.userData.lineMats.push(lineMat);
         const line = new THREE.LineLoop(lineGeo, lineMat);
         g.add(line);
       });
@@ -419,10 +431,12 @@ export function UsMapPage() {
     /* ================= frame loop ================= */
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const LERP = REDUCED ? 1 : 0.14;
+    const clockStart = performance.now();
     let rafId;
 
     function frame() {
       rafId = requestAnimationFrame(frame);
+      const t = (performance.now() - clockStart) / 1000;
 
       raycaster.setFromCamera(ndc, camera);
       const hits = raycaster.intersectObjects(pickMeshes);
@@ -452,6 +466,13 @@ export function UsMapPage() {
         const m = g.userData.topMat;
         m.emissiveIntensity += (targetGlow - m.emissiveIntensity) * LERP;
         g.userData.sideMat.emissiveIntensity = m.emissiveIntensity * 0.6;
+
+        // Borders idle-pulse (staggered per state via `phase`) and flare
+        // brighter on top of that when the state is hovered/selected,
+        // riding the same lerped glow value as the fill's emissive.
+        const idlePulse = REDUCED ? 0.5 : 0.5 + 0.5 * Math.sin(t * 1.6 + g.userData.phase);
+        const lineOpacity = Math.min(1, 0.28 + idlePulse * 0.3 + m.emissiveIntensity * 2.6);
+        for (const lm of g.userData.lineMats) lm.opacity = lineOpacity;
       }
 
       renderer.render(scene, camera);
