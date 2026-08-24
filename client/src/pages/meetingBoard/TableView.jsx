@@ -404,7 +404,7 @@ export function TableView({
             </tr>
           </thead>
           <tbody>
-            {meetings.map((m) => {
+            {meetings.map((m, idx) => {
               const member = memberOf(m.person_id);
               const zone = ZONES[m.zone_index] || ZONES[0];
               const startUTC = toUTC(m.date, m.time, zone.iana);
@@ -414,7 +414,11 @@ export function TableView({
               const manageable = canManageMeeting(m);
 
               return (
-                <tr key={m.id} className={conflict ? styles.isConflict : ''}>
+                <tr
+                  key={m.id}
+                  className={conflict ? styles.isConflict : ''}
+                  style={{ animationDelay: `${Math.min(idx, 20) * 25}ms` }}
+                >
                   <td className={styles.colPerson}>
                     <div className={styles.personCell}>
                       <Avatar name={member.name || '—'} color={member.color} size={26} />

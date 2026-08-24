@@ -101,7 +101,7 @@
   box-shadow: var(--shadow);
   overflow: hidden;
 }
-.tableScroll { overflow-x: auto; }
+.tableScroll { overflow-x: auto; perspective: 1400px; }
 /* No forced width/min-width — each column sizes to its own header label
    and cell content, only growing past the scroll container (triggering
    horizontal scroll) when the content genuinely needs it. */
@@ -123,14 +123,36 @@
   border-bottom: 2px solid var(--border);
 }
 .tbl thead th.c { text-align: center; }
+@keyframes rowIn3D {
+  from { opacity: 0; transform: perspective(800px) rotateX(-14deg) translateY(8px); }
+  to   { opacity: 1; transform: perspective(800px) rotateX(0) translateY(0); }
+}
+.tbl tbody tr {
+  animation: rowIn3D .42s var(--ease) backwards;
+  transform-style: preserve-3d;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tbl tbody tr { animation: none; }
+}
+
 .tbl tbody td {
   padding: 11px 12px;
   border-bottom: 1px solid var(--border-soft);
   vertical-align: middle;
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease);
 }
 .tbl tbody tr:hover { background: var(--accent-soft); }
 .tbl tbody tr:last-child td { border-bottom: none; }
 .tbl tbody td.c { text-align: center; }
+
+/* A hovered row lifts toward the viewer as one flat plane — every cell
+   gets the same translateZ, so the row pops in 3D (via the
+   .tableScroll perspective above) without any cell drifting out of
+   alignment with its neighbors. */
+.tbl tbody tr:hover td {
+  transform: translateZ(10px);
+  box-shadow: 0 10px 18px -10px var(--accent-line), var(--shadow-sm);
+}
 
 .personCell { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
 .personName { font-weight: 650; font-size: 13px; }

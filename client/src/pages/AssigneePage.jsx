@@ -279,11 +279,11 @@ export function AssigneePage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredAssignments.map((a) => {
+                        {filteredAssignments.map((a, idx) => {
                           const m = members.find((x) => x.id === a.assigned_to);
                           const manageable = canManageAssignment(a);
                           return (
-                            <tr key={a.id}>
+                            <tr key={a.id} style={{ animationDelay: `${Math.min(idx, 20) * 25}ms` }}>
                               <td className={styles.c}>
                                 <span className={styles.personCell}>
                                   <Avatar name={m ? m.name : '?'} color={avatarColor(a.assigned_to, members)} size={26} />
