@@ -11,7 +11,7 @@ const Logo3D = lazy(() => import('./Logo3D.jsx').then((m) => ({ default: m.Logo3
 export function HeaderLogo() {
   return (
     <Suspense fallback={null}>
-      <Logo3D variant="header" />
+      <Logo3D variant="header" showWordmark={false} />
     </Suspense>
   );
 }

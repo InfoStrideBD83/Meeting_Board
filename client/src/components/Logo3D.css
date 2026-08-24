@@ -91,25 +91,20 @@ html[data-theme="dark"]  .wordmark.on-light { display: none; }
   height: clamp(20px, 2.6vw, 27px); margin-top: clamp(5px, 1vw, 10px);
 }
 
-/* Compact horizontal lockup for the top-left header (Meeting Board,
-   Assignee, US Timer, US Map) — the same live 3D mark, just small and
-   side-by-side with the wordmark instead of stacked in a big hero. */
+/* Compact stand-in for the top-left header logo (Meeting Board,
+   Assignee, US Timer, US Map) — just the live 3D mark at a small,
+   single-element size (no separate wordmark image alongside it, so
+   there's still exactly one logo in the corner, now animated instead
+   of static). */
 .logo-stage--header {
-  flex-direction: row;
   width: auto; max-width: none;
   margin: 0;
-  gap: 9px;
 }
 .logo-stage--header .logo-glow,
 .logo-stage--header .logo-floor { display: none; }
 .logo-stage--header .logo-mount {
-  width: 30px; height: 30px;
-  flex-shrink: 0;
-}
-.logo-stage--header .wordmark {
-  height: 22px; margin-top: 0;
+  width: 34px; height: 34px;
 }
 @media (max-width: 767px) {
-  .logo-stage--header .logo-mount { width: 26px; height: 26px; }
-  .logo-stage--header .wordmark { height: 19px; }
+  .logo-stage--header .logo-mount { width: 28px; height: 28px; }
 }

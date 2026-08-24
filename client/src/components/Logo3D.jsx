@@ -13,7 +13,7 @@ import './Logo3D.css';
  *  renderer, cancel the animation frame, remove listeners) is explicit
  *  since a React unmount — not a full page navigation — is now what
  *  ends this scene's life. */
-export function Logo3D({ variant = 'default' }) {
+export function Logo3D({ variant = 'default', showWordmark = true }) {
   const mountRef = useRef(null);
   const themeRepaintRef = useRef(null);
   const { theme } = useTheme();
@@ -216,8 +216,12 @@ export function Logo3D({ variant = 'default' }) {
       <div className="logo-glow" aria-hidden="true" />
       <div className="logo-mount" ref={mountRef} role="img" aria-label="InfoStride animated logo" />
       <div className="logo-floor" aria-hidden="true" />
-      <img className="wordmark on-light" src={logoLight} alt="InfoStride" width="2560" height="349" />
-      <img className="wordmark on-dark" src={logoDark} alt="InfoStride" width="853" height="120" />
+      {showWordmark && (
+        <>
+          <img className="wordmark on-light" src={logoLight} alt="InfoStride" width="2560" height="349" />
+          <img className="wordmark on-dark" src={logoDark} alt="InfoStride" width="853" height="120" />
+        </>
+      )}
     </section>
   );
 }
