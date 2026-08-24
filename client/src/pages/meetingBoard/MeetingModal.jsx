@@ -73,7 +73,7 @@ function buildInitialForm(initial, defaultPersonId) {
    -> State code cascade (and the Topic "Others" toggle) through normal
    React state, the same pattern AssigneePage's own country/state
    cascade already uses. */
-export function MeetingModal({ meeting, members, currentMemberId, onSave, onClose, onDelete }) {
+export function MeetingModal({ meeting, members, isAdmin, currentMemberId, onSave, onClose, onDelete }) {
   const isEdit = Boolean(meeting && meeting.id);
   const defaultPersonId = currentMemberId || (members[0] ? members[0].id : '');
   const [form, setForm] = useState(() => buildInitialForm(meeting, defaultPersonId));
@@ -189,9 +189,10 @@ export function MeetingModal({ meeting, members, currentMemberId, onSave, onClos
             <div className={styles.gridTwo}>
               <div className={styles.fgroup}>
                 <label htmlFor="m_person">Scheduled By <span className={styles.reqStar}>*</span></label>
-                <select id="m_person" className={styles.control} value={form.personId} onChange={(e) => set({ personId: e.target.value })}>
+                <select id="m_person" className={styles.control} disabled={!isAdmin} value={form.personId} onChange={(e) => set({ personId: e.target.value })}>
                   {members.map((mem) => <option key={mem.id} value={mem.id}>{mem.name}</option>)}
                 </select>
+                {!isAdmin && <p className={styles.fieldHint}>Only an admin can reassign this meeting.</p>}
               </div>
               <div className={styles.fgroup}>
                 <label htmlFor="m_status">Status <span className={styles.reqStar}>*</span></label>
