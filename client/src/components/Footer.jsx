@@ -12,6 +12,7 @@ const ITEMS = [
   { icon: PinIcon, text: 'USA — 7000 N Mopac Expressway, Suite 200, Austin, TX 78731, USA' },
   { icon: PinIcon, text: 'India (Mohali) — WorldTech Square, 2nd Floor, Plot No. I-15, IT City Road, Sector 83, Mohali, Punjab 140306' },
   { icon: PinIcon, text: 'India (Noida) — 502, 5th Floor, Regus Tower, Infostride Technologies Pvt. Ltd., Sector 142, Noida, Uttar Pradesh 201305' },
+  { icon: null, text: '© 2026 InfoStride, Inc. All rights reserved.' },
 ];
 
 function Track() {
