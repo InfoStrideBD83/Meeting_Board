@@ -109,6 +109,26 @@ function AnalogClock({ hourRef, minRef, secGroupRef }) {
   );
 }
 
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Pointer-tracked 3D tilt for the feature clock and the 4 zone cards —
+ *  same technique as the dashboard's workspace cards. */
+function handleZoneTilt(e) {
+  if (prefersReducedMotion()) return;
+  const el = e.currentTarget;
+  const rect = el.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top) / rect.height;
+  const rx = (0.5 - py) * 10;
+  const ry = (px - 0.5) * 12;
+  el.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+}
+function resetZoneTilt(e) {
+  e.currentTarget.style.transform = '';
+}
+
 function setHourMin(refs, h, m, s) {
   const hA = (((h % 12) + m / 60 + s / 3600) / 12) * 360;
   const mA = ((m + s / 60) / 60) * 360;
@@ -259,7 +279,11 @@ export function UsTimerPage() {
       </header>
 
       <div className={styles.stage} ref={stageRef}>
-        <section className={`${styles.feature} ${featIsNight ? styles.isNight : ''}`}>
+        <section
+          className={`${styles.feature} ${featIsNight ? styles.isNight : ''}`}
+          onMouseMove={handleZoneTilt}
+          onMouseLeave={resetZoneTilt}
+        >
           <div className={styles.eyebrow}>India Standard Time</div>
           <div className={styles.featureClock}>
             <AnalogClock hourRef={featRefs.hourRef} minRef={featRefs.minRef} secGroupRef={featRefs.secGroupRef} />
@@ -279,7 +303,13 @@ export function UsTimerPage() {
           {cardsData.map(({ z, P }, i) => {
             const sameDay = P.day === F.day && P.month === F.month;
             return (
-              <div className={`${styles.card} ${!isDay(P.h) ? styles.isNight : ''}`} key={z.label}>
+              <div
+                className={`${styles.card} ${!isDay(P.h) ? styles.isNight : ''}`}
+                key={z.label}
+                style={{ animationDelay: `${i * 70}ms` }}
+                onMouseMove={handleZoneTilt}
+                onMouseLeave={resetZoneTilt}
+              >
                 <div className={styles.cardClock}>
                   <AnalogClock hourRef={cardRefsList[i].hourRef} minRef={cardRefsList[i].minRef} secGroupRef={cardRefsList[i].secGroupRef} />
                 </div>
