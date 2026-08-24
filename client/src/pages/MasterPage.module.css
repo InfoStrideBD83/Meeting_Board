@@ -109,8 +109,8 @@
 
 .appCard {
   position: relative;
-  flex: 0 1 calc(25% - 15px);
-  min-width: 240px;
+  flex: 0 1 calc(20% - 16px);
+  min-width: 200px;
   display: flex; flex-direction: column;
   gap: 13px;
   padding: 13px 13px 15px;
