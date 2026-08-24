@@ -292,7 +292,6 @@ export function MasterPage() {
                 <rect x="10" y="10" width="180" height="88" rx="6" className={styles.artPanel} stroke="var(--border)" strokeWidth="1"/>
                 <rect x="10" y="10" width="180" height="18" rx="6" fill="var(--map-cst)" opacity=".22"/>
                 <line x1="10" y1="28" x2="190" y2="28" stroke="var(--border-soft)" strokeWidth="1"/>
-                <text x="100" y="21.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--map-cst)">8:00 AM – 1:00 PM CST</text>
                 <g stroke="var(--border-soft)" strokeWidth="1">
                   <line x1="46" y1="28" x2="46" y2="98"/><line x1="82" y1="28" x2="82" y2="98"/>
                   <line x1="118" y1="28" x2="118" y2="98"/><line x1="154" y1="28" x2="154" y2="98"/>
