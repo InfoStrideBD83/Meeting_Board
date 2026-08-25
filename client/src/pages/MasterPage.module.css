@@ -104,12 +104,12 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: clamp(12px, 1.8vw, 20px);
-  width: 100%; max-width: 1387px;
+  width: 100%;
 }
 
 .appCard {
   position: relative;
-  flex: 0 1 calc(16.6667% - 17px);
+  flex: 1 1 calc(16.6667% - 17px);
   min-width: 190px;
   display: flex; flex-direction: column;
   gap: 13px;
