@@ -230,7 +230,8 @@ export function TableView({
       const scroller = scrollRef.current;
       if (!scroller) return;
       const top = scroller.getBoundingClientRect().top;
-      const avail = Math.max(160, window.innerHeight - top - 16);
+      const footerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--footer-h')) || 0;
+      const avail = Math.max(160, window.innerHeight - top - footerH - 16);
       scroller.style.setProperty('--tbl-h', avail + 'px');
     }
     fit();
