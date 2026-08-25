@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { Footer } from './components/Footer.jsx';
+import { MessagingWidget } from './components/MessagingWidget.jsx';
 
 // Route-based code splitting — each page ships as its own chunk instead
 // of one large bundle, and only loads when its route is actually visited.
@@ -64,6 +65,7 @@ export function App() {
         </Routes>
       </Suspense>
       <Footer />
+      <MessagingWidget />
     </>
   );
 }
