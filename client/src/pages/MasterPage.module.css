@@ -109,8 +109,8 @@
 
 .appCard {
   position: relative;
-  flex: 0 1 calc(20% - 16px);
-  min-width: 200px;
+  flex: 0 1 calc(16.6667% - 17px);
+  min-width: 190px;
   display: flex; flex-direction: column;
   gap: 13px;
   padding: 13px 13px 15px;
@@ -203,6 +203,7 @@
 .cMap      { --tint: var(--success-soft); --tint-fg: var(--success); --tint-line: color-mix(in srgb, var(--success) 40%, transparent); }
 .cAssignee { --tint: color-mix(in srgb, var(--map-pst) 15%, transparent); --tint-fg: var(--map-pst); --tint-line: color-mix(in srgb, var(--map-pst) 40%, transparent); }
 .cCalendar { --tint: color-mix(in srgb, var(--map-cst) 15%, transparent); --tint-fg: var(--map-cst); --tint-line: color-mix(in srgb, var(--map-cst) 40%, transparent); }
+.cDocuments { --tint: color-mix(in srgb, var(--map-est) 15%, transparent); --tint-fg: var(--map-est); --tint-line: color-mix(in srgb, var(--map-est) 40%, transparent); }
 
 /* ── Preview artwork — shared bits ────────────────────────────── */
 .artPanel  { fill: var(--panel); }

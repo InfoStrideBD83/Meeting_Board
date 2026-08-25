@@ -10,6 +10,7 @@ const SignupPage = lazy(() => import('./pages/SignupPage.jsx').then((m) => ({ de
 const MasterPage = lazy(() => import('./pages/MasterPage.jsx').then((m) => ({ default: m.MasterPage })));
 const MeetingBoardPage = lazy(() => import('./pages/MeetingBoardPage.jsx').then((m) => ({ default: m.MeetingBoardPage })));
 const CalendarPage = lazy(() => import('./pages/CalendarPage.jsx').then((m) => ({ default: m.CalendarPage })));
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage.jsx').then((m) => ({ default: m.DocumentsPage })));
 const AssigneePage = lazy(() => import('./pages/AssigneePage.jsx').then((m) => ({ default: m.AssigneePage })));
 const UsTimerPage = lazy(() => import('./pages/UsTimerPage.jsx').then((m) => ({ default: m.UsTimerPage })));
 const UsMapPage = lazy(() => import('./pages/UsMapPage.jsx').then((m) => ({ default: m.UsMapPage })));
@@ -44,6 +45,10 @@ export function App() {
           <Route
             path="/calendar"
             element={<ProtectedRoute><CalendarPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/documents"
+            element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>}
           />
           <Route
             path="/assignee"

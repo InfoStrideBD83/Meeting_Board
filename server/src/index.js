@@ -14,6 +14,7 @@ import topicRoutes from './routes/topics.js';
 import allotmentRoutes from './routes/allotments.js';
 import misEntryRoutes from './routes/misEntries.js';
 import assignmentRoutes from './routes/assignments.js';
+import documentRoutes from './routes/documents.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // The client is now a Vite-built React SPA; CLIENT_DIR points at its build
@@ -43,6 +44,7 @@ app.use('/api/topics', topicRoutes);
 app.use('/api/allotments', allotmentRoutes);
 app.use('/api/mis-entries', misEntryRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/documents', documentRoutes);
 
 // ── Static frontend (serves the built React SPA) ────────────
 app.use(express.static(CLIENT_DIR));

@@ -446,6 +446,33 @@ export function MasterPage() {
               <span className={styles.appArrow}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
             </span>
           </Link>
+
+          <Link className={`${styles.appCard} ${styles.cDocuments}`} to="/documents" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
+            <span className={styles.cardPreview}>
+              <svg viewBox="0 0 200 108" aria-hidden="true">
+                <rect x="52" y="16" width="72" height="88" rx="6" fill="var(--panel-3)" opacity=".7" transform="rotate(-6 88 60)"/>
+                <rect x="64" y="12" width="72" height="88" rx="6" className={styles.artPanel} stroke="var(--border)" strokeWidth="1" transform="rotate(4 100 56)"/>
+                <rect x="28" y="18" width="72" height="88" rx="6" className={styles.artPanel} stroke="var(--map-est, #7c8cf8)" strokeWidth="1.2"/>
+                <rect x="36" y="28" width="56" height="6" rx="3" fill="var(--map-est, #7c8cf8)" opacity=".8"/>
+                <rect x="36" y="40" width="44" height="3.4" rx="1.7" className={styles.artMuted} opacity=".6"/>
+                <rect x="36" y="47" width="48" height="3.4" rx="1.7" className={styles.artMuted} opacity=".6"/>
+                <rect x="36" y="54" width="38" height="3.4" rx="1.7" className={styles.artMuted} opacity=".6"/>
+                <rect x="36" y="66" width="56" height="20" rx="4" fill="var(--map-est, #7c8cf8)" opacity=".14"/>
+                <rect x="42" y="72" width="30" height="3.4" rx="1.7" className={styles.artMuted} opacity=".55"/>
+                <rect x="42" y="79" width="22" height="3.4" rx="1.7" className={styles.artMuted} opacity=".45"/>
+                <g className={styles.artPing}>
+                  <circle cx="148" cy="78" r="16" fill="var(--success)" opacity=".16"/>
+                  <circle cx="148" cy="78" r="12" fill="var(--panel)" stroke="var(--success)" strokeWidth="1.4"/>
+                </g>
+                <path d="M148 72v9M143.5 77l4.5 4.5 4.5-4.5" stroke="var(--success)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+            <span className={styles.cardFoot}>
+              <span className={styles.appIcon}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2.5H6.5A2 2 0 0 0 4.5 4.5v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h4"/></svg></span>
+              <span className={styles.appTitle}>Documents</span>
+              <span className={styles.appArrow}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
+            </span>
+          </Link>
         </nav>
       </main>
 
