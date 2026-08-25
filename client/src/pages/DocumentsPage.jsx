@@ -106,7 +106,6 @@ export function DocumentsPage() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const [members, setMembers] = useState([]);
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -117,9 +116,8 @@ export function DocumentsPage() {
   const bootstrap = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    Promise.all([apiFetch('/members'), apiFetch('/documents')])
-      .then(([membersRes, docsRes]) => {
-        setMembers(membersRes);
+    apiFetch('/documents')
+      .then((docsRes) => {
         setDocs(docsRes);
         setLoading(false);
       })
@@ -136,11 +134,6 @@ export function DocumentsPage() {
 
   useEffect(() => { bootstrap(); }, [bootstrap]);
   useEffect(() => { document.title = 'InfoStride · Documents & Brochures'; }, []);
-
-  function memberName(id) {
-    const m = members.find((x) => x.id === id);
-    return m ? m.name : 'Unknown';
-  }
 
   function handleDownload(doc) {
     setDownloadingId(doc.id);
@@ -204,7 +197,6 @@ export function DocumentsPage() {
                 <div className={styles.docBody}>
                   <div className={styles.docTitle} title={d.title}>{d.title}</div>
                   <div className={styles.docMeta}>{humanSize(d.file_size)} &middot; {formatDate(d.created_at)}</div>
-                  <div className={styles.docMeta}>Added by {memberName(d.uploaded_by)}</div>
                 </div>
                 <div className={styles.docActions}>
                   <button type="button" className="btn" disabled={downloadingId === d.id} onClick={() => handleDownload(d)}>
