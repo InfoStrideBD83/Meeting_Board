@@ -30,53 +30,85 @@ function StatusSelect({ meeting, onChange }) {
   );
 }
 
+/* A checkbox-list dropdown rather than a plain <select> — meeting_taken_by
+   has always been stored as a JSON array (multiple people can run a demo
+   together), the old UI just only ever read/wrote its first entry. */
 function TakenBySelect({ meeting, onChange }) {
-  let takenByName = '';
-  try { takenByName = meeting.meeting_taken_by ? (JSON.parse(meeting.meeting_taken_by)[0] || '') : ''; }
-  catch { takenByName = meeting.meeting_taken_by || ''; }
-  const isKnown = TAKEN_BY_OPTIONS.includes(takenByName);
-  const isOther = Boolean(takenByName) && !isKnown;
-  const [showOther, setShowOther] = useState(isOther);
-  const otherRef = useRef(null);
+  let selected = [];
+  try { selected = meeting.meeting_taken_by ? JSON.parse(meeting.meeting_taken_by) : []; }
+  catch { selected = meeting.meeting_taken_by ? [meeting.meeting_taken_by] : []; }
+  if (!Array.isArray(selected)) selected = [];
 
-  useEffect(() => { setShowOther(isOther); }, [isOther, meeting.id]);
+  const [open, setOpen] = useState(false);
+  const [customText, setCustomText] = useState('');
+  const wrapRef = useRef(null);
 
-  function onSelectChange(value) {
-    if (value === 'Others') {
-      setShowOther(true);
-      setTimeout(() => otherRef.current && otherRef.current.focus(), 0);
-      return;
-    }
-    setShowOther(false);
-    onChange(meeting.id, 'meeting_taken_by', value ? JSON.stringify([value]) : '');
+  useEffect(() => {
+    if (!open) return undefined;
+    function onDocDown(e) { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); }
+    function onKeyDown(e) { if (e.key === 'Escape') setOpen(false); }
+    document.addEventListener('mousedown', onDocDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  function commit(next) {
+    onChange(meeting.id, 'meeting_taken_by', next.length ? JSON.stringify(next) : '');
   }
-  function commitOther() {
-    const v = (otherRef.current && otherRef.current.value.trim()) || '';
-    if (v) onChange(meeting.id, 'meeting_taken_by', JSON.stringify([v]));
+  function toggleName(name) {
+    commit(selected.includes(name) ? selected.filter((n) => n !== name) : selected.concat([name]));
   }
+  function addCustom() {
+    const v = customText.trim();
+    if (!v) return;
+    if (!selected.includes(v)) commit(selected.concat([v]));
+    setCustomText('');
+  }
+
+  const extraNames = selected.filter((n) => !TAKEN_BY_OPTIONS.includes(n));
+  const label = selected.length ? selected.join(', ') : '— Select —';
 
   return (
-    <span className={styles.takenByWrap}>
-      <select
-        className={`${styles.pillSelect} ${styles.sNeutral} ${styles.selName}`}
+    <span className={styles.takenByWrap} ref={wrapRef}>
+      <button
+        type="button"
+        className={`${styles.pillSelect} ${styles.sNeutral} ${styles.selName} ${styles.takenByBtn}`}
         aria-label="Meeting taken by"
-        value={isOther ? 'Others' : takenByName}
-        onChange={(e) => onSelectChange(e.target.value)}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        title={selected.join(', ')}
       >
-        <option value="">— Select —</option>
-        {TAKEN_BY_OPTIONS.map((name) => <option key={name} value={name}>{name}</option>)}
-        <option value="Others">Others</option>
-      </select>
-      {showOther && (
-        <input
-          ref={otherRef}
-          type="text"
-          className={styles.takenByOther}
-          defaultValue={isOther ? takenByName : ''}
-          placeholder="Enter name"
-          onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-          onBlur={commitOther}
-        />
+        <span className={styles.takenByBtnLabel}>{label}</span>
+      </button>
+      {open && (
+        <div className={styles.takenByMenu}>
+          {TAKEN_BY_OPTIONS.map((name) => (
+            <label key={name} className={styles.takenByOption}>
+              <input type="checkbox" checked={selected.includes(name)} onChange={() => toggleName(name)} />
+              <span>{name}</span>
+            </label>
+          ))}
+          {extraNames.map((name) => (
+            <label key={name} className={styles.takenByOption}>
+              <input type="checkbox" checked onChange={() => toggleName(name)} />
+              <span>{name}</span>
+            </label>
+          ))}
+          <div className={styles.takenByAddRow}>
+            <input
+              type="text"
+              className={styles.takenByOther}
+              placeholder="Add a name…"
+              value={customText}
+              onChange={(e) => setCustomText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+            />
+            <button type="button" className={styles.takenByAddBtn} onClick={addCustom}>Add</button>
+          </div>
+        </div>
       )}
     </span>
   );
