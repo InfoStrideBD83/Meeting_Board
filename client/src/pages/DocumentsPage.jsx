@@ -32,11 +32,6 @@ function humanSize(bytes) {
   return `${n.toFixed(i === 0 || n >= 10 ? 0 : 1)} ${units[i]}`;
 }
 
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 /* Upload form — admin only. A plain <input type="file"> + optional title,
    submitted as multipart/form-data (apiFetch already leaves FormData
    bodies alone instead of JSON-encoding them). */
@@ -196,7 +191,7 @@ export function DocumentsPage() {
                 <div className={styles.docIcon}>{ico.doc}</div>
                 <div className={styles.docBody}>
                   <div className={styles.docTitle} title={d.title}>{d.title}</div>
-                  <div className={styles.docMeta}>{humanSize(d.file_size)} &middot; {formatDate(d.created_at)}</div>
+                  <div className={styles.docMeta}>{humanSize(d.file_size)}</div>
                 </div>
                 <div className={styles.docActions}>
                   <button type="button" className="btn" disabled={downloadingId === d.id} onClick={() => handleDownload(d)}>
