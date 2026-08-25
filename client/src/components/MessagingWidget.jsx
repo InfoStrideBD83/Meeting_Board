@@ -23,6 +23,9 @@ const ico = {
   group: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 20v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
   ),
+  gear: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+  ),
 };
 
 function timeAgo(iso) {
@@ -47,11 +50,12 @@ export function MessagingWidget() {
   const { isAuthenticated, member } = useAuth();
 
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState('list'); // 'list' | 'chat' | 'new'
+  const [view, setView] = useState('list'); // 'list' | 'chat' | 'new' | 'manage'
   const [conversations, setConversations] = useState([]);
   const [members, setMembers] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [detail, setDetail] = useState(null); // full conversation incl. members' last_read_at
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [groupName, setGroupName] = useState('');
@@ -81,10 +85,13 @@ export function MessagingWidget() {
     apiFetch(`/conversations/${encodeURIComponent(activeId)}/messages`)
       .then(setMessages)
       .catch(() => { /* transient — next poll retries */ });
+    apiFetch(`/conversations/${encodeURIComponent(activeId)}`)
+      .then(setDetail)
+      .catch(() => { /* transient — next poll retries */ });
   }, [activeId]);
 
   useEffect(() => {
-    if (!activeId || view !== 'chat') return undefined;
+    if (!activeId || (view !== 'chat' && view !== 'manage')) return undefined;
     refreshThread();
     const id = setInterval(refreshThread, POLL_THREAD_MS);
     return () => clearInterval(id);
@@ -104,12 +111,14 @@ export function MessagingWidget() {
   function openConversation(id) {
     setActiveId(id);
     setMessages([]);
+    setDetail(null);
     setView('chat');
   }
 
   function backToList() {
     setView('list');
     setActiveId(null);
+    setDetail(null);
     refreshList();
   }
 
@@ -163,6 +172,32 @@ export function MessagingWidget() {
       .finally(() => setCreating(false));
   }
 
+  function addMember(memberId) {
+    if (!activeId) return;
+    apiFetch(`/conversations/${encodeURIComponent(activeId)}/members`, { method: 'POST', body: { member_id: memberId } })
+      .then(() => { refreshThread(); refreshList(); })
+      .catch((err) => alert(err.message || 'Could not add this member.'));
+  }
+
+  function removeMember(memberId) {
+    if (!activeId) return;
+    if (!window.confirm('Remove this member from the group?')) return;
+    apiFetch(`/conversations/${encodeURIComponent(activeId)}/members/${encodeURIComponent(memberId)}`, { method: 'DELETE' })
+      .then(() => { refreshThread(); refreshList(); })
+      .catch((err) => alert(err.message || 'Could not remove this member.'));
+  }
+
+  /** Which of a group's (or a DM's) other members have read up to at least
+   *  this message — derived from each member's own last_read_at, not a
+   *  separate per-message table. */
+  function seenByFor(msg) {
+    if (!detail) return [];
+    const meId = member && member.id;
+    return detail.members.filter((m) => (
+      m.id !== meId && m.last_read_at && new Date(m.last_read_at) >= new Date(msg.created_at)
+    ));
+  }
+
   if (!isAuthenticated) return null;
 
   const unreadTotal = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
@@ -175,6 +210,9 @@ export function MessagingWidget() {
   const teamRows = pickable
     .map((m) => ({ member: m, convo: dmByMemberId[m.id] || null }))
     .sort((a, b) => a.member.name.localeCompare(b.member.name));
+
+  const isCreator = Boolean(active && active.is_group && active.created_by === (member && member.id));
+  const addable = detail ? pickable.filter((m) => !detail.members.some((x) => x.id === m.id)) : [];
 
   return (
     <>
@@ -199,6 +237,16 @@ export function MessagingWidget() {
                   {active ? active.name : 'Conversation'}
                   {active && active.is_group && <span className={styles.groupTag}>Group</span>}
                 </div>
+                {isCreator && (
+                  <button type="button" className={styles.iconBtn} onClick={() => setView('manage')} aria-label="Manage group members" title="Manage members">
+                    {ico.gear}
+                  </button>
+                )}
+              </>
+            ) : view === 'manage' ? (
+              <>
+                <button type="button" className={styles.iconBtn} onClick={() => setView('chat')} aria-label="Back to conversation">{ico.back}</button>
+                <div className={styles.panelTitle}>Manage members</div>
               </>
             ) : view === 'new' ? (
               <>
@@ -296,6 +344,35 @@ export function MessagingWidget() {
             </form>
           )}
 
+          {view === 'manage' && (
+            <div className={styles.list}>
+              <div className={styles.sectionLabel}>Members</div>
+              {(detail ? detail.members : []).map((m) => (
+                <div key={m.id} className={styles.manageRow}>
+                  <Avatar name={m.name} color={m.color} size={32} />
+                  <span className={styles.manageName}>
+                    {m.name}{m.id === detail.created_by ? ' · creator' : ''}
+                  </span>
+                  {m.id !== detail.created_by && (
+                    <button type="button" className={styles.removeBtn} onClick={() => removeMember(m.id)} aria-label={`Remove ${m.name}`}>
+                      {ico.close}
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <div className={styles.sectionLabel}>Add member</div>
+              {addable.length === 0 ? (
+                <div className={styles.empty}><p>Everyone on the team is already in this group.</p></div>
+              ) : addable.map((m) => (
+                <button type="button" key={m.id} className={styles.memberRowCheck} onClick={() => addMember(m.id)}>
+                  <Avatar name={m.name} color={m.color} size={32} />
+                  <span>{m.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {view === 'chat' && (
             <>
               <div className={styles.thread}>
@@ -304,10 +381,20 @@ export function MessagingWidget() {
                   const senderName = !mine && active && active.is_group
                     ? ((active.members || []).find((x) => x.id === m.sender_id) || {}).name
                     : null;
+                  const seenBy = mine ? seenByFor(m) : [];
                   return (
                     <div key={m.id} className={`${styles.bubbleRow} ${mine ? styles.mine : ''}`}>
                       {senderName && <span className={styles.bubbleSender}>{senderName}</span>}
                       <div className={styles.bubble}>{m.body}</div>
+                      {mine && (
+                        <span className={styles.seenLabel}>
+                          {seenBy.length === 0
+                            ? 'Sent'
+                            : active && active.is_group
+                              ? `Seen by ${seenBy.map((x) => x.name).join(', ')}`
+                              : 'Seen'}
+                        </span>
+                      )}
                     </div>
                   );
                 })}

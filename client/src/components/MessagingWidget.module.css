@@ -135,6 +135,22 @@
 .memberRowCheck:hover { background: var(--panel-2); }
 .memberRowCheck input { width: 15px; height: 15px; accent-color: var(--accent); }
 
+/* ── manage members ───────────────────────────────────────────── */
+.manageRow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px;
+}
+.manageName { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; }
+.removeBtn {
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border-radius: 50%; border: none;
+  background: var(--panel-2); color: var(--muted);
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.removeBtn:hover { background: var(--danger-soft); color: var(--danger); }
+
 .groupForm { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px; gap: 10px; }
 .groupNameInput {
   flex-shrink: 0;
@@ -168,6 +184,7 @@
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
 }
+.seenLabel { font-size: 10px; color: var(--faint); margin: 3px 2px 0; }
 
 .composer {
   flex-shrink: 0;

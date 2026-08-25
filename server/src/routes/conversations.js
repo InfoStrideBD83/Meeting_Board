@@ -97,6 +97,7 @@ router.get(
         id: c.id,
         is_group: c.is_group,
         name: c.is_group ? c.name : (others[0] ? others[0].name : 'Unknown member'),
+        created_by: c.created_by,
         members: c.is_group ? members : undefined,
         other_member: c.is_group ? undefined : (others[0] || null),
         last_message: lastMessageByConvo[c.id] || null,
@@ -179,6 +180,96 @@ router.post(
     if (mErr) throw mErr;
 
     res.status(201).json(convo);
+  })
+);
+
+async function assertCreator(conversationId, memberId) {
+  const { data: convo, error } = await supabase
+    .from('conversations')
+    .select('id, is_group, created_by')
+    .eq('id', conversationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!convo) throw new ApiError(404, 'Conversation not found');
+  if (!convo.is_group) throw new ApiError(400, 'Only groups have members that can be changed');
+  if (convo.created_by !== memberId) throw new ApiError(403, 'Only the group creator can manage members');
+  return convo;
+}
+
+/**
+ * GET /api/conversations/:id — full detail, including each member's
+ * last_read_at so the client can work out (and show) who has "seen" a
+ * given message: a member has seen message M once their own
+ * last_read_at is at or after M's created_at.
+ */
+router.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    await assertMember(req.params.id, req.user.sub);
+
+    const { data: convo, error: cErr } = await supabase
+      .from('conversations')
+      .select('id, is_group, name, created_by, updated_at')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (cErr) throw cErr;
+    if (!convo) throw new ApiError(404, 'Conversation not found');
+
+    const { data: memberRows, error: mErr } = await supabase
+      .from('conversation_members')
+      .select('member_id, last_read_at')
+      .eq('conversation_id', req.params.id);
+    if (mErr) throw mErr;
+
+    const { data: allMembers, error: amErr } = await supabase.from('members').select('id, name, color');
+    if (amErr) throw amErr;
+    const memberById = Object.fromEntries(allMembers.map((m) => [m.id, m]));
+
+    const members = memberRows
+      .map((r) => (memberById[r.member_id] ? { ...memberById[r.member_id], last_read_at: r.last_read_at } : null))
+      .filter(Boolean);
+
+    res.json({ ...convo, members });
+  })
+);
+
+/** POST /api/conversations/:id/members — add a member to a group. Only the
+ *  member who created the group may do this. */
+router.post(
+  '/:id/members',
+  asyncHandler(async (req, res) => {
+    await assertCreator(req.params.id, req.user.sub);
+    const { member_id } = req.body;
+    if (!member_id) throw new ApiError(400, 'member_id is required');
+
+    const { error } = await supabase
+      .from('conversation_members')
+      .insert({ conversation_id: req.params.id, member_id });
+    if (error) {
+      if (error.code === '23505') throw new ApiError(409, 'That member is already in the group');
+      throw error;
+    }
+    res.status(201).end();
+  })
+);
+
+/** DELETE /api/conversations/:id/members/:memberId — remove a member from a
+ *  group. Only the member who created the group may do this; the creator
+ *  themselves can't be removed this way. */
+router.delete(
+  '/:id/members/:memberId',
+  asyncHandler(async (req, res) => {
+    const convo = await assertCreator(req.params.id, req.user.sub);
+    if (req.params.memberId === convo.created_by) {
+      throw new ApiError(400, 'The group creator cannot be removed');
+    }
+    const { error } = await supabase
+      .from('conversation_members')
+      .delete()
+      .eq('conversation_id', req.params.id)
+      .eq('member_id', req.params.memberId);
+    if (error) throw error;
+    res.status(204).end();
   })
 );
 
