@@ -20,9 +20,6 @@ const ico = {
   close: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
   ),
-  plus: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-  ),
   group: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 20v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
   ),
@@ -57,7 +54,6 @@ export function MessagingWidget() {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
-  const [newMode, setNewMode] = useState('dm'); // 'dm' | 'group'
   const [groupName, setGroupName] = useState('');
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [creating, setCreating] = useState(false);
@@ -132,9 +128,8 @@ export function MessagingWidget() {
       .finally(() => setSending(false));
   }
 
-  function startNew() {
+  function startNewGroup() {
     setView('new');
-    setNewMode('dm');
     setGroupName('');
     setSelectedIds(new Set());
   }
@@ -174,6 +169,13 @@ export function MessagingWidget() {
   const active = conversations.find((c) => c.id === activeId);
   const pickable = members.filter((m) => m.id !== (member && member.id));
 
+  const groups = conversations.filter((c) => c.is_group);
+  const dmByMemberId = {};
+  conversations.forEach((c) => { if (!c.is_group && c.other_member) dmByMemberId[c.other_member.id] = c; });
+  const teamRows = pickable
+    .map((m) => ({ member: m, convo: dmByMemberId[m.id] || null }))
+    .sort((a, b) => a.member.name.localeCompare(b.member.name));
+
   return (
     <>
       <button
@@ -201,7 +203,7 @@ export function MessagingWidget() {
             ) : view === 'new' ? (
               <>
                 <button type="button" className={styles.iconBtn} onClick={() => setView('list')} aria-label="Back to conversations">{ico.back}</button>
-                <div className={styles.panelTitle}>New message</div>
+                <div className={styles.panelTitle}>Create group</div>
               </>
             ) : (
               <div className={styles.panelTitle}>Messages</div>
@@ -212,31 +214,54 @@ export function MessagingWidget() {
           {view === 'list' && (
             <>
               <div className={styles.listToolbar}>
-                <button type="button" className="btn btn-primary" onClick={startNew}>
-                  {ico.plus}<span className="btn-label-sm">New</span>
+                <button type="button" className="btn btn-primary" onClick={startNewGroup}>
+                  {ico.group}<span className="btn-label-sm">Create Group</span>
                 </button>
               </div>
               <div className={styles.list}>
-                {conversations.length === 0 ? (
-                  <div className={styles.empty}>
-                    <p>No conversations yet.</p>
-                    <p className={styles.emptySub}>Use "New" above to message someone or start a group.</p>
-                  </div>
+                {groups.length > 0 && (
+                  <>
+                    <div className={styles.sectionLabel}>Groups</div>
+                    {groups.map((c) => (
+                      <button type="button" key={c.id} className={styles.convoItem} onClick={() => openConversation(c.id)}>
+                        <span className={styles.groupIcon}>{ico.group}</span>
+                        <span className={styles.convoBody}>
+                          <span className={styles.convoName}>{c.name}</span>
+                          <span className={styles.convoPreview}>
+                            {c.last_message ? c.last_message.body : 'No messages yet'}
+                          </span>
+                        </span>
+                        <span className={styles.convoMeta}>
+                          {c.last_message && <span className={styles.convoTime}>{timeAgo(c.last_message.created_at)}</span>}
+                          {c.unread_count > 0 && <span className={styles.unreadDot}>{c.unread_count}</span>}
+                        </span>
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                <div className={styles.sectionLabel}>Team</div>
+                {teamRows.length === 0 ? (
+                  <div className={styles.empty}><p>No other team members yet.</p></div>
                 ) : (
-                  conversations.map((c) => (
-                    <button type="button" key={c.id} className={styles.convoItem} onClick={() => openConversation(c.id)}>
-                      {c.is_group
-                        ? <span className={styles.groupIcon}>{ico.group}</span>
-                        : <Avatar name={c.name} color={c.other_member && c.other_member.color} size={38} />}
+                  teamRows.map(({ member: m, convo }) => (
+                    <button
+                      type="button"
+                      key={m.id}
+                      className={styles.convoItem}
+                      disabled={creating}
+                      onClick={() => (convo ? openConversation(convo.id) : startDM(m.id))}
+                    >
+                      <Avatar name={m.name} color={m.color} size={38} />
                       <span className={styles.convoBody}>
-                        <span className={styles.convoName}>{c.name}</span>
+                        <span className={styles.convoName}>{m.name}</span>
                         <span className={styles.convoPreview}>
-                          {c.last_message ? c.last_message.body : 'No messages yet'}
+                          {convo && convo.last_message ? convo.last_message.body : 'Tap to start a conversation'}
                         </span>
                       </span>
                       <span className={styles.convoMeta}>
-                        {c.last_message && <span className={styles.convoTime}>{timeAgo(c.last_message.created_at)}</span>}
-                        {c.unread_count > 0 && <span className={styles.unreadDot}>{c.unread_count}</span>}
+                        {convo && convo.last_message && <span className={styles.convoTime}>{timeAgo(convo.last_message.created_at)}</span>}
+                        {convo && convo.unread_count > 0 && <span className={styles.unreadDot}>{convo.unread_count}</span>}
                       </span>
                     </button>
                   ))
@@ -246,47 +271,29 @@ export function MessagingWidget() {
           )}
 
           {view === 'new' && (
-            <div className={styles.newPane}>
-              <div className={styles.segmented} role="tablist">
-                <button type="button" className={styles.seg} role="tab" aria-selected={newMode === 'dm'} onClick={() => setNewMode('dm')}>Direct message</button>
-                <button type="button" className={styles.seg} role="tab" aria-selected={newMode === 'group'} onClick={() => setNewMode('group')}>Group</button>
+            <form className={styles.groupForm} onSubmit={createGroup}>
+              <input
+                className={styles.groupNameInput}
+                type="text"
+                placeholder="Group name"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+              />
+              <div className={styles.memberPicker}>
+                {pickable.length === 0 ? (
+                  <div className={styles.empty}><p>No other team members yet.</p></div>
+                ) : pickable.map((m) => (
+                  <label key={m.id} className={styles.memberRowCheck}>
+                    <input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelected(m.id)} />
+                    <Avatar name={m.name} color={m.color} size={32} />
+                    <span>{m.name}</span>
+                  </label>
+                ))}
               </div>
-
-              {newMode === 'dm' ? (
-                <div className={styles.memberPicker}>
-                  {pickable.length === 0 ? (
-                    <div className={styles.empty}><p>No other team members yet.</p></div>
-                  ) : pickable.map((m) => (
-                    <button type="button" key={m.id} className={styles.memberRow} disabled={creating} onClick={() => startDM(m.id)}>
-                      <Avatar name={m.name} color={m.color} size={32} />
-                      <span>{m.name}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <form className={styles.groupForm} onSubmit={createGroup}>
-                  <input
-                    className={styles.groupNameInput}
-                    type="text"
-                    placeholder="Group name (optional)"
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
-                  />
-                  <div className={styles.memberPicker}>
-                    {pickable.map((m) => (
-                      <label key={m.id} className={styles.memberRowCheck}>
-                        <input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelected(m.id)} />
-                        <Avatar name={m.name} color={m.color} size={32} />
-                        <span>{m.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <button type="submit" className="btn btn-primary" disabled={creating} style={{ width: '100%' }}>
-                    {creating ? 'Creating…' : 'Create group'}
-                  </button>
-                </form>
-              )}
-            </div>
+              <button type="submit" className="btn btn-primary" disabled={creating || pickable.length === 0} style={{ width: '100%' }}>
+                {creating ? 'Creating…' : 'Create group'}
+              </button>
+            </form>
           )}
 
           {view === 'chat' && (
