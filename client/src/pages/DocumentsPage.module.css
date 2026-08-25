@@ -40,10 +40,10 @@
 
 .docCard {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 22px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -57,22 +57,21 @@
 }
 
 .docIcon {
-  width: 52px; height: 52px; flex-shrink: 0;
+  width: 40px; height: 40px; flex-shrink: 0;
   border-radius: var(--r-md);
   display: grid; place-items: center;
   background: var(--accent-soft); color: var(--accent);
 }
-.docIcon svg { width: 26px; height: 26px; }
+.docIcon svg { width: 20px; height: 20px; }
 
-.docBody { min-width: 0; width: 100%; }
+.docBody { flex: 1; min-width: 0; }
 .docTitle {
-  font-size: 16px; font-weight: 700; letter-spacing: -.1px;
+  font-size: 14px; font-weight: 700; letter-spacing: -.1px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.docMeta { font-size: 12.5px; color: var(--faint); margin-top: 5px; }
+.docMeta { font-size: 11px; color: var(--faint); margin-top: 2px; }
 
-.docActions { display: flex; align-items: center; gap: 8px; width: 100%; }
-.docActions :global(.btn) { flex: 1; }
+.docActions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
 .deleteBtn {
   width: 36px; height: 36px; flex-shrink: 0;

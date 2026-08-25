@@ -194,8 +194,15 @@ export function DocumentsPage() {
                   <div className={styles.docMeta}>{humanSize(d.file_size)}</div>
                 </div>
                 <div className={styles.docActions}>
-                  <button type="button" className="btn" disabled={downloadingId === d.id} onClick={() => handleDownload(d)}>
-                    {ico.download}<span className="btn-label-sm">{downloadingId === d.id ? 'Preparing…' : 'Download'}</span>
+                  <button
+                    type="button"
+                    className="btn btn-icon"
+                    disabled={downloadingId === d.id}
+                    onClick={() => handleDownload(d)}
+                    title={downloadingId === d.id ? 'Preparing…' : `Download ${d.title}`}
+                    aria-label={`Download ${d.title}`}
+                  >
+                    {ico.download}
                   </button>
                   {isAdmin && (
                     <button
