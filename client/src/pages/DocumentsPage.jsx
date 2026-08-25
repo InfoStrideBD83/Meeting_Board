@@ -16,6 +16,9 @@ const ico = {
   download: (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
   ),
+  eye: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+  ),
   trash: (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" /></svg>
   ),
@@ -107,6 +110,7 @@ export function DocumentsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [viewingId, setViewingId] = useState(null);
 
   const bootstrap = useCallback(() => {
     setLoading(true);
@@ -136,6 +140,14 @@ export function DocumentsPage() {
       .then(({ url }) => { window.open(url, '_blank', 'noopener'); })
       .catch((err) => alert(err.message || 'Could not download this document.'))
       .finally(() => setDownloadingId(null));
+  }
+
+  function handleView(doc) {
+    setViewingId(doc.id);
+    apiFetch(`/documents/${encodeURIComponent(doc.id)}/view`)
+      .then(({ url }) => { window.open(url, '_blank', 'noopener'); })
+      .catch((err) => alert(err.message || 'Could not open this document.'))
+      .finally(() => setViewingId(null));
   }
 
   function handleDelete(doc) {
@@ -194,6 +206,16 @@ export function DocumentsPage() {
                   <div className={styles.docMeta}>{humanSize(d.file_size)}</div>
                 </div>
                 <div className={styles.docActions}>
+                  <button
+                    type="button"
+                    className="btn btn-icon"
+                    disabled={viewingId === d.id}
+                    onClick={() => handleView(d)}
+                    title={viewingId === d.id ? 'Opening…' : `View ${d.title}`}
+                    aria-label={`View ${d.title}`}
+                  >
+                    {ico.eye}
+                  </button>
                   <button
                     type="button"
                     className="btn btn-icon"

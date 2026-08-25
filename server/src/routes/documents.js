@@ -87,27 +87,46 @@ router.post(
   })
 );
 
+async function findDocOrThrow(id) {
+  const { data: doc, error } = await supabase
+    .from('documents')
+    .select('storage_path, file_name')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!doc) throw new ApiError(404, 'Document not found');
+  return doc;
+}
+
 /**
- * GET /api/documents/:id/download — a short-lived signed URL for the file.
- * Any member. The frontend navigates to `url` directly; it's not proxied
- * through this server.
+ * GET /api/documents/:id/download — a short-lived signed URL that forces a
+ * save-to-disk (Content-Disposition: attachment). Any member.
  */
 router.get(
   '/:id/download',
   asyncHandler(async (req, res) => {
-    const { data: doc, error: findErr } = await supabase
-      .from('documents')
-      .select('storage_path, file_name')
-      .eq('id', req.params.id)
-      .maybeSingle();
-    if (findErr) throw findErr;
-    if (!doc) throw new ApiError(404, 'Document not found');
-
+    const doc = await findDocOrThrow(req.params.id);
     const { data, error } = await supabase.storage
       .from(BUCKET)
       .createSignedUrl(doc.storage_path, 60, { download: doc.file_name });
     if (error) throw error;
+    res.json({ url: data.signedUrl, file_name: doc.file_name });
+  })
+);
 
+/**
+ * GET /api/documents/:id/view — a short-lived signed URL with no download
+ * disposition, so the browser renders it inline (PDF/image) when it can
+ * instead of always saving to disk. Any member.
+ */
+router.get(
+  '/:id/view',
+  asyncHandler(async (req, res) => {
+    const doc = await findDocOrThrow(req.params.id);
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(doc.storage_path, 60);
+    if (error) throw error;
     res.json({ url: data.signedUrl, file_name: doc.file_name });
   })
 );
