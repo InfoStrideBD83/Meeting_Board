@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-
-const STORAGE_KEY = 'infostride-cursor-fx';
+import { getCursorFxEnabled, CURSOR_FX_CHANGE_EVENT, isCursorFxStorageKey } from './cursorFxStore.js';
 
 // Elements where losing the native cursor would break something functional
 // (the text-insertion beam, a resize handle, a select's own affordance) —
@@ -9,13 +8,6 @@ const TEXT_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 // Elements worth calling out as clickable, now that hovering them no longer
 // shows the OS's own pointer-hand icon — the dot itself grows instead.
 const INTERACTIVE_SELECTOR = 'a, button, [role="button"], summary, label, .btn, [tabindex]:not([tabindex="-1"])';
-
-export function getCursorFxEnabled() {
-  try { return window.localStorage.getItem(STORAGE_KEY) !== 'off'; } catch { return true; }
-}
-export function setCursorFxEnabled(on) {
-  try { window.localStorage.setItem(STORAGE_KEY, on ? 'on' : 'off'); } catch { /* ignore */ }
-}
 
 function themeColors() {
   const light = document.documentElement.getAttribute('data-theme') === 'light';
@@ -180,7 +172,7 @@ export function BrandCursor() {
     function onVisibility() {
       if (document.hidden && state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
     }
-    function onStorage(e) { if (e.key === STORAGE_KEY) setActive(computeActive()); }
+    function onStorage(e) { if (isCursorFxStorageKey(e.key)) setActive(computeActive()); }
     function refresh() { setActive(computeActive()); }
 
     resize();
@@ -191,6 +183,7 @@ export function BrandCursor() {
     document.addEventListener('mouseenter', onEnterDoc);
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('storage', onStorage);
+    window.addEventListener(CURSOR_FX_CHANGE_EVENT, refresh);
     reducedMotionMq.addEventListener('change', refresh);
     finePointerMq.addEventListener('change', refresh);
     forcedColorsMq.addEventListener('change', refresh);
@@ -202,6 +195,7 @@ export function BrandCursor() {
       document.removeEventListener('mouseenter', onEnterDoc);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('storage', onStorage);
+      window.removeEventListener(CURSOR_FX_CHANGE_EVENT, refresh);
       reducedMotionMq.removeEventListener('change', refresh);
       finePointerMq.removeEventListener('change', refresh);
       forcedColorsMq.removeEventListener('change', refresh);

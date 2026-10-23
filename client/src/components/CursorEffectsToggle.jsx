@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getCursorFxEnabled, setCursorFxEnabled } from './BrandCursor.jsx';
+import { getCursorFxEnabled, setCursorFxEnabled } from './cursorFxStore.js';
 
 /** Opt-out switch for BrandCursor.jsx's sparkle-trail cursor — it already
  *  auto-disables for touch/reduced-motion/forced-colors, but motion that
@@ -24,9 +24,8 @@ export function CursorEffectsToggle() {
       title="Toggle cursor sparkle effects"
       onClick={toggle}
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
-        <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M4.6 2.9c-.9-.4-1.9.5-1.5 1.5l6.6 16.9c.4 1 1.8 1 2.2 0l2.4-6.3 6.3-2.4c1-.4 1-1.8 0-2.2L4.6 2.9Z" />
       </svg>
     </button>
   );
