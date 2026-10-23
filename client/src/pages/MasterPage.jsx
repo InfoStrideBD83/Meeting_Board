@@ -97,6 +97,17 @@ export function MasterPage() {
       .catch((err) => alert(err.message || 'Could not decline this request.'));
   }
 
+  // Browsers only honor a notification-permission prompt triggered by a real
+  // user gesture, so it's asked for here, the first time someone actually
+  // opens the "Today's meetings" bell — shared, origin-wide permission that
+  // MeetingReminders.jsx (mounted globally in App.jsx) also relies on.
+  function openTodaysMeetings() {
+    refreshNotifications();
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+
   function refreshMembers() {
     apiFetch('/members').then(setMembers).catch(() => { /* transient — next open retries */ });
   }
@@ -210,7 +221,7 @@ export function MasterPage() {
           ariaLabel={`meeting${todaysMeetings.length === 1 ? '' : 's'} today`}
           count={todaysMeetings.length}
           panelTitle="Today's meetings"
-          onOpen={refreshNotifications}
+          onOpen={openTodaysMeetings}
         >
           {todaysMeetings.length === 0 ? (
             <div className="notif-empty">No meetings scheduled for today.</div>

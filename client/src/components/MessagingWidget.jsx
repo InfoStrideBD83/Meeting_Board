@@ -42,10 +42,13 @@ function timeAgo(iso) {
 
 /** A floating messaging widget mounted once at the app root (see App.jsx),
  *  so it's available on every authenticated page. DMs and group chats,
- *  backed by server/src/routes/conversations.js. "Notification" here is
- *  an in-app unread badge kept fresh by polling — this app has no
- *  WebSocket/push infrastructure, so it only updates while a tab is open,
- *  the same way the header's NotificationBell already works. */
+ *  backed by server/src/routes/conversations.js. The in-app unread badge is
+ *  kept fresh by polling — this app has no WebSocket/push infrastructure —
+ *  and new messages that arrive while the tab is open but not the one the
+ *  person is looking at also raise a browser Notification (see
+ *  notifyNewMessages below). That only reaches someone whose browser is
+ *  still open somewhere; it can't wake up a fully closed browser the way a
+ *  real OS push notification (service worker + Push API) would. */
 export function MessagingWidget() {
   const { isAuthenticated, member } = useAuth();
 
@@ -62,9 +65,55 @@ export function MessagingWidget() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [creating, setCreating] = useState(false);
   const threadEndRef = useRef(null);
+  const memberIdRef = useRef(null);
+  useEffect(() => { memberIdRef.current = member && member.id; }, [member]);
+
+  // Tracks each conversation's last_message.id as of the previous poll, so a
+  // fresh poll can tell "a new message arrived" apart from "still the same
+  // unread message as last time". Starts null (no baseline yet) so the very
+  // first poll of a session — which may surface messages from before this
+  // tab was open — never fires a flood of notifications on load.
+  const seenLastMsgRef = useRef(null);
+
+  function notifyNewMessages(list) {
+    const supported = typeof Notification !== 'undefined';
+    const prev = seenLastMsgRef.current;
+    const isFirstRun = prev === null;
+    // Only pop a system notification when this tab isn't what the person is
+    // looking at — if it's focused and visible, the in-app unread badge is
+    // enough and a popup would just be noise on top of what they can see.
+    const tabHidden = supported && (document.hidden || !document.hasFocus());
+
+    seenLastMsgRef.current = Object.fromEntries(list.map((c) => [c.id, c.last_message ? c.last_message.id : null]));
+    if (!supported || Notification.permission !== 'granted' || isFirstRun || !tabHidden) return;
+
+    for (const c of list) {
+      const lastId = c.last_message ? c.last_message.id : null;
+      if (!lastId || prev[c.id] === lastId) continue; // no message, or same one as last poll
+      if (c.last_message.sender_id === memberIdRef.current) continue; // my own message
+      if (!c.unread_count) continue; // already read (e.g. in another tab)
+
+      try {
+        const notif = new Notification(c.name, {
+          body: c.last_message.body,
+          icon: '/apple-touch-icon.png',
+          tag: `conversation-${c.id}`,
+        });
+        notif.onclick = () => {
+          window.focus();
+          setOpen(true);
+          openConversation(c.id);
+          notif.close();
+        };
+      } catch { /* some embedded browsers throw on `new Notification(...)` despite reporting support */ }
+    }
+  }
 
   const refreshList = useCallback(() => {
-    apiFetch('/conversations').then(setConversations).catch(() => { /* transient — next poll retries */ });
+    apiFetch('/conversations').then((data) => {
+      setConversations(data);
+      notifyNewMessages(data);
+    }).catch(() => { /* transient — next poll retries */ });
   }, []);
 
   useEffect(() => {
@@ -198,6 +247,16 @@ export function MessagingWidget() {
     ));
   }
 
+  // Browsers only honor a notification-permission prompt triggered by a real
+  // user gesture (a silent request on mount is ignored by most of them), so
+  // it's asked for here, the first time someone actually opens the widget.
+  function toggleOpen() {
+    setOpen((o) => !o);
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+
   if (!isAuthenticated) return null;
 
   const unreadTotal = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
@@ -219,7 +278,7 @@ export function MessagingWidget() {
       <button
         type="button"
         className={styles.launcher}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         aria-label={open ? 'Close messages' : 'Open messages'}
         title="Messages"
       >
