@@ -102,10 +102,13 @@
   overflow: hidden;
 }
 .tableScroll { overflow-x: auto; }
-/* No forced width/min-width — each column sizes to its own header label
-   and cell content, only growing past the scroll container (triggering
-   horizontal scroll) when the content genuinely needs it. */
+/* Unlike Meeting Board's table (many columns, needs horizontal scroll),
+   this table only has a handful of short columns — content-sized would
+   leave it hugging the left edge of a wide card, so it's stretched to
+   fill the available width instead; columns still share that width by
+   their own content ratio (no table-layout: fixed). */
 .tbl {
+  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
@@ -121,8 +124,11 @@
   color: var(--muted);
   white-space: nowrap;
   border-bottom: 2px solid var(--border);
+  box-shadow: inset 0 -2px 0 var(--border);
 }
 .tbl thead th.c { text-align: center; }
+.tbl thead th, .tbl tbody td { border-right: 1px solid var(--col-line); }
+.tbl thead th:last-child, .tbl tbody td:last-child { border-right: none; }
 @keyframes rowIn3D {
   from { opacity: 0; transform: perspective(800px) rotateX(-14deg) translateY(8px); }
   to   { opacity: 1; transform: perspective(800px) rotateX(0) translateY(0); }
@@ -254,9 +260,17 @@ select.control:disabled { opacity: .55; cursor: not-allowed; }
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
   .main { gap: 12px; padding-left: 12px; padding-right: 12px; }
+  .toolbar { padding: 10px 12px; }
+  .filterLabel { width: 100%; margin-bottom: 2px; }
+  /* Below tablet width, 6 columns stretched to 100% get squeezed
+     illegible — give the table a floor and let .tableScroll's existing
+     overflow-x: auto take over (swipe to see the rest), the same
+     horizontal-scroll pattern Meeting Board's own table already uses. */
+  .tbl { width: auto; min-width: 700px; }
 }
 
 @media (max-width: 420px) {
   .gridTwo { grid-template-columns: 1fr; }
   .modalFoot :global(.btn) { flex: 1; }
+  .chip { padding: 5px 10px 5px 7px; font-size: 12px; }
 }
