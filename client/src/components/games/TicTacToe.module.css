@@ -1,0 +1,23 @@
+.wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 10px 0; }
+.status { font-size: 13px; color: var(--text-2); font-weight: 600; min-height: 18px; text-align: center; }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 210px;
+}
+.cell {
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 28px; font-weight: 800;
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.cell:hover:not(:disabled) { border-color: var(--accent-line); background: var(--accent-soft); }
+.cell:disabled { cursor: default; }
+.winCell { border-color: var(--success); background: var(--success-soft); color: var(--success); }
