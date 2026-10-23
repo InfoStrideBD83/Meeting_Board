@@ -4,7 +4,7 @@ import styles from './Snake.module.css';
 const COLS = 18;
 const ROWS = 16;
 const CELL = 18;
-const TICK_MS = 110;
+const DIFFICULTIES = { easy: { label: 'Easy', ms: 160 }, medium: { label: 'Medium', ms: 100 }, hard: { label: 'Hard', ms: 45 } };
 
 function randomCell(exclude) {
   let cell;
@@ -20,7 +20,8 @@ function themeToken(name, fallback) {
 
 /** Classic Snake — no computer opponent (there isn't really a "vs PC" shape
  *  for solo arcade games), arrow keys or WASD, score tracked against the
- *  best score for this browser (localStorage). */
+ *  best score for this browser (localStorage). Easy/Medium/Hard just scale
+ *  the tick rate; Hard is deliberately very fast. */
 export function Snake() {
   const canvasRef = useRef(null);
   const stateRef = useRef(null);
@@ -29,6 +30,7 @@ export function Snake() {
     try { return Number(window.localStorage.getItem('infostride-snake-best')) || 0; } catch { return 0; }
   });
   const [status, setStatus] = useState('ready'); // ready | playing | over
+  const [difficulty, setDifficulty] = useState('medium');
 
   const reset = useCallback(() => {
     const snake = [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }];
@@ -110,13 +112,27 @@ export function Snake() {
         ctx.fillStyle = i === 0 ? headColor : snakeColor;
         ctx.fillRect(c.x * CELL + 1, c.y * CELL + 1, CELL - 2, CELL - 2);
       });
-    }, TICK_MS);
+    }, DIFFICULTIES[difficulty].ms);
 
     return () => clearInterval(tickId);
-  }, [status]);
+  }, [status, difficulty]);
 
   return (
     <div className={styles.wrap}>
+      <div className={styles.difficultyRow} role="group" aria-label="Difficulty">
+        {Object.entries(DIFFICULTIES).map(([key, d]) => (
+          <button
+            key={key}
+            type="button"
+            className={styles.diffBtn}
+            aria-pressed={difficulty === key}
+            disabled={status === 'playing'}
+            onClick={() => setDifficulty(key)}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
       <div className={styles.scoreRow}>
         <span>Score: <strong>{score}</strong></span>
         <span>Best: <strong>{best}</strong></span>
