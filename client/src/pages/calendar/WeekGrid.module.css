@@ -24,8 +24,20 @@
   border-bottom: 1px solid var(--border);
   border-left: 1px solid var(--border-soft);
   background: var(--panel-2);
+  transition: background .2s var(--ease);
 }
-.dayHead.today { background: var(--accent-soft); }
+.dayHead.today {
+  background: var(--accent-soft);
+  position: relative;
+  animation: todayPulse 2.6s var(--ease) infinite;
+}
+@keyframes todayPulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px var(--accent-line); }
+  50%      { box-shadow: inset 0 0 0 1px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dayHead.today { animation: none; }
+}
 .dow { display: block; font-size: 11px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
 .dom { display: block; font-size: 17px; font-weight: 750; margin-top: 2px; }
 .dayHead.today .dow, .dayHead.today .dom { color: var(--accent); }
@@ -59,6 +71,8 @@
   height: 52px;
 }
 
+@keyframes eventPop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+
 .event {
   width: 100%; height: 100%;
   display: flex; flex-direction: column; justify-content: center; gap: 2px;
@@ -67,9 +81,13 @@
   color: #fff;
   text-align: left;
   cursor: pointer;
+  animation: eventPop .22s var(--ease) backwards;
   transition: filter .15s var(--ease), transform .15s var(--ease);
 }
 .event:hover { filter: brightness(1.08); transform: translateY(-1px); }
+@media (prefers-reduced-motion: reduce) {
+  .event { animation: none; }
+}
 .evTitle { font-size: 12px; font-weight: 700; line-height: 1.25; }
 .evSub { font-size: 10.5px; opacity: .85; }
 

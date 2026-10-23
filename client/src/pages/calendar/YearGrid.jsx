@@ -24,7 +24,13 @@ export function YearGrid({ year, onSelectMonth }) {
   return (
     <div className={styles.grid}>
       {MONTH_SHORT.map((mn, mi) => (
-        <button key={mn} type="button" className={styles.miniMonth} onClick={() => onSelectMonth(mi)}>
+        <button
+          key={mn}
+          type="button"
+          className={styles.miniMonth}
+          style={{ animationDelay: `${mi * 25}ms` }}
+          onClick={() => onSelectMonth(mi)}
+        >
           <div className={styles.miniTitle}>{mn}</div>
           <div className={styles.miniGrid}>
             {miniMonthCells(mi, year).map((d, i) => {

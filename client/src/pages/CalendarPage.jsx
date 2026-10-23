@@ -175,25 +175,27 @@ export function CalendarPage() {
           </div>
         ) : (
           <>
-            <div className={styles.toolbar}>
+            <div className={`${styles.toolbar} reveal`}>
               <div className={styles.navGroup}>
                 <button type="button" className={styles.navBtn} onClick={navPrev} aria-label="Previous">{ico.chevL}</button>
                 <button type="button" className="btn" onClick={goToday}>Today</button>
                 <button type="button" className={styles.navBtn} onClick={navNext} aria-label="Next">{ico.chevR}</button>
               </div>
-              <span className={styles.periodLabel}>{periodLabel}</span>
+              <span key={periodLabel} className={`${styles.periodLabel} ${styles.periodPop}`}>{periodLabel}</span>
               {view === 'week' && <span className={styles.hint}>Slots shown 8:00 AM – 1:00 PM CST</span>}
             </div>
 
-            {view === 'week' && (
-              <WeekGrid days={days} meetings={meetingsData} members={members} onSlotClick={openNewSlot} onOpenMeeting={openExistingMeeting} />
-            )}
-            {view === 'month' && (
-              <MonthGrid month={monthCursor.month} year={monthCursor.year} meetings={meetingsData} onSelectDay={selectDay} />
-            )}
-            {view === 'year' && (
-              <YearGrid year={yearCursor} onSelectMonth={selectMonth} />
-            )}
+            <div key={view} className="reveal d1">
+              {view === 'week' && (
+                <WeekGrid days={days} meetings={meetingsData} members={members} onSlotClick={openNewSlot} onOpenMeeting={openExistingMeeting} />
+              )}
+              {view === 'month' && (
+                <MonthGrid month={monthCursor.month} year={monthCursor.year} meetings={meetingsData} onSelectDay={selectDay} />
+              )}
+              {view === 'year' && (
+                <YearGrid year={yearCursor} onSelectMonth={selectMonth} />
+              )}
+            </div>
           </>
         )}
       </main>

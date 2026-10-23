@@ -191,15 +191,15 @@ export function DocumentsPage() {
             <p style={{ color: 'var(--muted)', marginTop: 6 }}>{loadError}</p>
           </div>
         ) : docs.length === 0 ? (
-          <div className={styles.empty}>
+          <div className={`${styles.empty} reveal`}>
             <div className={styles.emptyArt}>{ico.inbox}</div>
             <h4>No documents yet</h4>
             <p>{isAdmin ? 'Upload your first document or brochure to get started.' : 'No documents or brochures have been shared yet.'}</p>
           </div>
         ) : (
-          <div className={styles.grid}>
-            {docs.map((d) => (
-              <div className={styles.docCard} key={d.id}>
+          <div className={`${styles.grid} reveal`}>
+            {docs.map((d, idx) => (
+              <div className={styles.docCard} key={d.id} style={{ animationDelay: `${Math.min(idx, 20) * 30}ms` }}>
                 <div className={styles.docIcon}>{ico.doc}</div>
                 <div className={styles.docBody}>
                   <div className={styles.docTitle} title={d.title}>{d.title}</div>

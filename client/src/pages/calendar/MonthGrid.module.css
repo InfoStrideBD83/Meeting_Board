@@ -39,7 +39,14 @@
   transition: all .15s var(--ease);
 }
 .dayCell:hover { border-color: var(--accent-line); background: var(--accent-soft); transform: translateY(-1px); }
-.dayCell.today { border-color: var(--accent); }
+.dayCell.today { border-color: var(--accent); animation: todayPulse 2.6s var(--ease) infinite; }
+@keyframes todayPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-line); }
+  50%      { box-shadow: 0 0 0 4px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dayCell.today { animation: none; }
+}
 
 .dayNum { font-size: 14px; font-weight: 700; }
 .dayCell.today .dayNum { color: var(--accent); }
@@ -51,4 +58,9 @@
   color: #fff;
   font-size: 10.5px; font-weight: 700;
   display: grid; place-items: center;
+  animation: countPop .25s var(--ease) backwards;
+}
+@keyframes countPop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .dayCount { animation: none; }
 }

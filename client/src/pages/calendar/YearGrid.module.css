@@ -4,6 +4,8 @@
   gap: 14px;
 }
 
+@keyframes miniIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
 .miniMonth {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -12,9 +14,13 @@
   padding: 12px;
   cursor: pointer;
   text-align: left;
+  animation: miniIn .35s var(--ease) backwards;
   transition: all .18s var(--ease);
 }
 .miniMonth:hover { border-color: var(--accent-line); transform: translateY(-2px); box-shadow: var(--shadow); }
+@media (prefers-reduced-motion: reduce) {
+  .miniMonth { animation: none; }
+}
 
 .miniTitle { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
 
@@ -31,4 +37,16 @@
   color: var(--muted);
   border-radius: 4px;
 }
-.miniToday { background: var(--accent); color: #fff; font-weight: 700; }
+.miniToday {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  animation: todayPulse 2.6s var(--ease) infinite;
+}
+@keyframes todayPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-line); }
+  50%      { box-shadow: 0 0 0 3px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .miniToday { animation: none; }
+}

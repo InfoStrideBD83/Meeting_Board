@@ -38,6 +38,8 @@
 @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px)  { .grid { grid-template-columns: 1fr; } }
 
+@keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+
 .docCard {
   display: flex;
   flex-direction: row;
@@ -48,6 +50,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
+  animation: cardIn .4s var(--ease) backwards;
   transition: transform .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease);
 }
 .docCard:hover {
@@ -55,14 +58,19 @@
   border-color: var(--accent-line);
   box-shadow: var(--shadow);
 }
+@media (prefers-reduced-motion: reduce) {
+  .docCard { animation: none; }
+}
 
 .docIcon {
   width: 40px; height: 40px; flex-shrink: 0;
   border-radius: var(--r-md);
   display: grid; place-items: center;
   background: var(--accent-soft); color: var(--accent);
+  transition: transform .25s var(--ease), background .25s var(--ease);
 }
 .docIcon svg { width: 20px; height: 20px; }
+.docCard:hover .docIcon { transform: scale(1.08) rotate(-4deg); background: var(--accent); color: #fff; }
 
 .docBody { flex: 1; min-width: 0; }
 .docTitle {

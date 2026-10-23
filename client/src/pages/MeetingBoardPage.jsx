@@ -330,7 +330,7 @@ export function MeetingBoardPage() {
         ) : (
           <>
             {view === 'table' && (
-              <div className={styles.pageHead}>
+              <div className={`${styles.pageHead} reveal`}>
                 <div><h1 className={styles.pageTitle}>{MONTH_NAMES[selectedMonth.month]} {selectedMonth.year}</h1></div>
               </div>
             )}
@@ -339,7 +339,7 @@ export function MeetingBoardPage() {
               <ConflictBanner pairs={conflictPairs} memberById={memberById} onDismiss={() => setDismissedConflictKey(conflictKey)} />
             )}
 
-            <div className={styles.toolbar}>
+            <div className={`${styles.toolbar} reveal d1`}>
               <div className={styles.toolbarRow}>
                 <div className={`${styles.searchWrap} ${view === 'calendar' ? styles.calHidden : ''}`}>
                   {ico.search}
@@ -423,34 +423,36 @@ export function MeetingBoardPage() {
               </div>
             </div>
 
-            {view === 'table' ? (
-              <TableView
-                meetings={filteredMeetings}
-                members={members}
-                isMobile={isMobile}
-                popovers={popovers}
-                onTogglePopover={toggleDetailPop}
-                onClosePopovers={closeAllPopovers}
-                canManageMeeting={canManageMeeting}
-                onEdit={openMeetingModal}
-                onDuplicate={duplicateMeeting}
-                onDelete={deleteMeeting}
-                onUpdateStatus={updateMeetingStatus}
-                onUpdateField={updateMeetingField}
-                filtering={filtering}
-                emptyMonthLabel={emptyMonthLabel}
-                onNewMeeting={() => openMeetingModal()}
-                onResetFilters={resetFilters}
-              />
-            ) : (
-              <CalendarView
-                meetings={filteredMeetings}
-                members={members}
-                days={days}
-                calendarZoneIdx={calendarZoneIdx}
-                onOpenMeeting={openMeetingModal}
-              />
-            )}
+            <div className="reveal d2">
+              {view === 'table' ? (
+                <TableView
+                  meetings={filteredMeetings}
+                  members={members}
+                  isMobile={isMobile}
+                  popovers={popovers}
+                  onTogglePopover={toggleDetailPop}
+                  onClosePopovers={closeAllPopovers}
+                  canManageMeeting={canManageMeeting}
+                  onEdit={openMeetingModal}
+                  onDuplicate={duplicateMeeting}
+                  onDelete={deleteMeeting}
+                  onUpdateStatus={updateMeetingStatus}
+                  onUpdateField={updateMeetingField}
+                  filtering={filtering}
+                  emptyMonthLabel={emptyMonthLabel}
+                  onNewMeeting={() => openMeetingModal()}
+                  onResetFilters={resetFilters}
+                />
+              ) : (
+                <CalendarView
+                  meetings={filteredMeetings}
+                  members={members}
+                  days={days}
+                  calendarZoneIdx={calendarZoneIdx}
+                  onOpenMeeting={openMeetingModal}
+                />
+              )}
+            </div>
           </>
         )}
       </main>

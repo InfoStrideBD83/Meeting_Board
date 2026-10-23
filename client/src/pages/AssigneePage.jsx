@@ -221,7 +221,7 @@ export function AssigneePage() {
             </div>
           ) : (
             <>
-              <div className={`${styles.card} ${styles.toolbar}`}>
+              <div className={`${styles.card} ${styles.toolbar} reveal`}>
                 {!members.length ? (
                   <div className={styles.toolbarRow}>
                     <span className={styles.filterLabel}>Team</span>
@@ -257,7 +257,7 @@ export function AssigneePage() {
               </div>
 
               {!filteredAssignments.length ? (
-                <div className={`${styles.card} ${styles.empty}`}>
+                <div className={`${styles.card} ${styles.empty} reveal d1`}>
                   <div className={styles.emptyArt}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.2"/><path d="M9 2.6h6a1 1 0 0 1 1 1V6H8V3.6a1 1 0 0 1 1-1Z"/><path d="M8.5 12.4l2 2 4-4"/><path d="M8.5 17h5"/></svg>
                   </div>
@@ -265,7 +265,7 @@ export function AssigneePage() {
                   <p>Click “Assign Work” above to give a team member their first task.</p>
                 </div>
               ) : (
-                <div className={styles.tableCard}>
+                <div className={`${styles.tableCard} reveal d1`}>
                   <div className={styles.tableScroll}>
                     <table className={styles.tbl}>
                       <thead>
