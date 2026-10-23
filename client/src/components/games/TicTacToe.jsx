@@ -7,7 +7,7 @@ const LINES = [
   [0, 4, 8], [2, 4, 6],
 ];
 
-function winnerOf(cells) {
+export function winnerOf(cells) {
   for (const [a, b, c] of LINES) {
     if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) return { mark: cells[a], line: [a, b, c] };
   }

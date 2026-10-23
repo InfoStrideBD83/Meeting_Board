@@ -1,0 +1,34 @@
+.wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 10px 0; }
+.status { font-size: 12.5px; color: var(--text-2); font-weight: 600; min-height: 16px; text-align: center; }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 36px);
+  grid-template-rows: repeat(8, 36px);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.square {
+  position: relative;
+  border: none;
+  display: grid; place-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+.light { background: var(--panel-2); }
+.dark { background: var(--panel-3); }
+.selected { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+
+.piece { font-size: 24px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
+
+.moveDot {
+  position: absolute; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent); opacity: .75;
+}
+.captureDot {
+  position: absolute; inset: 3px;
+  border-radius: 6px;
+  border: 3px solid var(--danger);
+  opacity: .8;
+}
