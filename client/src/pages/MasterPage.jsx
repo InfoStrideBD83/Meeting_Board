@@ -10,6 +10,9 @@ import { NotificationBell } from '../components/NotificationBell.jsx';
 import { Avatar } from '../components/Avatar.jsx';
 import { AddMemberModal } from '../components/AddMemberModal.jsx';
 import { Logo3D } from '../components/Logo3D.jsx';
+import { MessagingWidget } from '../components/MessagingWidget.jsx';
+import { NotepadWidget } from '../components/NotepadWidget.jsx';
+import { GamesWidget } from '../components/GamesWidget.jsx';
 import { firstName } from '../utils/avatarColor.js';
 import styles from './MasterPage.module.css';
 
@@ -495,6 +498,10 @@ export function MasterPage() {
           onCreated={(created) => setMembers((prev) => prev.concat([created]))}
         />
       )}
+
+      <MessagingWidget />
+      <NotepadWidget />
+      <GamesWidget />
     </>
   );
 }
