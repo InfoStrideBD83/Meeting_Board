@@ -4,9 +4,9 @@ import { ico } from './icons.jsx';
 import { ZONES, toDateStr } from './dateUtils.js';
 import styles from './MeetingModal.module.css';
 
-const TOPIC_OPTIONS = ['EMStride', 'HRIS', 'CMS', 'AI', 'Others'];
+const TOPIC_OPTIONS = ['EMStride', 'HRIS', 'CMS', 'AI', 'DBITS', 'Others'];
 const FIXED_TOPICS = TOPIC_OPTIONS.slice(0, -1); // everything except "Others"
-const STATUSES = ['Demo Scheduled', 'Demo Completed', 'Demo Canceled'];
+const STATUSES = ['Demo Scheduled', 'Demo Re-scheduled', 'Demo In Progress', 'Demo Completed', 'Demo Canceled'];
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 
 function statesForCountry(country) {

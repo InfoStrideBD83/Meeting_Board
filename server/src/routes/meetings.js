@@ -31,7 +31,7 @@ const WRITABLE = [
   'post_demo_actions',
 ];
 
-const VALID_STATUS = ['Demo Scheduled', 'Demo Completed', 'Demo Canceled'];
+const VALID_STATUS = ['Demo Scheduled', 'Demo Re-scheduled', 'Demo In Progress', 'Demo Completed', 'Demo Canceled'];
 
 function pickWritable(body) {
   const out = {};

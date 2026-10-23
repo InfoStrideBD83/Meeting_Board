@@ -6,12 +6,16 @@ import {
 } from './dateUtils.js';
 import styles from './TableView.module.css';
 
-const STATUSES = ['Demo Scheduled', 'Demo Completed', 'Demo Canceled'];
+const STATUSES = ['Demo Scheduled', 'Demo Re-scheduled', 'Demo In Progress', 'Demo Completed', 'Demo Canceled'];
 const OUTCOMES = ['Positive', 'Neutral', 'Negative'];
 const TAKEN_BY_OPTIONS = ['Vishal Mangla', 'Ritu Mangla', 'Deepak Sharma', 'Rohit Sood', 'Amit Kaushal'];
 
 function statusClass(s) {
-  return s === 'Demo Completed' ? styles.sCompleted : s === 'Demo Canceled' ? styles.sCanceled : styles.sScheduled;
+  if (s === 'Demo Completed') return styles.sCompleted;
+  if (s === 'Demo Canceled') return styles.sCanceled;
+  if (s === 'Demo In Progress') return styles.sInProgress;
+  if (s === 'Demo Re-scheduled') return styles.sRescheduled;
+  return styles.sScheduled;
 }
 function outcomeClass(o) {
   return o === 'Positive' ? styles.oPositive : o === 'Negative' ? styles.oNegative : o === 'Neutral' ? styles.oNeutral : styles.oEmpty;
@@ -69,19 +73,19 @@ function TakenBySelect({ meeting, onChange }) {
   }
 
   const extraNames = selected.filter((n) => !TAKEN_BY_OPTIONS.includes(n));
-  const label = selected.length ? selected.join(', ') : '— Select —';
+  const has = selected.length > 0;
 
   return (
     <span className={styles.takenByWrap} ref={wrapRef}>
       <button
         type="button"
-        className={`${styles.pillSelect} ${styles.sNeutral} ${styles.selName} ${styles.takenByBtn}`}
-        aria-label="Meeting taken by"
+        className={`${styles.noteBtn} ${has ? styles.filled : ''}`}
+        aria-label={has ? `Meeting taken by: ${selected.join(', ')}` : 'Select who took the meeting'}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        title={selected.join(', ')}
+        title={has ? `Taken by: ${selected.join(', ')}` : 'Select who took the meeting'}
       >
-        <span className={styles.takenByBtnLabel}>{label}</span>
+        {ico.users}
       </button>
       {open && (
         <div className={styles.takenByMenu}>
@@ -306,9 +310,6 @@ export function TableView({
           const conflict = conflictIds.has(m.id);
           const done = m.status === 'Demo Completed';
           const canFollowUp = done && (m.meeting_outcome === 'Positive' || m.meeting_outcome === 'Neutral');
-          let takenBy = '';
-          try { takenBy = m.meeting_taken_by ? JSON.parse(m.meeting_taken_by).join(', ') : ''; }
-          catch { takenBy = m.meeting_taken_by || ''; }
           const manageable = canManageMeeting(m);
 
           return (
@@ -397,7 +398,7 @@ export function TableView({
               )}
 
               <div className={styles.mcFoot}>
-                <span className={styles.mcFootNote}>{takenBy || (done ? 'Completed' : 'Awaiting demo')}</span>
+                <span className={styles.mcFootNote}>{done ? 'Completed' : 'Awaiting demo'}</span>
                 <ActionBtns meeting={m} manageable={manageable} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
               </div>
             </article>
@@ -430,7 +431,7 @@ export function TableView({
               <th className={`${styles.c} ${styles.thWrap}`}>Duration</th>
               <th className={`${styles.c} ${styles.thWrap}`}>Status</th>
               <th className={`${styles.c} ${styles.thNowrap}`}>Minutes of Meeting</th>
-              <th className={`${styles.c} ${styles.thWrap}`}>Meeting Taken By</th>
+              <th className={`${styles.c} ${styles.thNowrap}`}>Meeting Taken By</th>
               <th className={`${styles.c} ${styles.thWrap}`}>Meeting Outcome</th>
               <th className={`${styles.c} ${styles.thNowrap}`}>Post-Demo Actions</th>
               <th className={styles.c}>Actions</th>
