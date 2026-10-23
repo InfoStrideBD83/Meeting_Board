@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AppHeader } from '../components/AppHeader.jsx';
 import { ThemeToggle } from '../components/ThemeToggle.jsx';
+import { CursorEffectsToggle } from '../components/CursorEffectsToggle.jsx';
 import { ProfileMenu } from '../components/ProfileMenu.jsx';
 import { NotificationBell } from '../components/NotificationBell.jsx';
 import { Avatar } from '../components/Avatar.jsx';
@@ -241,6 +242,7 @@ export function MasterPage() {
           )}
         </NotificationBell>
 
+        <CursorEffectsToggle />
         <ThemeToggle />
         <ProfileMenu />
       </AppHeader>

@@ -490,6 +490,56 @@ html[data-theme="light"] .tt-sun  { opacity: 1; transform: rotate(0deg) scale(1)
 .menu-item:hover svg { color: var(--accent); }
 .menu-sep { height: 1px; background: var(--border-soft); margin: 4px 0; }
 
+/* ── Brand cursor (BrandCursor.jsx) — decorative, opt-in via the class
+   below (toggled in JS, never set directly). Auto-skipped under
+   forced-colors (Windows High Contrast etc.), where the OS cursor must
+   stay put. ──────────────────────────────────────────────────────── */
+html.cursor-fx-active, html.cursor-fx-active * { cursor: none !important; }
+html.cursor-fx-active input,
+html.cursor-fx-active textarea,
+html.cursor-fx-active select,
+html.cursor-fx-active [contenteditable="true"] { cursor: auto !important; }
+@media (forced-colors: active) {
+  html.cursor-fx-active, html.cursor-fx-active * { cursor: auto !important; }
+}
+
+.brand-cursor-canvas {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 2147483646;
+}
+.brand-cursor-dot {
+  position: fixed; top: 0; left: 0;
+  width: 18px; height: 18px;
+  pointer-events: none;
+  z-index: 2147483647;
+  transform: translate3d(-100px, -100px, 0);
+  will-change: transform;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .4));
+  transition: opacity .15s var(--ease);
+}
+html[data-theme="dark"] .brand-cursor-dot {
+  filter: drop-shadow(0 0 2px var(--accent-line)) drop-shadow(0 1px 2px rgba(0, 0, 0, .5));
+}
+.brand-cursor-dot svg { display: block; width: 100%; height: 100%; }
+.brand-cursor-dot.is-hidden { opacity: 0; }
+
+/* ── Cursor sparkle-effects toggle (CursorEffectsToggle.jsx) — same
+   sizing/affordance as .theme-toggle, so it sits naturally beside it. ── */
+.cursor-fx-toggle {
+  position: relative; width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  cursor: pointer; padding: 0;
+  display: grid; place-items: center;
+  background: var(--panel-2);
+  color: var(--muted);
+  transition: border-color .2s var(--ease), color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease);
+}
+.cursor-fx-toggle:hover { border-color: var(--accent-line); color: var(--accent); transform: translateY(-1px); }
+.cursor-fx-toggle[aria-checked="true"] { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
+.cursor-fx-toggle:active { transform: translateY(0) scale(.92); }
+
 /* ── Shared entrance animation ─────────────────────────────────── */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .reveal { animation: fadeUp .6s var(--ease) both; }
