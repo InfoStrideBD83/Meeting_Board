@@ -33,12 +33,28 @@
 }
 @keyframes gamePop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
 
+/* Driven by React state (document.fullscreenElement), not the :fullscreen
+   pseudo-class — the pseudo-class's vendor-prefix situation and its
+   interaction with this panel's own fixed positioning isn't worth the
+   cross-browser risk when a plain class does the same job reliably. */
+.panelFullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 0;
+  border: none;
+}
+.panelFullscreen .body { padding: 20px; }
+
 .panelHead {
   flex-shrink: 0;
-  display: grid; grid-template-columns: 30px 1fr 30px; align-items: center;
+  display: grid; grid-template-columns: 30px 1fr auto; align-items: center;
   padding: 12px 10px;
   border-bottom: 1px solid var(--border-soft);
 }
+.panelHeadActions { display: flex; gap: 4px; justify-content: flex-end; }
 .panelTitle { font-size: 13.5px; font-weight: 700; text-align: center; }
 .iconBtn {
   width: 30px; height: 30px;

@@ -7,7 +7,11 @@ const router = Router();
 router.use(requireAuth);
 
 // initialState() is the one place a new game_type gets wired in.
-const GAME_TYPES = ['tictactoe', 'memory', 'chess', 'ludo'];
+const GAME_TYPES = ['tictactoe', 'memory', 'chess', 'ludo', 'drift'];
+// Turn-based games alternate moves via the generic PATCH below. A time
+// trial has no turns — both players race independently — so it's handled
+// by the separate /submit endpoint instead.
+const ASYNC_GAME_TYPES = ['drift'];
 
 const MEMORY_ICONS = ['🎯', '🚀', '🎲', '🧩', '🔔', '💡', '🎧', '⭐'];
 
@@ -32,11 +36,12 @@ function initialChessBoard() {
   return board;
 }
 
-function initialState(gameType) {
+function initialState(gameType, config = {}) {
   if (gameType === 'tictactoe') return { board: Array(9).fill(null) };
   if (gameType === 'memory') return { cards: shuffledMemoryDeck(), flipped: [], scores: { player1: 0, player2: 0 } };
   if (gameType === 'chess') return { board: initialChessBoard() };
   if (gameType === 'ludo') return { tokens: { player1: [-1, -1, -1, -1], player2: [-1, -1, -1, -1] }, roll: null, sixStreak: 0 };
+  if (gameType === 'drift') return { track: config.track || 'oval', mode: config.mode || 'race', results: {} };
   throw new ApiError(400, `Unsupported game_type: ${gameType}`);
 }
 
@@ -81,7 +86,7 @@ router.post(
 
     const { data, error } = await supabase
       .from('game_sessions')
-      .insert({ game_type: gameType, player1_id: me, player2_id: opponentId, status: 'pending', state: initialState(gameType) })
+      .insert({ game_type: gameType, player1_id: me, player2_id: opponentId, status: 'pending', state: initialState(gameType, req.body.config) })
       .select()
       .single();
     if (error) throw error;
@@ -151,6 +156,7 @@ router.patch(
   asyncHandler(async (req, res) => {
     const me = req.user.sub;
     const session = await loadSession(req.params.id, me);
+    if (ASYNC_GAME_TYPES.includes(session.game_type)) throw new ApiError(400, 'This game type uses /submit, not a turn-based move');
     if (session.status !== 'active') throw new ApiError(400, 'This game is not active');
     if (session.turn !== me) throw new ApiError(403, "It's not your turn");
 
@@ -161,6 +167,44 @@ router.patch(
       update.winner = req.body.winner || null;
     } else {
       update.turn = req.body.turn;
+    }
+
+    const { data, error } = await supabase.from('game_sessions').update(update).eq('id', session.id).select().single();
+    if (error) throw error;
+    res.json(data);
+  })
+);
+
+/**
+ * POST /api/game-sessions/:id/submit — the async-game equivalent of PATCH,
+ * for game types with no turn order (currently just 'drift'): each
+ * participant submits their own result independently whenever they finish,
+ * instead of alternating moves. The session finishes once both results are
+ * in, with the winner computed here (not trusted from the client) since,
+ * unlike the turn-based games, there's no per-move check anywhere else to
+ * anchor that trust against.
+ */
+router.post(
+  '/:id/submit',
+  asyncHandler(async (req, res) => {
+    const me = req.user.sub;
+    const session = await loadSession(req.params.id, me);
+    if (!ASYNC_GAME_TYPES.includes(session.game_type)) throw new ApiError(400, 'This game type uses PATCH, not /submit');
+    if (session.status !== 'active') throw new ApiError(400, 'This game is not active');
+
+    const state = { ...session.state, results: { ...session.state.results, [me]: req.body.result } };
+    const update = { state, updated_at: new Date().toISOString() };
+
+    const opponentId = session.player1_id === me ? session.player2_id : session.player1_id;
+    if (state.results[opponentId]) {
+      update.status = 'finished';
+      const p1 = state.results[session.player1_id];
+      const p2 = state.results[session.player2_id];
+      const higherIsBetter = state.mode === 'drift';
+      const p1Score = higherIsBetter ? p1.driftScore : p1.time;
+      const p2Score = higherIsBetter ? p2.driftScore : p2.time;
+      const p1Wins = higherIsBetter ? p1Score > p2Score : p1Score < p2Score;
+      update.winner = p1Score === p2Score ? 'draw' : (p1Wins ? 'player1' : 'player2');
     }
 
     const { data, error } = await supabase.from('game_sessions').update(update).eq('id', session.id).select().single();

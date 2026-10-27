@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { TicTacToe } from './games/TicTacToe.jsx';
 import { Snake } from './games/Snake.jsx';
@@ -7,6 +7,7 @@ import { Ludo } from './games/Ludo.jsx';
 import { Uno } from './games/Uno.jsx';
 import { Chess } from './games/Chess.jsx';
 import { Sudoku } from './games/Sudoku.jsx';
+import { CarDrift } from './games/CarDrift.jsx';
 import { GameLobby } from './games/GameLobby.jsx';
 import styles from './GamesWidget.module.css';
 
@@ -32,6 +33,9 @@ const GAMES = [
   { key: 'sudoku', name: 'Sudoku', sub: 'Solo puzzle', Component: Sudoku, icon: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /><circle cx="6" cy="6" r=".9" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none" /><circle cx="18" cy="18" r=".9" fill="currentColor" stroke="none" /></svg>
   ) },
+  { key: 'drift', name: 'Drift Racer', sub: 'Solo arcade', Component: CarDrift, icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11" /><rect x="3" y="11" width="18" height="6" rx="2" /><circle cx="7.5" cy="17.5" r="1.6" /><circle cx="16.5" cy="17.5" r="1.6" /><path d="M3 14h2M19 14h2" /></svg>
+  ) },
   { key: 'online', name: 'Play a Teammate', sub: '4 games', Component: GameLobby, icon: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="3.2" /><circle cx="17" cy="9" r="2.6" /><path d="M2.5 20v-1.5A4.5 4.5 0 0 1 7 14h2a4.5 4.5 0 0 1 4.5 4.5V20" /><path d="M13.8 14.3A4 4 0 0 1 20.5 17.2V20" /></svg>
   ) },
@@ -41,25 +45,45 @@ const ico = {
   dice: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9h12a4 4 0 0 1 4 4v3a3 3 0 0 1-3 3c-1 0-1.6-.5-2.3-1.3L15.5 16h-7l-1.2 1.7C6.6 18.5 6 19 5 19a3 3 0 0 1-3-3v-3a4 4 0 0 1 4-4Z" /><line x1="9" y1="11.3" x2="9" y2="14.3" /><line x1="7.5" y1="12.8" x2="10.5" y2="12.8" /><circle cx="16" cy="12" r=".9" fill="currentColor" stroke="none" /><circle cx="18.2" cy="14" r=".9" fill="currentColor" stroke="none" /></svg>,
   back: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>,
   close: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+  expand: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" /></svg>,
+  collapse: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3v3a2 2 0 0 1-2 2H4M21 9h-3a2 2 0 0 1-2-2V4M15 21v-3a2 2 0 0 1 2-2h3M3 15h3a2 2 0 0 1 2 2v3" /></svg>,
 };
 
 /** A floating arcade — pick a game from the grid, play it inline, go back
  *  to pick another. Each game is a standalone component; this widget is
- *  just the launcher chrome around them. Every game except Snake is
- *  played against a computer opponent; Snake stays solo since there's no
- *  natural "vs PC" shape for a single-player arcade game. */
+ *  just the launcher chrome around them. Every game except Snake, Sudoku,
+ *  and Drift Racer is played against a computer opponent (or a teammate
+ *  via "Play a Teammate"); those three stay solo since there's no natural
+ *  "vs PC" shape for a single-player arcade or puzzle game. */
 export function GamesWidget() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    function onChange() { setFullscreen(document.fullscreenElement === panelRef.current); }
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
 
   if (!isAuthenticated) return null;
 
   const active = GAMES.find((g) => g.key === activeKey);
 
   function closePanel() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     setOpen(false);
     setActiveKey(null);
+  }
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else if (panelRef.current && panelRef.current.requestFullscreen) {
+      panelRef.current.requestFullscreen().catch(() => {});
+    }
   }
 
   return (
@@ -75,13 +99,18 @@ export function GamesWidget() {
       </button>
 
       {open && (
-        <div className={styles.panel} role="dialog" aria-label="Games">
+        <div ref={panelRef} className={`${styles.panel} ${fullscreen ? styles.panelFullscreen : ''}`} role="dialog" aria-label="Games">
           <div className={styles.panelHead}>
             {active ? (
               <button type="button" className={styles.iconBtn} onClick={() => setActiveKey(null)} aria-label="Back to game list">{ico.back}</button>
             ) : <span />}
             <div className={styles.panelTitle}>{active ? active.name : 'Games'}</div>
-            <button type="button" className={styles.iconBtn} onClick={closePanel} aria-label="Close games">{ico.close}</button>
+            <div className={styles.panelHeadActions}>
+              <button type="button" className={styles.iconBtn} onClick={toggleFullscreen} aria-label={fullscreen ? 'Exit full screen' : 'Full screen'} title={fullscreen ? 'Exit full screen' : 'Full screen'}>
+                {fullscreen ? ico.collapse : ico.expand}
+              </button>
+              <button type="button" className={styles.iconBtn} onClick={closePanel} aria-label="Close games">{ico.close}</button>
+            </div>
           </div>
 
           <div className={styles.body}>
