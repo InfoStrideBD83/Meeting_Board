@@ -1,0 +1,212 @@
+.main {
+  position: relative;
+  z-index: 1;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: clamp(10px, 1.6vw, 20px) clamp(12px, 2.2vw, 28px) clamp(10px, 1.6vw, 18px);
+  display: flex;
+  flex-direction: column;
+  /* Fits the whole dashboard — filters, chart, table — inside one screen
+     (62px is this app's established sticky-header height, see UsMapPage's
+     .stage for the same constant). Only the table scrolls internally if
+     the roster is long enough to need it; the page itself never scrolls. */
+  height: calc(100dvh - 62px - var(--footer-h));
+  overflow: hidden;
+}
+.mainContent { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: clamp(10px, 1.2vw, 16px); }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+}
+
+.empty { text-align: center; padding: clamp(48px, 10vw, 90px) 20px; color: var(--muted); }
+.empty h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.empty p { font-size: 13px; max-width: 380px; margin: 0 auto; }
+
+/* ── Toolbar / filters ────────────────────────────────────────── */
+.toolbar { padding: 14px 16px; }
+.toolbarRow { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.fgroup { display: flex; flex-direction: column; gap: 6px; min-width: 150px; }
+.fgroup > label {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.control {
+  min-height: 38px;
+  padding: 9px 32px 9px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  transition: border-color .16s var(--ease), box-shadow .16s var(--ease);
+}
+.control:focus {
+  outline: none; border-color: var(--accent);
+  background-color: var(--panel);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.toolbarStat {
+  margin-left: auto;
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding-bottom: 2px;
+}
+.toolbarStatNum { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; font-family: var(--font-mono); }
+.toolbarStatLabel { font-size: 11px; color: var(--faint); font-weight: 600; white-space: nowrap; }
+
+/* ── Chart ────────────────────────────────────────────────────── */
+.chartCard { flex: 0 0 auto; padding: 14px 16px 6px; }
+.chartWrap { position: relative; }
+.chartSvg { display: block; width: 100%; height: auto; overflow: visible; }
+.gridLine {
+  stroke: var(--border-soft); stroke-width: 1;
+  transform-box: fill-box; transform-origin: left;
+  animation: gridDraw .5s var(--ease) backwards;
+}
+@keyframes gridDraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.axisLabel {
+  font-size: 9.5px; fill: var(--faint); font-family: var(--font-ui);
+  opacity: 0; animation: labelFadeIn .4s var(--ease) forwards;
+}
+@keyframes labelFadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+.axisLabelX { transform-box: fill-box; transform-origin: center; }
+
+.hoverLine { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* pathLength="1" on the <path> normalizes its length to 1 regardless of
+   actual on-screen length, so this dash/offset pair always draws the full
+   line in exactly .9s no matter how many buckets or how long the path is. */
+.seriesLine { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lineDraw .9s var(--ease) forwards; }
+@keyframes lineDraw { to { stroke-dashoffset: 0; } }
+
+.seriesArea {
+  transform-box: fill-box; transform-origin: bottom;
+  opacity: 0;
+  animation: areaGrow 1s var(--ease) forwards;
+}
+@keyframes areaGrow {
+  0%   { transform: scaleY(0); opacity: 0; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+.pointDot {
+  transform-box: fill-box; transform-origin: center;
+  opacity: 0;
+  animation: pointPop .4s cubic-bezier(.34, 1.56, .64, 1) forwards;
+}
+@keyframes pointPop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.livePoint { opacity: 0; animation: liveFadeIn .3s var(--ease) forwards; }
+@keyframes liveFadeIn { to { opacity: 1; } }
+.liveRing { animation: livePulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes livePulse {
+  0%   { r: 2.6; stroke-width: 2; stroke-opacity: .8; }
+  70%  { r: 9; stroke-width: 1; stroke-opacity: 0; }
+  100% { r: 9; stroke-width: 0; stroke-opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gridLine { animation: none; transform: none; }
+  .axisLabel { animation: none; opacity: 1; transform: none; }
+  .seriesLine { animation: none; stroke-dashoffset: 0; }
+  .seriesArea { animation: none; opacity: 1; transform: none; }
+  .pointDot { animation: none; opacity: 1; transform: none; }
+  .livePoint { animation: none; opacity: 1; }
+  .liveRing { animation: none; opacity: 0; }
+}
+
+.tooltip {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  min-width: 120px;
+  pointer-events: none;
+  z-index: 2;
+}
+.tooltipDate { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+.tooltipRow { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 0; }
+.tooltipSwatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tooltipName { flex: 1; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tooltipVal { font-weight: 700; color: var(--text); font-family: var(--font-mono); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: center; padding: 10px 4px 6px; }
+.legendItem { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.legendSwatch { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Table ────────────────────────────────────────────────────── */
+.tableCard {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.tableScroll { flex: 1; min-height: 0; overflow: auto; }
+.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.tbl thead th {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--panel);
+  text-align: left;
+  padding: 11px 12px;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: .55px;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  border-bottom: 2px solid var(--border);
+  border-right: 1px solid var(--border-soft);
+  box-shadow: inset 0 -2px 0 var(--border);
+}
+.tbl thead th.c { text-align: center; }
+.tbl thead th:last-child, .tbl tbody td:last-child { border-right: none; }
+@keyframes rowIn3D {
+  from { opacity: 0; transform: perspective(800px) rotateX(-14deg) translateY(8px); }
+  to   { opacity: 1; transform: perspective(800px) rotateX(0) translateY(0); }
+}
+.tbl tbody tr { animation: rowIn3D .42s var(--ease) backwards; }
+@media (prefers-reduced-motion: reduce) { .tbl tbody tr { animation: none; } }
+.tbl tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border-soft); border-right: 1px solid var(--border-soft); vertical-align: middle; }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody td.c { text-align: center; }
+
+.personCell { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.personDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.personName { font-weight: 650; font-size: 13px; }
+.totalCell { font-weight: 750; color: var(--text); font-family: var(--font-mono); }
+
+@media (max-width: 767px) {
+  /* A phone screen can't fit filters + chart + table without scrolling —
+     the fixed-height, no-page-scroll layout is a desktop convenience, so
+     this falls back to normal page flow here instead of clipping content. */
+  .main { height: auto; overflow: visible; padding-left: 12px; padding-right: 12px; }
+  .mainContent { flex: none; }
+  .tableCard { flex: none; }
+  .tableScroll { overflow-x: auto; overflow-y: visible; }
+  .toolbarRow { gap: 12px; }
+  .toolbarStat { margin-left: 0; align-items: flex-start; width: 100%; }
+  .tbl { width: auto; min-width: 480px; }
+}
