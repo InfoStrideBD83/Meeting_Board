@@ -101,16 +101,18 @@
 
 .apps {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: clamp(12px, 1.8vw, 20px);
+  gap: clamp(8px, 1.2vw, 20px);
   width: 100%;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .appCard {
   position: relative;
-  flex: 1 1 calc(16.6667% - 17px);
-  min-width: 190px;
+  flex: 1 1 calc(14.2857% - 15px);
+  min-width: 140px;
   display: flex; flex-direction: column;
   gap: 13px;
   padding: 13px 13px 15px;
@@ -204,6 +206,7 @@
 .cAssignee { --tint: color-mix(in srgb, var(--map-pst) 15%, transparent); --tint-fg: var(--map-pst); --tint-line: color-mix(in srgb, var(--map-pst) 40%, transparent); }
 .cCalendar { --tint: color-mix(in srgb, var(--map-cst) 15%, transparent); --tint-fg: var(--map-cst); --tint-line: color-mix(in srgb, var(--map-cst) 40%, transparent); }
 .cDocuments { --tint: color-mix(in srgb, var(--map-est) 15%, transparent); --tint-fg: var(--map-est); --tint-line: color-mix(in srgb, var(--map-est) 40%, transparent); }
+.cProgress { --tint: color-mix(in srgb, var(--map-mst) 15%, transparent); --tint-fg: var(--map-mst); --tint-line: color-mix(in srgb, var(--map-mst) 40%, transparent); }
 
 /* ── Preview artwork — shared bits ────────────────────────────── */
 .artPanel  { fill: var(--panel); }
@@ -258,7 +261,7 @@
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 860px) {
-  .apps { flex-direction: column; gap: 12px; }
+  .apps { flex-direction: column; overflow-x: visible; gap: 12px; }
   .appCard { flex: 1 1 auto; flex-direction: row; align-items: center; gap: 14px; padding: 12px; }
   .cardPreview { width: 132px; flex-shrink: 0; }
   .cardFoot { flex: 1; min-width: 0; padding: 0; }

@@ -13,6 +13,7 @@ import { Logo3D } from '../components/Logo3D.jsx';
 import { MessagingWidget } from '../components/MessagingWidget.jsx';
 import { NotepadWidget } from '../components/NotepadWidget.jsx';
 import { GamesWidget } from '../components/GamesWidget.jsx';
+import { PresenceWidget } from '../components/PresenceWidget.jsx';
 import { firstName } from '../utils/avatarColor.js';
 import styles from './MasterPage.module.css';
 
@@ -489,6 +490,35 @@ export function MasterPage() {
               <span className={styles.appArrow}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
             </span>
           </Link>
+
+          <Link className={`${styles.appCard} ${styles.cProgress}`} to="/progress" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
+            <span className={styles.cardPreview}>
+              <svg viewBox="0 0 200 108" aria-hidden="true">
+                <rect x="10" y="10" width="180" height="88" rx="6" className={styles.artPanel} stroke="var(--border)" strokeWidth="1"/>
+                <g stroke="var(--border-soft)" strokeWidth="1">
+                  <line x1="10" y1="34" x2="190" y2="34"/>
+                  <line x1="10" y1="58" x2="190" y2="58"/>
+                  <line x1="10" y1="82" x2="190" y2="82"/>
+                </g>
+                <rect x="28" y="60" width="16" height="34" rx="2" fill="var(--map-mst)" opacity=".5"/>
+                <rect x="58" y="44" width="16" height="50" rx="2" fill="var(--map-mst)" opacity=".65"/>
+                <rect x="88" y="52" width="16" height="42" rx="2" fill="var(--map-mst)" opacity=".55"/>
+                <rect x="118" y="30" width="16" height="64" rx="2" fill="var(--map-mst)" opacity=".8"/>
+                <rect x="148" y="38" width="16" height="56" rx="2" fill="var(--map-mst)" opacity=".7"/>
+                <polyline points="36,56 66,40 96,48 126,24 156,32" fill="none" stroke="var(--map-mst)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="36" cy="56" r="2.6" fill="var(--map-mst)"/>
+                <circle cx="66" cy="40" r="2.6" fill="var(--map-mst)"/>
+                <circle cx="96" cy="48" r="2.6" fill="var(--map-mst)"/>
+                <circle cx="126" cy="24" r="2.6" fill="var(--map-mst)"/>
+                <circle cx="156" cy="32" r="2.6" fill="var(--map-mst)"/>
+              </svg>
+            </span>
+            <span className={styles.cardFoot}>
+              <span className={styles.appIcon}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16l4-5 3 3 5-7"/></svg></span>
+              <span className={styles.appTitle}>Meeting Progress</span>
+              <span className={styles.appArrow}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
+            </span>
+          </Link>
         </nav>
       </main>
 
@@ -502,6 +532,7 @@ export function MasterPage() {
       <MessagingWidget />
       <NotepadWidget />
       <GamesWidget />
+      <PresenceWidget />
     </>
   );
 }

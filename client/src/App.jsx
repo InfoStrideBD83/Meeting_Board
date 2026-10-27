@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { Footer } from './components/Footer.jsx';
 import { MeetingReminders } from './components/MeetingReminders.jsx';
 import { BrandCursor } from './components/BrandCursor.jsx';
+import { usePresenceHeartbeat } from './hooks/usePresenceHeartbeat.js';
 
 // Route-based code splitting — each page ships as its own chunk instead
 // of one large bundle, and only loads when its route is actually visited.
@@ -14,6 +15,7 @@ const MeetingBoardPage = lazy(() => import('./pages/MeetingBoardPage.jsx').then(
 const CalendarPage = lazy(() => import('./pages/CalendarPage.jsx').then((m) => ({ default: m.CalendarPage })));
 const DocumentsPage = lazy(() => import('./pages/DocumentsPage.jsx').then((m) => ({ default: m.DocumentsPage })));
 const AssigneePage = lazy(() => import('./pages/AssigneePage.jsx').then((m) => ({ default: m.AssigneePage })));
+const ProgressPage = lazy(() => import('./pages/ProgressPage.jsx').then((m) => ({ default: m.ProgressPage })));
 const UsTimerPage = lazy(() => import('./pages/UsTimerPage.jsx').then((m) => ({ default: m.UsTimerPage })));
 const UsMapPage = lazy(() => import('./pages/UsMapPage.jsx').then((m) => ({ default: m.UsMapPage })));
 
@@ -26,6 +28,8 @@ function PageLoader() {
 }
 
 export function App() {
+  usePresenceHeartbeat();
+
   return (
     <>
       <Suspense fallback={<PageLoader />}>
@@ -55,6 +59,10 @@ export function App() {
           <Route
             path="/assignee"
             element={<ProtectedRoute><AssigneePage /></ProtectedRoute>}
+          />
+          <Route
+            path="/progress"
+            element={<ProtectedRoute><ProgressPage /></ProtectedRoute>}
           />
           {/* No ProtectedRoute here — US Timer.html has no auth gate in the
               original either (no config.js include, no login check). */}
