@@ -8,7 +8,7 @@ import logoDark from '../../assets/logo-dark-cropped.png';
  *  dashboard) uses the same shell but has no "home" link/brand, since it
  *  IS home — pass showBrand={false} there. `children` is the page's own
  *  header-actions content (bells, toggle, profile, toolbar buttons). */
-export function AppHeader({ showBrand = true, children }) {
+export function AppHeader({ showBrand = true, left, children }) {
   return (
     <header className="app-header">
       <div className="header-fx" aria-hidden="true">
@@ -29,6 +29,8 @@ export function AppHeader({ showBrand = true, children }) {
             </div>
           </>
         )}
+
+        {left}
 
         <div className="header-spacer" />
 

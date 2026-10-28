@@ -14,6 +14,8 @@ import { MessagingWidget } from '../components/MessagingWidget.jsx';
 import { NotepadWidget } from '../components/NotepadWidget.jsx';
 import { GamesWidget } from '../components/GamesWidget.jsx';
 import { PresenceWidget } from '../components/PresenceWidget.jsx';
+import { WeatherWidget } from '../components/WeatherWidget.jsx';
+import { LiveClock } from '../components/LiveClock.jsx';
 import { firstName } from '../utils/avatarColor.js';
 import styles from './MasterPage.module.css';
 
@@ -46,12 +48,27 @@ function todayStr() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
+// Names aren't always stored capitalized, so the hero greeting capitalizes
+// whatever it's given rather than trusting the data.
+function capitalize(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function timeGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning';
+  if (h < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
 export function MasterPage() {
   const { member, isAdmin } = useAuth();
 
   const [todaysMeetings, setTodaysMeetings] = useState([]);
+  const [meetingsLoaded, setMeetingsLoaded] = useState(false);
   const [members, setMembers] = useState([]);
   const [pending, setPending] = useState([]);
+  const [onlineCount, setOnlineCount] = useState(null);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const refreshNotifications = useCallback(() => {
@@ -62,6 +79,7 @@ export function MasterPage() {
       .then(([meetings, membersList]) => {
         setTodaysMeetings(meetings.sort((a, b) => String(a.time || '').localeCompare(String(b.time || ''))));
         setMembers(membersList);
+        setMeetingsLoaded(true);
       })
       .catch(() => { /* transient — next refresh (click or 60s poll) retries */ });
   }, []);
@@ -85,6 +103,20 @@ export function MasterPage() {
     const id = setInterval(refreshApprovals, 60000);
     return () => clearInterval(id);
   }, [isAdmin, refreshApprovals]);
+
+  // Powers the "X online" stat in the hero strip below — admin-only, same
+  // access boundary as the Member Activity panel itself (PresenceWidget).
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+    function refreshOnline() {
+      apiFetch('/presence')
+        .then((roster) => setOnlineCount(roster.filter((m) => m.online).length))
+        .catch(() => { /* transient — next poll retries */ });
+    }
+    refreshOnline();
+    const id = setInterval(refreshOnline, 30000);
+    return () => clearInterval(id);
+  }, [isAdmin]);
 
   useEffect(() => {
     document.title = 'InfoStride · Workspace · ' + firstName(member && member.name);
@@ -149,7 +181,7 @@ export function MasterPage() {
         <span className={`${styles.ambientGlyph} ${styles.g3}`}><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 2 L13 12 L3 22 L9 22 L19 12 L9 2 Z"/></svg></span>
       </div>
 
-      <AppHeader showBrand={false}>
+      <AppHeader showBrand={false} left={<><WeatherWidget /><LiveClock /></>}>
         {isAdmin && (
           <NotificationBell
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>}
@@ -255,8 +287,31 @@ export function MasterPage() {
         <section className={`${styles.hero} reveal`}>
           <span className={styles.eyebrow}><span className="live" />{role} · InfoStride Workspace</span>
           <h1 className={styles.greeting}>
-            Hi <span className={styles.who}>{firstName(member && member.name)}</span>, <span className={styles.welcome}>Welcome back</span>
+            {timeGreeting()}, <span className={styles.who}>{capitalize(firstName(member && member.name))}</span><span className={styles.welcome}>!</span>
           </h1>
+
+          <div className={styles.statStrip}>
+            {meetingsLoaded ? (
+              <span className={styles.statPill}>
+                <span className={`${styles.statDot} ${styles.statDotAccent}`} />
+                {todaysMeetings.length} meeting{todaysMeetings.length === 1 ? '' : 's'} today
+              </span>
+            ) : (
+              <span className={`${styles.statPill} ${styles.statSkeleton}`} aria-hidden="true" />
+            )}
+            {isAdmin && pending.length > 0 && (
+              <span className={styles.statPill}>
+                <span className={`${styles.statDot} ${styles.statDotWarn}`} />
+                {pending.length} pending approval{pending.length === 1 ? '' : 's'}
+              </span>
+            )}
+            {isAdmin && onlineCount !== null && (
+              <span className={styles.statPill}>
+                <span className={`${styles.statDot} ${styles.statDotOnline}`} />
+                {onlineCount} teammate{onlineCount === 1 ? '' : 's'} online
+              </span>
+            )}
+          </div>
         </section>
 
         <Logo3D />
