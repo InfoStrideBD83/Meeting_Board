@@ -263,6 +263,7 @@ export function MasterPage() {
 
         <div className={`${styles.appsLabel} reveal d2`}>Open a workspace</div>
 
+        <div className={styles.appsScroll}>
         <nav className={`${styles.apps} reveal d2`} aria-label="Applications">
           <Link className={`${styles.appCard} ${styles.cBoard}`} to="/meetings" onMouseMove={handleCardTilt} onMouseLeave={resetCardTilt}>
             <span className={styles.cardPreview}>
@@ -520,6 +521,7 @@ export function MasterPage() {
             </span>
           </Link>
         </nav>
+        </div>
       </main>
 
       {addMemberOpen && (

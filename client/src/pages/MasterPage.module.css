@@ -99,19 +99,23 @@
   content: ""; flex: 1; height: 1px; background: var(--border);
 }
 
+/* A hovered card's own tilt transform (translateY/rotateX/rotateY, set via
+   JS in handleCardTilt) bleeds past its box — that ink overflow isn't
+   contained by the card's own overflow:hidden (which only clips its
+   children) — and counts toward the *scrollable* overflow of whichever
+   ancestor actually scrolls. Splitting that into two layers fixes it for
+   good instead of just outrunning it with padding: .apps clips any such
+   bleed at its own (slightly padded) edge, so none of it ever reaches
+   .appsScroll, the one that actually owns the horizontal scrollbar. */
+.appsScroll { width: 100%; overflow-x: auto; overflow-y: hidden; }
 .apps {
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
   gap: clamp(8px, 1.2vw, 20px);
   width: 100%;
-  overflow-x: auto;
-  /* Left/right buffer, not visual spacing — a hovered card's own tilt
-     transform (translateY/rotateX/rotateY, set via JS in handleCardTilt)
-     isn't clipped by its own overflow:hidden (that only clips its
-     children), so without this slack the edge cards' tilt bleeds past
-     the scrollable content box and flashes a horizontal scrollbar. */
-  padding: 4px 36px 6px;
+  overflow: hidden;
+  padding: 10px 20px 12px;
 }
 
 .appCard {
@@ -266,7 +270,8 @@
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 860px) {
-  .apps { flex-direction: column; overflow-x: visible; gap: 12px; padding: 0; }
+  .appsScroll { overflow: visible; }
+  .apps { flex-direction: column; overflow: visible; gap: 12px; padding: 0; }
   .appCard { flex: 1 1 auto; flex-direction: row; align-items: center; gap: 14px; padding: 12px; }
   .cardPreview { width: 132px; flex-shrink: 0; }
   .cardFoot { flex: 1; min-width: 0; padding: 0; }
