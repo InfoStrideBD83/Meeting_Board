@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { Footer } from './components/Footer.jsx';
 import { MeetingReminders } from './components/MeetingReminders.jsx';
@@ -29,11 +29,16 @@ function PageLoader() {
 
 export function App() {
   usePresenceHeartbeat();
+  const location = useLocation();
 
   return (
     <>
       <Suspense fallback={<PageLoader />}>
-        <Routes>
+        {/* Keyed on the path so every navigation — even to a route that
+            renders the same component type — remounts this wrapper and
+            replays the fade, instead of the page just snapping into view. */}
+        <div key={location.pathname} className="page-transition">
+        <Routes location={location}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route
@@ -72,6 +77,7 @@ export function App() {
           <Route path="/map" element={<UsMapPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </div>
       </Suspense>
       <Footer />
       <MeetingReminders />

@@ -547,6 +547,21 @@ html[data-theme="dark"] .brand-cursor-dot {
 .reveal.d2 { animation-delay: .16s; }
 .reveal.d3 { animation-delay: .27s; }
 
+/* ── Route transition ─────────────────────────────────────────────
+   Keyed by pathname in App.jsx so every navigation remounts this and
+   replays the fade — a subtle, dependency-free stand-in for a real
+   crossfade (no exit animation, since keeping the outgoing lazy page
+   mounted during one would need a router-transition library). Opacity
+   only, deliberately no transform: a transform here would turn this
+   wrapper into a containing block for any position:fixed element a page
+   renders (US Map's full-viewport stage, modals, …) for the animation's
+   duration, pinning them to the wrong box for a split second. */
+@keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.page-transition { animation: pageFadeIn .32s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) {
+  .page-transition { animation: none; }
+}
+
 /* ── Responsive header ─────────────────────────────────────────── */
 @media (max-width: 560px) {
   .header-inner { gap: 10px; }
