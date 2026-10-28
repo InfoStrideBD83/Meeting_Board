@@ -185,21 +185,24 @@ export function UsMapPage() {
     const textures = [];
 
     function makeLabel(text, worldW) {
-      const scl = 2;
-      const font = '600 ' + (44 * scl) + 'px Georgia, "Times New Roman", serif';
+      // Bumped from the original's 44px/2x/7px-stroke/2.3-unit-tall cap —
+      // those made every label (especially small states, which hit the
+      // size floor below) too small to read clearly against the map.
+      const scl = 2.2;
+      const font = '700 ' + (50 * scl) + 'px Georgia, "Times New Roman", serif';
       const cv = document.createElement('canvas');
       let ctx = cv.getContext('2d');
       ctx.font = font;
       const tw = ctx.measureText(text).width;
-      cv.width = Math.ceil(tw + 28 * scl);
-      cv.height = Math.ceil(64 * scl);
+      cv.width = Math.ceil(tw + 30 * scl);
+      cv.height = Math.ceil(66 * scl);
       ctx = cv.getContext('2d');
       ctx.font = font;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(255,255,255,0.93)';
-      ctx.lineWidth = 7 * scl;
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.lineWidth = 9 * scl;
       ctx.strokeText(text, cv.width / 2, cv.height / 2);
       ctx.fillStyle = '#111726';
       ctx.fillText(text, cv.width / 2, cv.height / 2);
@@ -211,7 +214,7 @@ export function UsMapPage() {
       materials.push(spMat);
       const sp = new THREE.Sprite(spMat);
       let worldH = worldW * (cv.height / cv.width);
-      if (worldH > 2.3) { worldW *= 2.3 / worldH; worldH = 2.3; }
+      if (worldH > 3) { worldW *= 3 / worldH; worldH = 3; }
       sp.scale.set(worldW, worldH, 1);
       return sp;
     }
@@ -269,13 +272,17 @@ export function UsMapPage() {
         g.add(line);
       });
 
-      // name label — full name when it fits, abbreviation for small states
-      let labelW = Math.min(Math.max(st.bw * 0.62, 2.2), 9.5);
-      let text = st.n;
-      if (labelW / text.length < 0.52) {
-        text = st.i;
-        labelW = Math.min(Math.max(st.bw * 0.9, 1.5), 3.2);
-      }
+      // name label — full name when it fits, abbreviation for small states.
+      // The fit decision uses the state's *natural* width (unclamped) so a
+      // tiny state still correctly gets abbreviated even though the display
+      // floors below were raised — otherwise raising those floors alone
+      // would start forcing full names onto states too small for them.
+      const natural = st.bw * 0.62;
+      const useAbbrev = natural / st.n.length < 0.52;
+      const text = useAbbrev ? st.i : st.n;
+      const labelW = useAbbrev
+        ? Math.min(Math.max(st.bw * 0.9, 2.0), 3.6)
+        : Math.min(Math.max(natural, 2.8), 9.5);
       const sprite = makeLabel(text, labelW);
       sprite.position.set(st.c[0], st.c[1], DEPTH + 0.6);
       g.add(sprite);
@@ -573,7 +580,6 @@ export function UsMapPage() {
             </span>
           ))}
         </div>
-        <div className={styles.note}>Hover a state &middot; click to pin &middot; &#8776; marks estimated agency counts</div>
       </div>
 
       <svg className={styles.compass} viewBox="0 0 60 60" aria-hidden="true">
