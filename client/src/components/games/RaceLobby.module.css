@@ -1,0 +1,72 @@
+.browse { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 340px; margin: auto; text-align: left; }
+
+.section { display: flex; flex-direction: column; gap: 8px; }
+.sectionLabel {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  opacity: .7;
+}
+
+.row { display: flex; gap: 8px; }
+.rowGroup { display: inline-flex; gap: 6px; flex: 1; }
+.pillBtn {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  font-size: 11.5px; font-weight: 700;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+html[data-theme="light"] .pillBtn { border-color: var(--border); background: var(--panel-2); }
+.pillBtn:hover { border-color: var(--accent-line); }
+.pillBtn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+.empty { font-size: 12px; opacity: .75; padding: 6px 0; }
+
+.lobbyRow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .06);
+  font-size: 12px;
+}
+html[data-theme="light"] .lobbyRow { border-color: var(--border); background: var(--panel-2); }
+.lobbyRow span:first-child { flex: 1; min-width: 0; }
+.lobbyMeta { font-weight: 700; opacity: .8; flex-shrink: 0; }
+
+.waitRoom {
+  display: flex; flex-direction: column; gap: 12px; align-items: center;
+  width: 100%; max-width: 320px; margin: auto;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  text-align: center;
+}
+.playerList { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.playerRow {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 9px;
+  border-radius: var(--r-md);
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  font-size: 12.5px; font-weight: 600;
+}
+
+.scoreCard {
+  display: flex; flex-direction: column; gap: 12px;
+  width: 100%; max-width: 420px; margin: auto;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  text-align: center;
+}
+.scoreTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.scoreTable th, .scoreTable td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border-soft); }
+.scoreTable th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+.meRow { background: var(--accent-soft); }
+.meRow td { color: var(--accent); font-weight: 700; }

@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   CARS, TRACKS, PACES, RACE_LAPS,
-  freshCar, freshAI, stepCar, stepAI, drawScene, ordinal,
+  freshCar, freshAI, stepCar, stepAI, stepPenalties, netScore, drawScene, ordinal,
 } from './carDriftEngine.js';
+import { RaceLobby } from './RaceLobby.jsx';
 import styles from './CarDrift.module.css';
 
 const VIRTUAL_W = 380; const VIRTUAL_H = 260;
@@ -49,7 +50,7 @@ function Confetti() {
  *  computer racers. 4 cars (different top speed/accel/grip), 3 tracks (Oval,
  *  Figure-8, Serpentine) and 3 paces are all picked on the menu screen before
  *  a run; see carDriftEngine.js for the shared physics/track/rendering code
- *  (also used by OnlineCarDrift.jsx for the "Race a Teammate" time trial).
+ *  (also used by RaceLobby.jsx for "Race Online" against teammates).
  *  The canvas is drawn in a fixed virtual coordinate space and scaled to
  *  whatever size its container actually is (see the resize effect), so full
  *  screen (via GamesWidget's toggle) genuinely gives it more room instead of
@@ -64,6 +65,7 @@ export function CarDrift() {
   const raceRef = useRef({ finished: false, startTime: 0 });
   const raceConfigRef = useRef({ car: CARS[0], track: TRACKS[0], pace: PACES[1] });
 
+  const [view, setView] = useState('solo'); // 'solo' | 'online'
   const [status, setStatus] = useState('menu'); // menu | countdown | driving | finished
   const [mode, setMode] = useState(null); // 'drift' | 'race'
   const [carId, setCarId] = useState(CARS[0].id);
@@ -71,8 +73,9 @@ export function CarDrift() {
   const [paceId, setPaceId] = useState('normal');
   const [countdownStage, setCountdownStage] = useState(0); // 0 = none, 1-3 = red lights, 4 = GO
   const [lapFlash, setLapFlash] = useState(null);
+  const [penaltyFlash, setPenaltyFlash] = useState(null);
   const [raceResult, setRaceResult] = useState(null);
-  const [hud, setHud] = useState({ speed: 0, lap: 0, lapTime: 0, bestLap: null, driftScore: 0, driftCombo: 0, place: null });
+  const [hud, setHud] = useState({ speed: 0, lap: 0, lapTime: 0, bestLap: null, driftScore: 0, driftCombo: 0, place: null, netScore: 1000 });
   const [bestLapStored, setBestLapStored] = useState(() => readBestLap(TRACKS[0]));
 
   function readColors() {
@@ -185,6 +188,12 @@ export function CarDrift() {
   }, [lapFlash]);
 
   useEffect(() => {
+    if (!penaltyFlash) return undefined;
+    const t = setTimeout(() => setPenaltyFlash(null), 900);
+    return () => clearTimeout(t);
+  }, [penaltyFlash]);
+
+  useEffect(() => {
     if (status !== 'driving') return undefined;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -213,6 +222,12 @@ export function CarDrift() {
         aiRef.current.forEach((ai) => stepAI(ai, track, dt, pace.aiSpeed));
       }
 
+      const penaltyEvents = stepPenalties(car, aiRef.current, track, dt);
+      if (penaltyEvents.length) {
+        const ev = penaltyEvents[0];
+        setPenaltyFlash({ type: ev.type, points: ev.points, key: now });
+      }
+
       if (justLapped) {
         const lapTime = (now - car.lapStart) / 1000;
         car.lapStart = now;
@@ -238,7 +253,7 @@ export function CarDrift() {
           ...aiRef.current.map((ai, i) => ({ name: `CPU ${i + 1}`, progress: ai.totalProgress, mine: false })),
         ].sort((a, b) => b.progress - a.progress);
         const place = results.findIndex((r) => r.mine) + 1;
-        setRaceResult({ place, total: results.length, time: (now - raceRef.current.startTime) / 1000 });
+        setRaceResult({ place, total: results.length, time: (now - raceRef.current.startTime) / 1000, netScore: netScore(car) });
         setStatus('finished');
       }
 
@@ -260,6 +275,7 @@ export function CarDrift() {
           driftScore: Math.round(car.driftScore),
           driftCombo: Math.min(1, car.driftCombo / 220),
           place,
+          netScore: netScore(car),
         });
       }
 
@@ -282,6 +298,8 @@ export function CarDrift() {
     });
   }
 
+  if (view === 'online') return <RaceLobby onExit={() => setView('solo')} />;
+
   return (
     <div className={styles.wrap}>
       {status !== 'menu' && (
@@ -296,6 +314,7 @@ export function CarDrift() {
             ) : (
               <span>Drift <strong>{hud.driftScore}</strong></span>
             )}
+            <span>Points <strong>{hud.netScore}</strong></span>
           </div>
           {mode === 'drift' && (
             <div className={styles.driftMeterTrack}>
@@ -311,6 +330,12 @@ export function CarDrift() {
         {lapFlash && (
           <div key={lapFlash.key} className={`${styles.lapFlash} ${lapFlash.best ? styles.lapFlashBest : ''}`}>
             Lap {lapFlash.lap}{lapFlash.best ? ' — Best!' : ''}
+          </div>
+        )}
+
+        {penaltyFlash && (
+          <div key={penaltyFlash.key} className={styles.penaltyFlash}>
+            −{penaltyFlash.points} {penaltyFlash.type === 'wall' ? 'Wall contact!' : 'Collision!'}
           </div>
         )}
 
@@ -331,6 +356,7 @@ export function CarDrift() {
               {raceResult.place === 1 ? 'You won!' : `You finished ${ordinal(raceResult.place)}`}
             </h3>
             <p>Race time: {raceResult.time.toFixed(1)}s</p>
+            <p>Points (clean driving): <strong>{raceResult.netScore}</strong></p>
             <div className={styles.resultBtns}>
               <button type="button" className="btn btn-primary" onClick={() => chooseMode('race')}>Race again</button>
               <button type="button" className="btn" onClick={backToMenu}>Menu</button>
@@ -406,6 +432,10 @@ export function CarDrift() {
                 <button type="button" className={`btn btn-primary ${styles.modeBtn}`} onClick={() => chooseMode('race')}>
                   <span className={styles.modeBtnTitle}>Race Mode</span>
                   <span className={styles.modeBtnSub}>3 laps vs 2 computer racers</span>
+                </button>
+                <button type="button" className={`btn ${styles.modeBtn}`} onClick={() => setView('online')}>
+                  <span className={styles.modeBtnTitle}>Race Online</span>
+                  <span className={styles.modeBtnSub}>2–4 members, each races the same track, ranked scorecard at the end</span>
                 </button>
               </div>
             </div>

@@ -1,5 +1,5 @@
 // Pure, framework-free drift/race physics + track geometry shared by the
-// solo CarDrift.jsx and the online time-trial OnlineCarDrift.jsx, the same
+// solo CarDrift.jsx and the online race lobby RaceLobby.jsx, the same
 // way Chess.jsx's engine functions are shared by OnlineChess.jsx. Nothing
 // here touches the DOM except canvas 2D drawing in drawScene (no React, no
 // localStorage) so both callers can reuse it without duplicating physics.
@@ -15,6 +15,11 @@ const DRIFT_THRESHOLD = 70;
 const SMOKE_THRESHOLD = 150;
 const SKID_LIFETIME = 6.5;
 const AI_BASE_SPEED = 225;
+const PENALTY_BASELINE = 1000;
+const WALL_PENALTY = 15;
+const AI_HIT_PENALTY = 40;
+const PENALTY_COOLDOWN = 0.5;
+const WALL_TOLERANCE = 6;
 
 export const CAR_LEN = 17;
 export const CAR_W = 9.5;
@@ -161,7 +166,53 @@ export function freshCar(track) {
     x: p.x, y: p.y, heading: p.heading, vf: 0, vl: 0,
     totalProgress: 0, lastIdx: undefined, lap: 0,
     driftScore: 0, driftCombo: 0, skidL: [], skidR: [], smoke: [], smokeTimer: 0, shake: 0,
+    penalty: 0, _wallCd: 0, _aiCd: 0,
   };
+}
+
+/** A clean-driving score: starts at PENALTY_BASELINE and loses points for
+ *  wall contact and (Race Mode) clipping an AI car — the "points system" the
+ *  racing lobby's scorecard ranks Drift Mode by (there's no lap time there
+ *  to rank by) and shows as a secondary stat in Race Mode (ranked by time).
+ *  Each penalty type has its own short cooldown so scraping a wall for a
+ *  full second deducts once, not a tick every frame. */
+export function netScore(car) { return PENALTY_BASELINE - car.penalty; }
+
+/** Call once per frame, after stepCar/stepAI, from whichever screen is
+ *  driving the race (solo CarDrift.jsx or the race-lobby online screen) —
+ *  kept separate from stepCar itself since it needs the AI list too, and
+ *  solo Drift Mode (no AI list) still wants the wall-penalty half of it. */
+export function stepPenalties(car, aiList, track, dt) {
+  car._wallCd = Math.max(0, car._wallCd - dt);
+  car._aiCd = Math.max(0, car._aiCd - dt);
+  const events = [];
+
+  const near = nearestIndex(track, car.x, car.y);
+  if (near.dist > track.halfWidth + WALL_TOLERANCE && car._wallCd <= 0) {
+    car.penalty += WALL_PENALTY;
+    car._wallCd = PENALTY_COOLDOWN;
+    events.push({ type: 'wall', points: WALL_PENALTY });
+  }
+
+  if (aiList && aiList.length && car._aiCd <= 0) {
+    const hitRadius = (CAR_LEN + CAR_W) / 2 * 0.65;
+    for (const ai of aiList) {
+      const p = pointAtT(track, ai.t, ai.laneOffset);
+      const d = Math.hypot(car.x - p.x, car.y - p.y);
+      if (d < hitRadius) {
+        car.penalty += AI_HIT_PENALTY;
+        car._aiCd = PENALTY_COOLDOWN;
+        // A little knockback so a collision actually reads as one, not just
+        // an invisible point deduction.
+        const away = Math.atan2(car.y - p.y, car.x - p.x);
+        car.vf *= 0.6;
+        car.vl += Math.sin(away - car.heading) * 80;
+        events.push({ type: 'ai', points: AI_HIT_PENALTY });
+        break;
+      }
+    }
+  }
+  return events;
 }
 
 export function freshAI(track, index) {
@@ -285,7 +336,7 @@ export function stepAI(ai, track, dt, paceMultiplier) {
 
 /** Renders one frame into a canvas already sized/transformed by the caller
  *  (context.setTransform to map the VIRTUAL_W x VIRTUAL_H space onto the
- *  actual canvas size) — shared by CarDrift.jsx and OnlineCarDrift.jsx so
+ *  actual canvas size) — shared by CarDrift.jsx and RaceLobby.jsx so
  *  the two can never visually drift apart. */
 export function drawScene(context, { car, aiList, track, carDef, colors, mode, now, virtualW, virtualH }) {
   const c = colors;
