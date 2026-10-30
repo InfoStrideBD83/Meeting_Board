@@ -1,0 +1,118 @@
+.wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0; width: 100%; height: 100%; min-height: 0; }
+
+.hud {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px;
+  width: 100%;
+  font-size: 11.5px; color: var(--text-2); font-weight: 600;
+  position: relative;
+}
+.hud strong { color: var(--text); font-family: var(--font-mono); }
+
+.timerWrap { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); }
+.timerBarTrack { width: 70px; height: 6px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border-soft); overflow: hidden; }
+.timerBarFill { display: block; height: 100%; border-radius: 999px; transition: width .1s linear, background .2s var(--ease); }
+
+.quitBtn {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--panel-2); color: var(--muted);
+  font-size: 14px; line-height: 1; cursor: pointer;
+}
+.quitBtn:hover { color: var(--danger); border-color: var(--danger); }
+
+.boardWrap {
+  position: relative; flex: 1; min-height: 0; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border);
+}
+.canvas { display: block; }
+
+.lightsWrap {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  pointer-events: none;
+}
+.lights { display: flex; gap: 10px; background: rgba(10, 12, 18, .55); padding: 10px 14px; border-radius: var(--r-pill); }
+.light { width: 18px; height: 18px; border-radius: 50%; background: rgba(255, 255, 255, .15); transition: background .15s var(--ease), box-shadow .15s var(--ease); }
+.lightRed { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+.goText { font-size: 38px; font-weight: 800; color: var(--success); text-shadow: 0 2px 10px rgba(0, 0, 0, .5); animation: countdownPop .5s var(--ease); }
+@keyframes countdownPop {
+  0% { opacity: 0; transform: scale(.4); }
+  30% { opacity: 1; transform: scale(1.15); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) { .goText { animation: none; } }
+
+.overlay {
+  position: absolute; inset: 0;
+  background: rgba(6, 9, 16, .72);
+  backdrop-filter: blur(2px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  color: #fff;
+  font-size: 12.5px; font-weight: 600;
+  text-align: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+html[data-theme="light"] .overlay { background: rgba(241, 244, 250, .88); color: var(--text); }
+
+.resultTitle { font-size: 18px; font-weight: 800; margin: 0; }
+.resultBtns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+.starsRow { display: flex; gap: 4px; font-size: 26px; }
+.starOn { color: var(--warn); }
+.starOff { color: rgba(255, 255, 255, .22); }
+html[data-theme="light"] .starOff { color: var(--border-strong); }
+
+.menuScroll { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 360px; margin: auto; }
+.menuHint { margin: 0; opacity: .85; }
+
+.tierSection { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.tierHeader { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .03em; }
+.tierDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tierRange { color: inherit; opacity: .65; font-weight: 600; }
+
+.levelGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; }
+.levelBtn {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  height: 40px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+html[data-theme="light"] .levelBtn { border-color: var(--border); background: var(--panel-2); }
+.levelBtn:hover:not(.levelLocked) { border-width: 2px; transform: translateY(-1px); }
+.levelLocked { opacity: .4; cursor: not-allowed; }
+.levelNum { font-size: 12.5px; font-weight: 750; }
+.lockIcon { font-size: 11px; }
+.miniStars { display: flex; gap: 1px; font-size: 6.5px; line-height: 1; }
+.starOnTiny { color: var(--warn); }
+.starOffTiny { color: rgba(255, 255, 255, .25); }
+html[data-theme="light"] .starOffTiny { color: var(--border-strong); }
+
+.touchControls {
+  position: absolute; inset: 0; bottom: 8px; top: auto; height: 96px;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 0 10px;
+  pointer-events: none;
+}
+.touchCol { display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
+.touchBtn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .3);
+  background: rgba(10, 12, 18, .45);
+  color: #fff;
+  font-size: 16px;
+  display: grid; place-items: center;
+  touch-action: none;
+  user-select: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .touchControls { display: none; }
+}
