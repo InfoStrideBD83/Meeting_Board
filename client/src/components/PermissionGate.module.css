@@ -1,0 +1,51 @@
+.wrap {
+  min-height: 100vh; min-height: 100dvh;
+  display: grid; place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.card {
+  width: 100%; max-width: 480px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 28px 26px;
+}
+
+.title { font-size: 19px; font-weight: 750; letter-spacing: -.2px; margin-bottom: 8px; }
+.lede { font-size: 13px; color: var(--text-2); line-height: 1.55; margin-bottom: 22px; }
+
+.row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid var(--border-soft);
+}
+.row:first-of-type { border-top: none; }
+.rowInfo { display: flex; flex-direction: column; gap: 4px; }
+.rowTitle { font-size: 14px; font-weight: 650; color: var(--text); }
+
+.badge {
+  display: inline-flex; align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .02em;
+}
+.badgeOk { background: var(--success-soft, rgba(16,185,129,.15)); color: var(--success); }
+.badgeDenied { background: var(--err-soft); color: var(--err); }
+.badgePending { background: var(--warn-soft, rgba(251,191,36,.15)); color: var(--warn); }
+
+.fixit {
+  font-size: 12px; line-height: 1.6; color: var(--text-2);
+  background: var(--panel-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin: -4px 0 4px;
+}
+.fixit strong { color: var(--text); }
+.fixit ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+
+.card > .btn,
+.card > button:last-child { width: 100%; margin-top: 18px; }
