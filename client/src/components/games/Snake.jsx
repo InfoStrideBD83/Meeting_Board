@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './Snake.module.css';
 
-const COLS = 18;
-const ROWS = 16;
-const CELL = 18;
-const DIFFICULTIES = { easy: { label: 'Easy', ms: 160 }, medium: { label: 'Medium', ms: 100 }, hard: { label: 'Hard', ms: 45 } };
+export const COLS = 18;
+export const ROWS = 16;
+export const CELL = 18;
+export const DIFFICULTIES = { easy: { label: 'Easy', ms: 160 }, medium: { label: 'Medium', ms: 100 }, hard: { label: 'Hard', ms: 45 } };
 
 function randomCell(exclude) {
   let cell;
@@ -18,26 +18,27 @@ function themeToken(name, fallback) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 }
 
-/** Classic Snake — no computer opponent (there isn't really a "vs PC" shape
- *  for solo arcade games), arrow keys or WASD, score tracked against the
- *  best score for this browser (localStorage). Easy/Medium/Hard just scale
- *  the tick rate; Hard is deliberately very fast. */
-export function Snake() {
+/** The actual game: board, keyboard controls, tick loop, rendering, score —
+ *  shared by solo play (Snake, below) and the online race (OnlineSnake.jsx),
+ *  the same way Chess.jsx's engine is shared with OnlineChess.jsx. Mounting
+ *  this component starts a fresh round; unmount/remount (e.g. via a `key`)
+ *  to restart. Renders only the canvas — callers own all surrounding layout
+ *  (score display, overlays) and get live score/time via the `onScore`/
+ *  `onTime` callbacks rather than this component rendering its own chrome,
+ *  so solo play and the online race can each lay it out their own way.
+ *  `onOver(score)` fires exactly once when the round ends, either by
+ *  crashing (wall/self) or — if `timeLimitMs` is set — when time runs out,
+ *  whichever comes first; the caller owns what happens after. */
+export function SnakeBoard({ tickMs, timeLimitMs = null, onScore, onTime, onOver }) {
   const canvasRef = useRef(null);
   const stateRef = useRef(null);
-  const [score, setScore] = useState(0);
-  const [best, setBest] = useState(() => {
-    try { return Number(window.localStorage.getItem('infostride-snake-best')) || 0; } catch { return 0; }
-  });
-  const [status, setStatus] = useState('ready'); // ready | playing | over
-  const [difficulty, setDifficulty] = useState('medium');
-
-  const reset = useCallback(() => {
-    const snake = [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }];
-    stateRef.current = { snake, dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 }, food: randomCell(snake) };
-    setScore(0);
-    setStatus('playing');
-  }, []);
+  const scoreRef = useRef(0);
+  const onScoreRef = useRef(onScore);
+  const onTimeRef = useRef(onTime);
+  const onOverRef = useRef(onOver);
+  onScoreRef.current = onScore;
+  onTimeRef.current = onTime;
+  onOverRef.current = onOver;
 
   useEffect(() => {
     function onKey(e) {
@@ -61,9 +62,22 @@ export function Snake() {
   }, []);
 
   useEffect(() => {
-    if (status !== 'playing') return undefined;
+    const snake = [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }];
+    stateRef.current = { snake, dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 }, food: randomCell(snake) };
+    if (onTimeRef.current && timeLimitMs != null) onTimeRef.current(Math.ceil(timeLimitMs / 1000));
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+    const startedAt = Date.now();
+    let ended = false;
+
+    function end() {
+      if (ended) return;
+      ended = true;
+      clearInterval(tickId);
+      if (timerId) clearInterval(timerId);
+      onOverRef.current(scoreRef.current);
+    }
 
     const tickId = setInterval(() => {
       const st = stateRef.current;
@@ -72,20 +86,13 @@ export function Snake() {
 
       const hitWall = head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS;
       const hitSelf = st.snake.some((c) => c.x === head.x && c.y === head.y);
-      if (hitWall || hitSelf) {
-        setStatus('over');
-        setBest((prevBest) => {
-          const newBest = Math.max(prevBest, st.snake.length - 3);
-          try { window.localStorage.setItem('infostride-snake-best', String(newBest)); } catch { /* ignore */ }
-          return newBest;
-        });
-        return;
-      }
+      if (hitWall || hitSelf) { end(); return; }
 
       st.snake.unshift(head);
       if (head.x === st.food.x && head.y === st.food.y) {
         st.food = randomCell(st.snake);
-        setScore((s) => s + 1);
+        scoreRef.current += 1;
+        if (onScoreRef.current) onScoreRef.current(scoreRef.current);
       } else {
         st.snake.pop();
       }
@@ -112,10 +119,56 @@ export function Snake() {
         ctx.fillStyle = i === 0 ? headColor : snakeColor;
         ctx.fillRect(c.x * CELL + 1, c.y * CELL + 1, CELL - 2, CELL - 2);
       });
-    }, DIFFICULTIES[difficulty].ms);
+    }, tickMs);
 
-    return () => clearInterval(tickId);
-  }, [status, difficulty]);
+    let timerId = null;
+    if (timeLimitMs != null) {
+      timerId = setInterval(() => {
+        const remaining = timeLimitMs - (Date.now() - startedAt);
+        if (onTimeRef.current) onTimeRef.current(Math.max(0, Math.ceil(remaining / 1000)));
+        if (remaining <= 0) end();
+      }, 250);
+    }
+
+    return () => { clearInterval(tickId); if (timerId) clearInterval(timerId); };
+    // tickMs/timeLimitMs are fixed for a round's lifetime by callers (both
+    // remount this component via a `key` to start a new round) — re-running
+    // this effect on their change isn't needed and would restart mid-round.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <canvas ref={canvasRef} width={COLS * CELL} height={ROWS * CELL} className={styles.canvas} />;
+}
+
+/** Classic Snake — no computer opponent (there isn't really a "vs PC" shape
+ *  for solo arcade games), arrow keys or WASD, score tracked against the
+ *  best score for this browser (localStorage). Easy/Medium/Hard just scale
+ *  the tick rate; Hard is deliberately very fast. */
+export function Snake() {
+  const [round, setRound] = useState(0);
+  const [score, setScore] = useState(0);
+  const [lastScore, setLastScore] = useState(0);
+  const [best, setBest] = useState(() => {
+    try { return Number(window.localStorage.getItem('infostride-snake-best')) || 0; } catch { return 0; }
+  });
+  const [status, setStatus] = useState('ready'); // ready | playing | over
+  const [difficulty, setDifficulty] = useState('medium');
+
+  const start = useCallback(() => {
+    setScore(0);
+    setRound((r) => r + 1);
+    setStatus('playing');
+  }, []);
+
+  function handleOver(finalScore) {
+    setLastScore(finalScore);
+    setStatus('over');
+    setBest((prevBest) => {
+      const newBest = Math.max(prevBest, finalScore);
+      try { window.localStorage.setItem('infostride-snake-best', String(newBest)); } catch { /* ignore */ }
+      return newBest;
+    });
+  }
 
   return (
     <div className={styles.wrap}>
@@ -138,12 +191,17 @@ export function Snake() {
         <span>Best: <strong>{best}</strong></span>
       </div>
       <div className={styles.boardWrap}>
-        <canvas ref={canvasRef} width={COLS * CELL} height={ROWS * CELL} className={styles.canvas} />
+        {status === 'playing' && (
+          <SnakeBoard key={round} tickMs={DIFFICULTIES[difficulty].ms} onScore={setScore} onOver={handleOver} />
+        )}
         {status !== 'playing' && (
-          <div className={styles.overlay}>
-            <p>{status === 'over' ? `Game over — score ${score}` : 'Arrow keys / WASD to move'}</p>
-            <button type="button" className="btn btn-primary" onClick={reset}>{status === 'over' ? 'Play again' : 'Start'}</button>
-          </div>
+          <>
+            <canvas width={COLS * CELL} height={ROWS * CELL} className={styles.canvas} />
+            <div className={styles.overlay}>
+              <p>{status === 'over' ? `Game over — score ${lastScore}` : 'Arrow keys / WASD to move'}</p>
+              <button type="button" className="btn btn-primary" onClick={start}>{status === 'over' ? 'Play again' : 'Start'}</button>
+            </div>
+          </>
         )}
       </div>
     </div>
