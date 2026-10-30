@@ -1,0 +1,74 @@
+.wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 10px 0; }
+.status { font-size: 12.5px; color: var(--text-2); font-weight: 600; min-height: 16px; text-align: center; }
+
+.boardOuter { position: relative; width: 300px; height: 300px; }
+.lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ladderLine { stroke: var(--success); stroke-width: 1.4; stroke-linecap: round; opacity: .75; }
+.snakeLine { stroke: var(--danger); stroke-width: 1.4; stroke-linecap: round; stroke-dasharray: 3 2; opacity: .75; }
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(10, 30px);
+  grid-template-rows: repeat(10, 30px);
+  gap: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.cell {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  display: flex; align-items: flex-start; justify-content: flex-start;
+}
+.cellNum { position: absolute; top: 1px; left: 2px; font-size: 7px; font-weight: 700; color: var(--faint); }
+.marker { position: absolute; bottom: 0; right: 0; font-size: 12px; line-height: 1; }
+.ladderCell { background: color-mix(in srgb, var(--success) 10%, var(--panel)); }
+.snakeCell { background: color-mix(in srgb, var(--danger) 10%, var(--panel)); }
+
+.tokens {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  gap: 1px; flex-wrap: wrap;
+  padding: 7px 2px 1px;
+}
+.token { width: 7px; height: 7px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .3); flex-shrink: 0; }
+
+.controls { display: flex; gap: 10px; }
+
+.sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+}
+.sidePanel {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 8px;
+  text-align: center;
+}
+.sideDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sideLabel { font-size: 11.5px; font-weight: 750; }
+.sidePos { font-size: 10.5px; color: var(--muted); }
+
+.setupRow { display: flex; gap: 8px; }
+.seatList { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 300px; }
+.seatToggle {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.seatToggle:hover { border-color: var(--accent-line); background: var(--accent-soft); }
+.seatHint { color: var(--faint); font-weight: 500; }
