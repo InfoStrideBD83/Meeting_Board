@@ -6,8 +6,10 @@ import { OnlineTicTacToe } from './OnlineTicTacToe.jsx';
 import { OnlineMemoryMatch } from './OnlineMemoryMatch.jsx';
 import { OnlineChess } from './OnlineChess.jsx';
 import { OnlineLudo } from './OnlineLudo.jsx';
-import { OnlineCarDrift } from './OnlineCarDrift.jsx';
-import { TRACKS } from './carDriftEngine.js';
+import { OnlineCarrom } from './OnlineCarrom.jsx';
+import { OnlineSnakesAndLadders } from './OnlineSnakesAndLadders.jsx';
+import { OnlineUno } from './OnlineUno.jsx';
+import { OnlineSnake } from './OnlineSnake.jsx';
 import styles from './GameLobby.module.css';
 
 const POLL_MS = 4000;
@@ -17,16 +19,18 @@ const ONLINE_GAMES = {
   memory: { label: 'Memory Match', Component: OnlineMemoryMatch },
   chess: { label: 'Chess', Component: OnlineChess },
   ludo: { label: 'Ludo', Component: OnlineLudo },
-  drift: { label: 'Drift Racer — Time Trial', Component: OnlineCarDrift },
+  carrom: { label: 'Carrom', Component: OnlineCarrom },
+  snakesladders: { label: 'Snakes & Ladders', Component: OnlineSnakesAndLadders },
+  uno: { label: 'UNO', Component: OnlineUno },
+  snake: { label: 'Snake — Score Race', Component: OnlineSnake },
 };
 
-// 'drift' is asynchronous (no turn order — see server/src/routes/gameSessions.js),
-// so the generic "Your turn"/"Their turn" status below doesn't apply to it.
-function driftRowStatus(session, meId) {
+// 'snake' is asynchronous (no turn order — see server/src/routes/
+// gameSessions.js's ASYNC_GAME_TYPES), so the generic "Your turn"/"Their
+// turn" status below doesn't apply to it.
+function snakeRowStatus(session, meId) {
   const results = session.state.results || {};
-  if (session.status === 'finished') return 'Results ready';
-  if (results[meId]) return "You've raced — waiting on them";
-  return 'Not raced yet';
+  return results[meId] ? "You've raced — waiting on them" : 'Not raced yet';
 }
 
 /** The entry point for playing a teammate instead of the computer —
@@ -42,8 +46,6 @@ export function GameLobby() {
   const [openSession, setOpenSession] = useState(null);
   const [busyWith, setBusyWith] = useState(null);
   const [gameType, setGameType] = useState('tictactoe');
-  const [driftTrack, setDriftTrack] = useState(TRACKS[0].id);
-  const [driftMode, setDriftMode] = useState('race');
 
   const refresh = useCallback(() => {
     apiFetch('/game-sessions').then(setSessions).catch(() => { /* transient — next poll retries */ });
@@ -58,8 +60,7 @@ export function GameLobby() {
 
   function challenge(opponentId) {
     setBusyWith(opponentId);
-    const config = gameType === 'drift' ? { track: driftTrack, mode: driftMode } : undefined;
-    apiFetch('/game-sessions', { method: 'POST', body: { opponent_id: opponentId, game_type: gameType, config } })
+    apiFetch('/game-sessions', { method: 'POST', body: { opponent_id: opponentId, game_type: gameType } })
       .then((s) => { refresh(); setOpenSession(s); })
       .catch((err) => alert(err.message || 'Could not send that challenge.'))
       .finally(() => setBusyWith(null));
@@ -105,13 +106,13 @@ export function GameLobby() {
           <div className={styles.sectionLabel}>In progress</div>
           {active.map((s) => {
             const oppId = s.player1_id === member.id ? s.player2_id : s.player1_id;
-            const isDrift = s.game_type === 'drift';
+            const isAsync = s.game_type === 'snake';
             const myTurn = s.turn === member.id;
             return (
               <button key={s.id} type="button" className={styles.activeRow} onClick={() => setOpenSession(s)}>
                 <span>{ONLINE_GAMES[s.game_type].label} vs {nameOf(oppId)}</span>
-                {isDrift ? (
-                  <span className={styles.theirTurn}>{driftRowStatus(s, member.id)}</span>
+                {isAsync ? (
+                  <span className={styles.theirTurn}>{snakeRowStatus(s, member.id)}</span>
                 ) : (
                   <span className={myTurn ? styles.yourTurn : styles.theirTurn}>{myTurn ? 'Your turn' : 'Their turn'}</span>
                 )}
@@ -140,15 +141,6 @@ export function GameLobby() {
             <button key={key} type="button" className={styles.gameTypeBtn} aria-pressed={gameType === key} onClick={() => setGameType(key)}>{g.label}</button>
           ))}
         </div>
-        {gameType === 'drift' && (
-          <div className={styles.gameTypeRow} role="group" aria-label="Drift Racer settings">
-            {TRACKS.map((t) => (
-              <button key={t.id} type="button" className={styles.gameTypeBtn} aria-pressed={driftTrack === t.id} onClick={() => setDriftTrack(t.id)}>{t.name}</button>
-            ))}
-            <button type="button" className={styles.gameTypeBtn} aria-pressed={driftMode === 'race'} onClick={() => setDriftMode('race')}>Race</button>
-            <button type="button" className={styles.gameTypeBtn} aria-pressed={driftMode === 'drift'} onClick={() => setDriftMode('drift')}>Drift</button>
-          </div>
-        )}
         {others.length === 0 ? (
           <p className={styles.empty}>No other team members yet.</p>
         ) : others.map((m) => (

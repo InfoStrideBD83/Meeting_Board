@@ -7,11 +7,22 @@ const router = Router();
 router.use(requireAuth);
 
 // initialState() is the one place a new game_type gets wired in.
-const GAME_TYPES = ['tictactoe', 'memory', 'chess', 'ludo', 'drift'];
-// Turn-based games alternate moves via the generic PATCH below. A time
-// trial has no turns — both players race independently — so it's handled
-// by the separate /submit endpoint instead.
-const ASYNC_GAME_TYPES = ['drift'];
+const GAME_TYPES = ['tictactoe', 'memory', 'chess', 'ludo', 'carrom', 'snakesladders', 'snake', 'uno'];
+
+// Most games here alternate moves via the generic PATCH below. A few have
+// no turn order — each participant plays independently and submits their
+// own result whenever they finish — so they go through /submit instead.
+// Generic (not tied to one game) so any future independent-score game can
+// reuse it by adding a comparator below.
+const ASYNC_GAME_TYPES = ['snake'];
+function asyncWinner(gameType, results) {
+  const p1 = results.player1, p2 = results.player2;
+  if (gameType === 'snake') {
+    if (p1.score === p2.score) return 'draw';
+    return p1.score > p2.score ? 'player1' : 'player2';
+  }
+  throw new ApiError(400, `No async winner comparator for ${gameType}`);
+}
 
 const MEMORY_ICONS = ['🎯', '🚀', '🎲', '🧩', '🔔', '💡', '🎧', '⭐'];
 
@@ -36,12 +47,81 @@ function initialChessBoard() {
   return board;
 }
 
-function initialState(gameType, config = {}) {
+// Mirrors client/src/components/games/Carrom.jsx's createEntities()/
+// createCarromState('solo') exactly (coin ring layout, seat/owner/color
+// assignment) — duplicated here rather than imported because that file
+// also imports its own CSS module, which only resolves in the Vite build,
+// not plain Node.
+const CARROM_BOARD = 440, CARROM_MARGIN = 26, CARROM_COIN_R = 11, CARROM_STRIKER_R = 14, CARROM_RING_R = 46;
+function initialCarromState() {
+  const cx = CARROM_BOARD / 2, cy = CARROM_BOARD / 2;
+  const entities = [{ id: 'striker', x: cx, y: CARROM_BOARD - CARROM_MARGIN - 20, vx: 0, vy: 0, r: CARROM_STRIKER_R, color: 'striker', pocketed: false }];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4;
+    entities.push({
+      id: `c${i}`, x: cx + CARROM_RING_R * Math.cos(angle), y: cy + CARROM_RING_R * Math.sin(angle),
+      vx: 0, vy: 0, r: CARROM_COIN_R, color: i % 2 === 0 ? 'light' : 'dark', pocketed: false,
+    });
+  }
+  entities.push({ id: 'queen', x: cx, y: cy, vx: 0, vy: 0, r: CARROM_COIN_R, color: 'queen', pocketed: false });
+  return {
+    mode: 'solo', seats: ['bottom', 'top'], owners: ['player1', 'player2'],
+    seatOwner: { bottom: 'player1', top: 'player2' },
+    colors: { player1: 'light', player2: 'dark' },
+    turnIdx: 0,
+    scores: { player1: 0, player2: 0 },
+    entities,
+    phase: 'aim', winner: null, shotsTaken: 0, shotSnapshotPocketed: [], message: null,
+  };
+}
+
+// Mirrors client/src/components/games/Uno.jsx's createUnoState('player1',
+// 'player2') exactly (deck build/shuffle, 7-card deal each, a non-wild
+// starter card) — duplicated for the same reason as Carrom's state above:
+// that file also imports its own CSS module.
+const UNO_COLORS = ['red', 'yellow', 'green', 'blue'];
+function unoBuildDeck() {
+  const deck = [];
+  for (const color of UNO_COLORS) {
+    deck.push({ color, value: '0' });
+    for (let n = 1; n <= 9; n++) { deck.push({ color, value: String(n) }); deck.push({ color, value: String(n) }); }
+    for (const v of ['skip', 'reverse', 'draw2']) { deck.push({ color, value: v }); deck.push({ color, value: v }); }
+  }
+  for (let i = 0; i < 4; i++) { deck.push({ color: null, value: 'wild' }); deck.push({ color: null, value: 'wild4' }); }
+  return deck;
+}
+function unoShuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function initialUnoState() {
+  let deck = unoShuffle(unoBuildDeck());
+  const player1Hand = deck.splice(0, 7);
+  const player2Hand = deck.splice(0, 7);
+  let starter;
+  do { starter = deck.shift(); if (!starter) { deck = unoShuffle(unoBuildDeck()); starter = deck.shift(); } }
+  while (starter.color === null);
+  return {
+    deck, discard: [starter], player1Hand, player2Hand,
+    sides: ['player1', 'player2'],
+    currentColor: starter.color, turn: 'player1',
+    pendingWild: null, winner: null,
+  };
+}
+
+function initialState(gameType) {
   if (gameType === 'tictactoe') return { board: Array(9).fill(null) };
   if (gameType === 'memory') return { cards: shuffledMemoryDeck(), flipped: [], scores: { player1: 0, player2: 0 } };
   if (gameType === 'chess') return { board: initialChessBoard() };
   if (gameType === 'ludo') return { tokens: { player1: [-1, -1, -1, -1], player2: [-1, -1, -1, -1] }, roll: null, sixStreak: 0 };
-  if (gameType === 'drift') return { track: config.track || 'oval', mode: config.mode || 'race', results: {} };
+  if (gameType === 'carrom') return initialCarromState();
+  if (gameType === 'snakesladders') return { positions: { player1: 0, player2: 0 } };
+  if (gameType === 'snake') return { results: {} };
+  if (gameType === 'uno') return initialUnoState();
   throw new ApiError(400, `Unsupported game_type: ${gameType}`);
 }
 
@@ -86,7 +166,7 @@ router.post(
 
     const { data, error } = await supabase
       .from('game_sessions')
-      .insert({ game_type: gameType, player1_id: me, player2_id: opponentId, status: 'pending', state: initialState(gameType, req.body.config) })
+      .insert({ game_type: gameType, player1_id: me, player2_id: opponentId, status: 'pending', state: initialState(gameType) })
       .select()
       .single();
     if (error) throw error;
@@ -177,12 +257,12 @@ router.patch(
 
 /**
  * POST /api/game-sessions/:id/submit — the async-game equivalent of PATCH,
- * for game types with no turn order (currently just 'drift'): each
+ * for game types with no turn order (currently just 'snake'): each
  * participant submits their own result independently whenever they finish,
  * instead of alternating moves. The session finishes once both results are
- * in, with the winner computed here (not trusted from the client) since,
- * unlike the turn-based games, there's no per-move check anywhere else to
- * anchor that trust against.
+ * in, with the winner computed here (not trusted from the client) via
+ * asyncWinner(), since there's no per-move check anywhere else to anchor
+ * that trust against for this kind of game.
  */
 router.post(
   '/:id/submit',
@@ -198,13 +278,11 @@ router.post(
     const opponentId = session.player1_id === me ? session.player2_id : session.player1_id;
     if (state.results[opponentId]) {
       update.status = 'finished';
-      const p1 = state.results[session.player1_id];
-      const p2 = state.results[session.player2_id];
-      const higherIsBetter = state.mode === 'drift';
-      const p1Score = higherIsBetter ? p1.driftScore : p1.time;
-      const p2Score = higherIsBetter ? p2.driftScore : p2.time;
-      const p1Wins = higherIsBetter ? p1Score > p2Score : p1Score < p2Score;
-      update.winner = p1Score === p2Score ? 'draw' : (p1Wins ? 'player1' : 'player2');
+      const byPlayer = {
+        player1: state.results[session.player1_id],
+        player2: state.results[session.player2_id],
+      };
+      update.winner = asyncWinner(session.game_type, byPlayer);
     }
 
     const { data, error } = await supabase.from('game_sessions').update(update).eq('id', session.id).select().single();

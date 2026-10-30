@@ -18,6 +18,7 @@ import documentRoutes from './routes/documents.js';
 import conversationRoutes from './routes/conversations.js';
 import gameSessionRoutes from './routes/gameSessions.js';
 import presenceRoutes from './routes/presence.js';
+import raceLobbyRoutes from './routes/raceLobbies.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // The client is now a Vite-built React SPA; CLIENT_DIR points at its build
@@ -51,6 +52,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/game-sessions', gameSessionRoutes);
 app.use('/api/presence', presenceRoutes);
+app.use('/api/race-lobbies', raceLobbyRoutes);
 
 // ── Static frontend (serves the built React SPA) ────────────
 app.use(express.static(CLIENT_DIR));
