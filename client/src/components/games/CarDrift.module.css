@@ -167,6 +167,22 @@ html[data-theme="light"] .overlay { background: rgba(241, 244, 250, .82); color:
 
 .menuScroll { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; margin: auto; }
 .menuHint { margin: 0; opacity: .85; }
+.menuStepTitle { font-size: 14.5px; font-weight: 750; }
+.menuStepHead { display: grid; grid-template-columns: 30px 1fr 30px; align-items: center; }
+.backBtn {
+  width: 30px; height: 30px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+html[data-theme="light"] .backBtn { border-color: var(--border); background: var(--panel-2); }
+.backBtn:hover { border-color: var(--accent-line); }
+
+.startBtn { width: 100%; height: auto; padding: 13px 14px; font-size: 14px; }
 
 .pickerSection { display: flex; flex-direction: column; gap: 7px; text-align: left; }
 .pickerLabel { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; opacity: .7; }

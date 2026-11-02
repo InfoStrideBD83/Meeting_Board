@@ -67,6 +67,8 @@ export function CarDrift() {
 
   const [view, setView] = useState('solo'); // 'solo' | 'online'
   const [status, setStatus] = useState('menu'); // menu | countdown | driving | finished
+  const [setupStep, setSetupStep] = useState('mode'); // 'mode' | 'configure' — one decision at a time instead of every choice at once
+  const [pendingMode, setPendingMode] = useState(null); // mode picked on the 'mode' step, started by the 'configure' step's Start button
   const [mode, setMode] = useState(null); // 'drift' | 'race'
   const [carId, setCarId] = useState(CARS[0].id);
   const [trackId, setTrackId] = useState(TRACKS[0].id);
@@ -179,6 +181,14 @@ export function CarDrift() {
     setStatus('menu');
     setMode(null);
     setRaceResult(null);
+    setSetupStep('mode');
+    setPendingMode(null);
+  }
+
+  function selectMode(m) {
+    if (m === 'online') { setView('online'); return; }
+    setPendingMode(m);
+    setSetupStep('configure');
   }
 
   useEffect(() => {
@@ -365,10 +375,38 @@ export function CarDrift() {
           </div>
         )}
 
-        {status === 'menu' && (
+        {status === 'menu' && setupStep === 'mode' && (
           <div className={styles.overlay}>
             <div className={styles.menuScroll}>
               <p className={styles.menuHint}>Arrows/WASD to drive · Space to handbrake-drift</p>
+              <div className={styles.menuStepTitle}>Choose how to play</div>
+
+              <div className={styles.modeRow}>
+                <button type="button" className={`btn btn-primary ${styles.modeBtn}`} onClick={() => selectMode('drift')}>
+                  <span className={styles.modeBtnTitle}>Drift Mode</span>
+                  <span className={styles.modeBtnSub}>Freestyle — chase your best lap &amp; drift score</span>
+                </button>
+                <button type="button" className={`btn btn-primary ${styles.modeBtn}`} onClick={() => selectMode('race')}>
+                  <span className={styles.modeBtnTitle}>Race Mode</span>
+                  <span className={styles.modeBtnSub}>3 laps vs 2 computer racers</span>
+                </button>
+                <button type="button" className={`btn ${styles.modeBtn}`} onClick={() => selectMode('online')}>
+                  <span className={styles.modeBtnTitle}>Race Online</span>
+                  <span className={styles.modeBtnSub}>2–4 members, same track, ranked scorecard at the end</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {status === 'menu' && setupStep === 'configure' && (
+          <div className={styles.overlay}>
+            <div className={styles.menuScroll}>
+              <div className={styles.menuStepHead}>
+                <button type="button" className={styles.backBtn} onClick={() => setSetupStep('mode')} aria-label="Back">←</button>
+                <div className={styles.menuStepTitle}>{pendingMode === 'race' ? 'Set up your race' : 'Set up your drift run'}</div>
+                <span />
+              </div>
 
               <div className={styles.pickerSection}>
                 <div className={styles.pickerLabel}>Car</div>
@@ -424,20 +462,9 @@ export function CarDrift() {
                 </div>
               </div>
 
-              <div className={styles.modeRow}>
-                <button type="button" className={`btn btn-primary ${styles.modeBtn}`} onClick={() => chooseMode('drift')}>
-                  <span className={styles.modeBtnTitle}>Drift Mode</span>
-                  <span className={styles.modeBtnSub}>Freestyle — chase your best lap &amp; drift score</span>
-                </button>
-                <button type="button" className={`btn btn-primary ${styles.modeBtn}`} onClick={() => chooseMode('race')}>
-                  <span className={styles.modeBtnTitle}>Race Mode</span>
-                  <span className={styles.modeBtnSub}>3 laps vs 2 computer racers</span>
-                </button>
-                <button type="button" className={`btn ${styles.modeBtn}`} onClick={() => setView('online')}>
-                  <span className={styles.modeBtnTitle}>Race Online</span>
-                  <span className={styles.modeBtnSub}>2–4 members, each races the same track, ranked scorecard at the end</span>
-                </button>
-              </div>
+              <button type="button" className={`btn btn-primary ${styles.startBtn}`} onClick={() => chooseMode(pendingMode)}>
+                {pendingMode === 'race' ? 'Start Race' : 'Start Drifting'}
+              </button>
             </div>
           </div>
         )}
