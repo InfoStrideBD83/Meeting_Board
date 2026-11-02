@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { supabaseRealtime } from '../../api/supabaseRealtime.js';
 import { Avatar } from '../Avatar.jsx';
 import {
   CARS, TRACKS, PACES, RACE_LAPS, DRIFT_TIME_LIMIT,
@@ -12,6 +13,8 @@ import styles from './RaceLobby.module.css';
 const VIRTUAL_W = 380; const VIRTUAL_H = 260;
 const POLL_MS = 3000;
 const PLAYER_COUNTS = [2, 3, 4];
+const POS_BROADCAST_MS = 0.1; // ~10/s — plenty smooth for a top-down arcade car, cheap on the wire
+const REMOTE_STALE_MS = 2500; // a teammate who's gone quiet (finished, disconnected) fades out of the scene
 
 const KEYS = {
   throttle: ['ArrowUp', 'w', 'W'],
@@ -65,6 +68,8 @@ export function RaceLobby({ onExit }) {
   const keysRef = useRef(new Set());
   const colorsRef = useRef(null);
   const runRef = useRef({ startTime: 0, submitted: false });
+  const channelRef = useRef(null);
+  const remotesRef = useRef({}); // memberId -> { x, y, heading, car, t }
 
   const refreshLobbies = useCallback(() => {
     apiFetch('/race-lobbies').then(setLobbies).catch(() => { /* transient — next poll retries */ });
@@ -160,6 +165,31 @@ export function RaceLobby({ onExit }) {
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   }, []);
 
+  // Live car positions for a Race Online lobby — a Realtime Broadcast
+  // channel scoped to this lobby, separate from everything else in this app
+  // (which only polls the REST API): ephemeral, not persisted to any table,
+  // exactly the shape Supabase's own Broadcast feature is meant for. Joined
+  // for the whole time the lobby is active (not just while I'm driving) so
+  // I still see teammates who are ahead of or behind my own run.
+  useEffect(() => {
+    if (!supabaseRealtime || !racing || !myLobby) return undefined;
+    remotesRef.current = {};
+    const channel = supabaseRealtime.channel(`race-lobby-${myLobby.id}`, { config: { broadcast: { self: false } } });
+    channel.on('broadcast', { event: 'pos' }, ({ payload }) => {
+      // Stamped with OUR OWN clock at receipt, not the sender's — performance.now()
+      // is relative to each page's own navigation start, not synchronized across
+      // browsers, so comparing a remote timestamp against a local `now` later
+      // (the staleness check in liveRemoteCars) would be meaningless otherwise.
+      if (payload && payload.id !== member.id) remotesRef.current[payload.id] = { ...payload, t: performance.now() };
+    });
+    channel.subscribe();
+    channelRef.current = channel;
+    return () => {
+      channelRef.current = null;
+      supabaseRealtime.removeChannel(channel);
+    };
+  }, [racing, myLobby && myLobby.id, member.id]);
+
   const racing = myLobby && myLobby.status === 'active';
   const track = myLobby ? (TRACKS.find((t) => t.id === myLobby.track) || TRACKS[0]) : TRACKS[0];
   const mode = myLobby ? myLobby.mode : 'race';
@@ -190,13 +220,23 @@ export function RaceLobby({ onExit }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, racing]);
 
+  function liveRemoteCars(now) {
+    const list = [];
+    for (const [id, r] of Object.entries(remotesRef.current)) {
+      if (now - r.t > REMOTE_STALE_MS) continue;
+      const carDef = CARS.find((cc) => cc.id === r.car) || CARS[0];
+      list.push({ x: r.x, y: r.y, heading: r.heading, colors: carDef.colors, name: nameOf(id) });
+    }
+    return list;
+  }
+
   function draw(context, car, now) {
     const c = colorsRef.current;
     const canvas = canvasRef.current;
     if (!c || !canvas) return;
     const carDef = CARS.find((cc) => cc.id === carId) || CARS[0];
     context.setTransform(canvas.width / VIRTUAL_W, 0, 0, canvas.height / VIRTUAL_H, 0, 0);
-    drawScene(context, { car, aiList: aiRef.current, track, carDef, colors: c, mode, now, virtualW: VIRTUAL_W, virtualH: VIRTUAL_H });
+    drawScene(context, { car, aiList: aiRef.current, remoteList: liveRemoteCars(now), track, carDef, colors: c, mode, now, virtualW: VIRTUAL_W, virtualH: VIRTUAL_H });
   }
 
   function submitResult(result) {
@@ -236,6 +276,7 @@ export function RaceLobby({ onExit }) {
     let raf;
     let last = performance.now();
     let hudTimer = 0;
+    let posTimer = 0;
 
     function held(list) { return list.some((k) => keys.has(k)); }
 
@@ -270,6 +311,17 @@ export function RaceLobby({ onExit }) {
       }
 
       draw(ctx, car, now);
+
+      posTimer += dt;
+      if (posTimer > POS_BROADCAST_MS) {
+        posTimer = 0;
+        if (channelRef.current) {
+          channelRef.current.send({
+            type: 'broadcast', event: 'pos',
+            payload: { id: member.id, x: car.x, y: car.y, heading: car.heading, car: carId },
+          });
+        }
+      }
 
       hudTimer += dt;
       if (hudTimer > 0.1) {

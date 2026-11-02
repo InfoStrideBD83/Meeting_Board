@@ -338,7 +338,7 @@ export function stepAI(ai, track, dt, paceMultiplier) {
  *  (context.setTransform to map the VIRTUAL_W x VIRTUAL_H space onto the
  *  actual canvas size) — shared by CarDrift.jsx and RaceLobby.jsx so
  *  the two can never visually drift apart. */
-export function drawScene(context, { car, aiList, track, carDef, colors, mode, now, virtualW, virtualH }) {
+export function drawScene(context, { car, aiList, remoteList, track, carDef, colors, mode, now, virtualW, virtualH }) {
   const c = colors;
   const CX = virtualW / 2; const CY = virtualH / 2;
   context.clearRect(0, 0, virtualW, virtualH);
@@ -439,6 +439,40 @@ export function drawScene(context, { car, aiList, track, carDef, colors, mode, n
       context.fillStyle = c.grassDark;
       roundRectPath(context, -CAR_LEN / 2 + CAR_LEN * 0.42, -CAR_W / 2 + 1.6, CAR_LEN * 0.3, CAR_W - 3.2, 1.5);
       context.fill();
+      context.restore();
+    });
+  }
+
+  // Real teammates in a Race Online lobby — each running their own physics
+  // locally and broadcasting {x, y, heading} a few times a second (see
+  // RaceLobby.jsx), not a shared simulation. Drawn in the color of whichever
+  // car they actually picked, with a name tag, so they read as people, not
+  // AI traffic.
+  if (remoteList && remoteList.length) {
+    remoteList.forEach((r) => {
+      context.save();
+      context.translate(r.x, r.y);
+      context.rotate(r.heading);
+      const grad = context.createLinearGradient(0, -CAR_W / 2, 0, CAR_W / 2);
+      grad.addColorStop(0, r.colors.carDark);
+      grad.addColorStop(0.5, r.colors.car);
+      grad.addColorStop(1, r.colors.carDark);
+      context.fillStyle = grad;
+      roundRectPath(context, -CAR_LEN / 2, -CAR_W / 2, CAR_LEN, CAR_W, 3);
+      context.fill();
+      context.fillStyle = c.grassDark;
+      roundRectPath(context, -CAR_LEN / 2 + CAR_LEN * 0.42, -CAR_W / 2 + 1.6, CAR_LEN * 0.3, CAR_W - 3.2, 1.5);
+      context.fill();
+      context.restore();
+
+      context.save();
+      context.translate(r.x, r.y - CAR_W - 3);
+      context.font = '600 6px Inter, sans-serif';
+      context.textAlign = 'center';
+      context.fillStyle = 'rgba(0,0,0,.55)';
+      context.fillText(r.name, 0.3, 0.3);
+      context.fillStyle = '#fff';
+      context.fillText(r.name, 0, 0);
       context.restore();
     });
   }
