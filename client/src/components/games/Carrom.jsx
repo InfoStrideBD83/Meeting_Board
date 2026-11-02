@@ -24,7 +24,13 @@ const FRICTION_K = 0.0026; // velocity *= (1 - FRICTION_K * dtMs) per step
 const STOP_EPS = 0.012;
 const REST_WALL = 0.72;
 const REST_ENT = 0.86;
-const MAX_SPEED = 0.95;
+// At the old 0.95, a full-power pull's theoretical unobstructed reach
+// (v0/FRICTION_K) was ~365 virtual units against a 440-unit board whose
+// corner-to-corner pockets are ~620 apart — a max-strength shot could die
+// short of a far coin even in a straight line, which read as "the striker
+// won't reach." Raised so a strong, not-quite-maxed pull comfortably
+// spans the whole board.
+const MAX_SPEED = 1.5;
 export const MAX_DRAG = 95; // virtual units; a full pull-back = max power
 const SHOT_CAP = 80;
 
@@ -298,14 +304,39 @@ function drawBoard(ctx, state, aim) {
 
   if (aim && aim.dragging) {
     const s = striker(state);
-    ctx.strokeStyle = 'rgba(255,255,255,.75)';
-    ctx.lineWidth = 2;
+    const dx = s.x - aim.x; const dy = s.y - aim.y;
+    const d = Math.min(MAX_DRAG, Math.hypot(dx, dy));
+    const power = d / MAX_DRAG;
+
+    // The "regulator" — a visible power readout while pulling back, so the
+    // shot strength is something you can see and calibrate rather than
+    // guess blind. Color runs soft green (gentle tap) through to hot red
+    // (full power) along with the line itself, so the whole aim indicator
+    // communicates strength, not just direction.
+    const powerColor = `hsl(${120 - power * 120}, 85%, 55%)`;
+    ctx.strokeStyle = powerColor;
+    ctx.lineWidth = 2 + power * 2;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
     ctx.moveTo(s.x, s.y);
     ctx.lineTo(s.x + (s.x - aim.x) * 1.4, s.y + (s.y - aim.y) * 1.4);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    const trackW = 60, trackH = 7;
+    const tx = s.x - trackW / 2, ty = s.y - s.r - 16;
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    ctx.fillRect(tx, ty, trackW, trackH);
+    ctx.fillStyle = powerColor;
+    ctx.fillRect(tx, ty, trackW * power, trackH);
+    ctx.strokeStyle = 'rgba(255,255,255,.6)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(tx, ty, trackW, trackH);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.round(power * 100)}%`, s.x, ty - 5);
   }
 }
 

@@ -39,14 +39,34 @@ function drawBoard(ctx, state, aim, dim) {
   }
   if (aim && aim.dragging) {
     const s = state.entities.find((e) => e.id === 'striker');
-    ctx.strokeStyle = 'rgba(255,255,255,.75)';
-    ctx.lineWidth = 2;
+    const dx = s.x - aim.x; const dy = s.y - aim.y;
+    const d = Math.min(MAX_DRAG, Math.hypot(dx, dy));
+    const power = d / MAX_DRAG;
+
+    const powerColor = `hsl(${120 - power * 120}, 85%, 55%)`;
+    ctx.strokeStyle = powerColor;
+    ctx.lineWidth = 2 + power * 2;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
     ctx.moveTo(s.x, s.y);
     ctx.lineTo(s.x + (s.x - aim.x) * 1.4, s.y + (s.y - aim.y) * 1.4);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    const trackW = 60, trackH = 7;
+    const tx = s.x - trackW / 2, ty = s.y - s.r - 16;
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    ctx.fillRect(tx, ty, trackW, trackH);
+    ctx.fillStyle = powerColor;
+    ctx.fillRect(tx, ty, trackW * power, trackH);
+    ctx.strokeStyle = 'rgba(255,255,255,.6)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(tx, ty, trackW, trackH);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.round(power * 100)}%`, s.x, ty - 5);
   }
   if (dim) {
     ctx.fillStyle = 'rgba(0,0,0,.35)';
@@ -116,7 +136,11 @@ export function OnlineCarrom({ sessionId, meId, onExit }) {
     if (d < 6) return;
     const power = d / MAX_DRAG;
     const angle = Math.atan2(dy, dx);
-    const MAX_SPEED = 0.95;
+    // Matches Carrom.jsx's own MAX_SPEED exactly, so a shot feels identical
+    // whether you're playing a teammate or the computer — see that file's
+    // comment for why 1.5 (not the original 0.95, whose full-power reach
+    // fell short of the board's own corner-to-corner distance).
+    const MAX_SPEED = 1.5;
     gameRef.current = launchStriker(g, Math.cos(angle) * MAX_SPEED * power, Math.sin(angle) * MAX_SPEED * power);
   }
 
