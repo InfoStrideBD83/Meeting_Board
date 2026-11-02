@@ -88,19 +88,24 @@ router.post(
 
       // Reject duplicates against members, and against any *pending*
       // request — a previously declined request shouldn't block a retry.
+      // Deliberately the same generic message for both fields (not "email
+      // already exists" vs "Employee ID already exists") — distinguishing
+      // them would let anyone probe arbitrary 5-digit Employee IDs against
+      // a throwaway email and learn, one bit at a time, which ones belong
+      // to a real account.
       const { data: existingMember } = await supabase
         .from('members')
         .select('id')
         .eq('email', email)
         .maybeSingle();
-      if (existingMember) throw new ApiError(409, 'An account with this email already exists');
+      if (existingMember) throw new ApiError(409, 'An account with this email or Employee ID already exists');
 
       const { data: existingEmpId } = await supabase
         .from('members')
         .select('id')
         .eq('employee_id', employee_id)
         .maybeSingle();
-      if (existingEmpId) throw new ApiError(409, 'An account with this Employee ID already exists');
+      if (existingEmpId) throw new ApiError(409, 'An account with this email or Employee ID already exists');
 
       if (isFirstEver) {
         const { data, error } = await supabase

@@ -19,17 +19,31 @@ function validateColor(color) {
   }
 }
 
+/**
+ * employee_id is the "second factor" POST /api/auth/reset-password accepts
+ * alongside email to let someone take over a password with no admin/email
+ * step involved — so it must never be visible to a member looking at anyone
+ * ELSE's record (that pair, read off this same list, is all it takes to
+ * hijack an account). Admins already manage it directly and need to see it;
+ * everyone else only gets their own.
+ */
+function scopeMember(m, viewer) {
+  const pub = publicMember(m);
+  if (!viewer.is_admin && pub.id !== viewer.sub) delete pub.employee_id;
+  return pub;
+}
+
 /** GET /api/members — list all members (auth required). */
 router.get(
   '/',
   requireAuth,
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const { data, error } = await supabase
       .from('members')
       .select('*')
       .order('name', { ascending: true });
     if (error) throw error;
-    res.json(data.map(publicMember));
+    res.json(data.map((m) => scopeMember(m, req.user)));
   })
 );
 
@@ -45,7 +59,7 @@ router.get(
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new ApiError(404, 'Member not found');
-    res.json(publicMember(data));
+    res.json(scopeMember(data, req.user));
   })
 );
 

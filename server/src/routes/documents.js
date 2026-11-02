@@ -9,9 +9,35 @@ const router = Router();
 const BUCKET = 'documents';
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB
 
+// Mirrors the client's upload <input accept="..."> — that attribute is only
+// a UI hint (trivially bypassed by anyone posting directly to this route),
+// so the real enforcement has to live here. Admin-only already limits who
+// can reach this at all, but an uploaded HTML/SVG file served back inline
+// via /:id/view (no attachment disposition) would still render as a page
+// under Supabase Storage's own domain, so disallowing it is worth doing
+// regardless of who's trusted to upload.
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+]);
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_BYTES },
+  fileFilter(req, file, cb) {
+    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      return cb(new ApiError(400, 'Unsupported file type — PDF, Word, PowerPoint, Excel, or an image only'));
+    }
+    cb(null, true);
+  },
 });
 
 // multer reports its own errors (e.g. file-too-large) by calling next(err)
@@ -25,6 +51,15 @@ function handleUpload(req, res, next) {
     }
     next(err);
   });
+}
+
+/** Keeps only a safe character set from the original filename for use in a
+ *  storage key — the previous version only replaced whitespace, so a
+ *  filename containing "../" or a bare "/" could escape the flat bucket
+ *  layout or collide with an unrelated object. */
+function sanitizeFilenameForStorage(name) {
+  const cleaned = String(name).replace(/[^A-Za-z0-9._-]/g, '_');
+  return cleaned.slice(-150) || 'file';
 }
 
 // Every document route requires a signed-in member; admin-only actions
@@ -57,7 +92,7 @@ router.post(
     if (!req.file) throw new ApiError(400, 'A file is required');
     const title = (req.body.title || '').trim() || req.file.originalname;
 
-    const storagePath = `${crypto.randomUUID()}-${req.file.originalname}`.replace(/\s+/g, '_');
+    const storagePath = `${crypto.randomUUID()}-${sanitizeFilenameForStorage(req.file.originalname)}`;
     const { error: uploadErr } = await supabase.storage
       .from(BUCKET)
       .upload(storagePath, req.file.buffer, {
