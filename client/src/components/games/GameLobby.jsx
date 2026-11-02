@@ -136,11 +136,16 @@ export function GameLobby() {
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Challenge a teammate</div>
-        <div className={styles.gameTypeRow} role="group" aria-label="Game">
+        <select
+          className={styles.gameSelect}
+          aria-label="Game"
+          value={gameType}
+          onChange={(e) => setGameType(e.target.value)}
+        >
           {Object.entries(ONLINE_GAMES).map(([key, g]) => (
-            <button key={key} type="button" className={styles.gameTypeBtn} aria-pressed={gameType === key} onClick={() => setGameType(key)}>{g.label}</button>
+            <option key={key} value={key}>{g.label}</option>
           ))}
-        </div>
+        </select>
         {others.length === 0 ? (
           <p className={styles.empty}>No other team members yet.</p>
         ) : others.map((m) => (
