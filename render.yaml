@@ -12,7 +12,10 @@ services:
     # Builds the server's own deps, then builds the React client (client/dist)
     # that server/src/index.js serves — Render's rootDir only covers server/,
     # so the client build has to be triggered explicitly here too.
-    buildCommand: npm install && cd ../client && npm install && npm run build
+    # --include=dev on both: NODE_ENV=production (set below) makes a plain
+    # `npm install` skip devDependencies entirely, which would silently drop
+    # vite itself — the thing `npm run build` needs to run at all.
+    buildCommand: npm install --include=dev && cd ../client && npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
