@@ -247,7 +247,9 @@ const PROGRESS_KEY = 'infostride-car-parking-progress';
 function loadProgress() {
   try {
     const raw = JSON.parse(window.localStorage.getItem(PROGRESS_KEY) || 'null');
-    if (raw && typeof raw.unlocked === 'number' && raw.results) return raw;
+    // Clamp to at least 1 so a corrupted/legacy stored value (e.g. 0) can
+    // never lock out level 1 itself — level 1 must always be playable.
+    if (raw && typeof raw.unlocked === 'number' && raw.results) return { ...raw, unlocked: Math.max(1, raw.unlocked) };
   } catch { /* ignore */ }
   return { unlocked: 1, results: {} };
 }
@@ -381,7 +383,7 @@ export function CarParking() {
     setTimeout(tick, 480);
   }
 
-  function finishLevel(success) {
+  function finishLevel(success, reason) {
     const data = levelDataRef.current;
     if (success) {
       const { points, stars } = scoreRun(data.tier, data.timeLimit, timeLeftRef.current, hitsRef.current);
@@ -396,7 +398,7 @@ export function CarParking() {
         return next;
       });
     } else {
-      setResult({ success: false, hits: hitsRef.current });
+      setResult({ success: false, hits: hitsRef.current, reason });
     }
     setScreen('result');
   }
@@ -435,7 +437,11 @@ export function CarParking() {
       if (hudTimer > 0.1) { hudTimer = 0; setHud({ time: timeLeftRef.current, hits: hitsRef.current }); }
 
       if (parkedForRef.current > 0.5) { finishLevel(true); return; }
-      if (timeLeftRef.current <= 0) { finishLevel(false); return; }
+      // Two strikes on a wall/obstacle and the level restarts — one touch is
+      // forgiven (just a score ding via resolveCollisions' speed penalty),
+      // the second one ends the run.
+      if (hitsRef.current >= 2) { finishLevel(false, 'collisions'); return; }
+      if (timeLeftRef.current <= 0) { finishLevel(false, 'time'); return; }
 
       raf = requestAnimationFrame(step);
     }
@@ -576,8 +582,12 @@ export function CarParking() {
               </>
             ) : (
               <>
-                <h3 className={styles.resultTitle}>Time's up</h3>
-                <p>{result.hits} hit{result.hits === 1 ? '' : 's'} — give it another go.</p>
+                <h3 className={styles.resultTitle}>{result.reason === 'collisions' ? 'Too many collisions' : "Time's up"}</h3>
+                <p>
+                  {result.reason === 'collisions'
+                    ? 'You hit the boundary twice — the level restarts after a second hit.'
+                    : `${result.hits} hit${result.hits === 1 ? '' : 's'} — give it another go.`}
+                </p>
                 <div className={styles.resultBtns}>
                   <button type="button" className="btn btn-primary" onClick={() => startLevel(levelNum)}>Retry</button>
                   <button type="button" className="btn" onClick={() => setScreen('select')}>Level select</button>
