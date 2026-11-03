@@ -160,9 +160,18 @@ export function RaceLobby({ onExit }) {
       keysRef.current.add(e.key);
     }
     function up(e) { keysRef.current.delete(e.key); }
+    // Without this, alt-tabbing (or any focus loss) while a key is held
+    // never fires its keyup, leaving a phantom held key that keeps
+    // accelerating/steering/handbraking once focus returns.
+    function clear() { keysRef.current.clear(); }
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+    window.addEventListener('blur', clear);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', clear);
+    };
   }, []);
 
   // Live car positions for a Race Online lobby — a Realtime Broadcast
