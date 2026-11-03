@@ -92,8 +92,9 @@ function pointInOBB(px, py, r, tolerance = 0) {
   return Math.abs(lx) <= r.w / 2 + tolerance && Math.abs(ly) <= r.h / 2 + tolerance;
 }
 
+const WALL_T = 14;
 function wallsFor(lot) {
-  const t = 14;
+  const t = WALL_T;
   return [
     { x: lot.x - t / 2, y: lot.y + lot.h / 2, w: t, h: lot.h + t * 2, angle: 0 },
     { x: lot.x + lot.w + t / 2, y: lot.y + lot.h / 2, w: t, h: lot.h + t * 2, angle: 0 },
@@ -198,10 +199,15 @@ function stepCarPhysics(car, input, dt) {
   else if (car.speed < 0) car.speed = Math.min(0, car.speed + FRICTION * dt);
   car.speed = Math.max(-MAX_REVERSE, Math.min(MAX_SPEED, car.speed));
 
+  // Deliberately NOT flipped when reversing (the physically "correct" bicycle
+  // model inverts turn direction in reverse, which is exactly what players
+  // read as "the controls are broken" in a parking game — most of a parking
+  // run happens in reverse, so holding left should always swing the nose
+  // left on screen, forward or back, the way every arcade top-down driver
+  // does it.
   if (Math.abs(car.speed) > 0.5) {
     const speedRatio = Math.max(0.4, Math.min(1, Math.abs(car.speed) / MAX_SPEED));
-    const dir = car.speed > 0 ? 1 : -1;
-    car.heading += input.steer * TURN_RATE * speedRatio * dir * dt;
+    car.heading += input.steer * TURN_RATE * speedRatio * dt;
   }
   car.x += Math.sin(car.heading) * car.speed * dt;
   car.y -= Math.cos(car.heading) * car.speed * dt;
@@ -217,11 +223,17 @@ function resolveCollisions(car, solids) {
     if (res) {
       car.x -= res.axis.x * res.overlap;
       car.y -= res.axis.y * res.overlap;
-      car.speed *= 0.25;
       touching = true;
     }
   }
   const newHit = touching && !car.wasTouching;
+  // Damp speed only on the moment of impact, not every frame of continued
+  // contact — a parking game is all about grazing walls/curbs while
+  // maneuvering into a tight spot, and re-applying a 0.25x multiplier every
+  // single frame you're still touching something crushes speed to ~0 within
+  // a couple of frames, which read as the car (and its controls) just
+  // dying the instant it brushes anything.
+  if (newHit) car.speed *= 0.4;
   car.wasTouching = touching;
   return newHit;
 }
@@ -301,7 +313,7 @@ export function CarParking() {
   }, []);
 
   function readColors() {
-    colorsRef.current = {
+    const c = {
       ground: themeToken('--panel-2', '#1a2130'),
       lot: themeToken('--panel-3', '#222b3c'),
       wall: themeToken('--border-strong', '#33405a'),
@@ -313,6 +325,30 @@ export function CarParking() {
       mover: themeToken('--danger', '#fb7185'),
       text: themeToken('--text', '#e9edf6'),
     };
+    // A hazard-striped boundary tile (built once per theme change, not per
+    // frame) so the lot's edge reads as an actual curb/barrier rather than a
+    // thin outline — and is drawn at the SAME thickness as the real
+    // collision wall (wallsFor's `t`) so the boundary you see is exactly
+    // where a hit will register.
+    c.hazardPattern = buildHazardPattern(c.wall);
+    colorsRef.current = c;
+  }
+
+  function buildHazardPattern(wallColor) {
+    const tile = document.createElement('canvas');
+    tile.width = 16; tile.height = 16;
+    const tctx = tile.getContext('2d');
+    tctx.fillStyle = wallColor;
+    tctx.fillRect(0, 0, 16, 16);
+    tctx.strokeStyle = '#f5c518';
+    tctx.lineWidth = 6;
+    [-16, 0, 16, 32].forEach((off) => {
+      tctx.beginPath();
+      tctx.moveTo(off, 16);
+      tctx.lineTo(off + 16, 0);
+      tctx.stroke();
+    });
+    return document.createElement('canvas').getContext('2d').createPattern(tile, 'repeat');
   }
 
   useEffect(() => {
@@ -328,9 +364,19 @@ export function CarParking() {
       keysRef.current.add(e.key);
     }
     function up(e) { keysRef.current.delete(e.key); }
+    // Without this, alt-tabbing or clicking outside the window while a key
+    // is held never fires its keyup, so the car keeps accelerating/steering
+    // forever once focus comes back — reads exactly like "the controls
+    // stopped responding" when it's really a stuck phantom key-press.
+    function clear() { keysRef.current.clear(); }
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+    window.addEventListener('blur', clear);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', clear);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -462,9 +508,42 @@ export function CarParking() {
 
     ctx.fillStyle = c.lot;
     ctx.fillRect(LOT.x, LOT.y, LOT.w, LOT.h);
-    ctx.strokeStyle = c.wall;
-    ctx.lineWidth = 6;
+
+    // Cosmetic lane dividers — a driving "track" feel inside the lot,
+    // purely visual (no collision), evenly splitting it into thirds.
+    ctx.strokeStyle = c.line;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([8, 7]);
+    for (const frac of [1 / 3, 2 / 3]) {
+      const lx = LOT.x + LOT.w * frac;
+      ctx.beginPath();
+      ctx.moveTo(lx, LOT.y + 6);
+      ctx.lineTo(lx, LOT.y + LOT.h - 6);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Hazard-striped boundary — same thickness as the real collision wall
+    // (WALL_T), so the curb you see is exactly where contact registers.
+    ctx.fillStyle = c.hazardPattern || c.wall;
+    ctx.fillRect(LOT.x - WALL_T, LOT.y - WALL_T, LOT.w + WALL_T * 2, WALL_T);
+    ctx.fillRect(LOT.x - WALL_T, LOT.y + LOT.h, LOT.w + WALL_T * 2, WALL_T);
+    ctx.fillRect(LOT.x - WALL_T, LOT.y, WALL_T, LOT.h);
+    ctx.fillRect(LOT.x + LOT.w, LOT.y, WALL_T, LOT.h);
+    ctx.strokeStyle = 'rgba(255,255,255,.4)';
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(LOT.x, LOT.y, LOT.w, LOT.h);
+
+    // Start marker — a faint dashed ring at the spawn point so it's clear
+    // where the run (and any restart) begins.
+    ctx.save();
+    ctx.strokeStyle = c.line;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(data.start.x, data.start.y, CAR_LEN * 0.65, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
 
     drawRect(ctx, data.spot, 'none', c.spot, 2.4, true);
     ctx.save();
@@ -555,12 +634,12 @@ export function CarParking() {
         {screen === 'playing' && isTouch && (
           <div className={styles.touchControls} aria-hidden="true">
             <div className={styles.touchCol}>
-              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('throttle')} onPointerUp={() => touchUp('throttle')} onPointerLeave={() => touchUp('throttle')}>▲</button>
-              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('brake')} onPointerUp={() => touchUp('brake')} onPointerLeave={() => touchUp('brake')}>▼</button>
+              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('throttle')} onPointerUp={() => touchUp('throttle')} onPointerLeave={() => touchUp('throttle')} onPointerCancel={() => touchUp('throttle')}>▲</button>
+              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('brake')} onPointerUp={() => touchUp('brake')} onPointerLeave={() => touchUp('brake')} onPointerCancel={() => touchUp('brake')}>▼</button>
             </div>
             <div className={styles.touchCol}>
-              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('left')} onPointerUp={() => touchUp('left')} onPointerLeave={() => touchUp('left')}>◀</button>
-              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('right')} onPointerUp={() => touchUp('right')} onPointerLeave={() => touchUp('right')}>▶</button>
+              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('left')} onPointerUp={() => touchUp('left')} onPointerLeave={() => touchUp('left')} onPointerCancel={() => touchUp('left')}>◀</button>
+              <button type="button" className={styles.touchBtn} onPointerDown={() => touchDown('right')} onPointerUp={() => touchUp('right')} onPointerLeave={() => touchUp('right')} onPointerCancel={() => touchUp('right')}>▶</button>
             </div>
           </div>
         )}
