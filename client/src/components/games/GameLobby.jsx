@@ -89,8 +89,8 @@ export function GameLobby() {
       {incoming.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionLabel}>Challenges for you</div>
-          {incoming.map((s) => (
-            <div key={s.id} className={styles.row}>
+          {incoming.map((s, i) => (
+            <div key={s.id} className={styles.row} style={{ '--i': i }}>
               <span>{nameOf(s.player1_id)} — {ONLINE_GAMES[s.game_type].label}</span>
               <div className={styles.rowActions}>
                 <button type="button" className="btn btn-primary" onClick={() => respond(s, true)}>Accept</button>
@@ -104,12 +104,12 @@ export function GameLobby() {
       {active.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionLabel}>In progress</div>
-          {active.map((s) => {
+          {active.map((s, i) => {
             const oppId = s.player1_id === member.id ? s.player2_id : s.player1_id;
             const isAsync = s.game_type === 'snake';
             const myTurn = s.turn === member.id;
             return (
-              <button key={s.id} type="button" className={styles.activeRow} onClick={() => setOpenSession(s)}>
+              <button key={s.id} type="button" className={styles.activeRow} style={{ '--i': i }} onClick={() => setOpenSession(s)}>
                 <span>{ONLINE_GAMES[s.game_type].label} vs {nameOf(oppId)}</span>
                 {isAsync ? (
                   <span className={styles.theirTurn}>{snakeRowStatus(s, member.id)}</span>
@@ -125,8 +125,8 @@ export function GameLobby() {
       {outgoing.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionLabel}>Waiting on them</div>
-          {outgoing.map((s) => (
-            <div key={s.id} className={styles.row}>
+          {outgoing.map((s, i) => (
+            <div key={s.id} className={styles.row} style={{ '--i': i }}>
               <span>{ONLINE_GAMES[s.game_type].label} vs {nameOf(s.player2_id)}</span>
               <span className={styles.theirTurn}>Waiting…</span>
             </div>
@@ -148,8 +148,8 @@ export function GameLobby() {
         </select>
         {others.length === 0 ? (
           <p className={styles.empty}>No other team members yet.</p>
-        ) : others.map((m) => (
-          <button key={m.id} type="button" className={styles.memberRow} disabled={busyWith === m.id} onClick={() => challenge(m.id)}>
+        ) : others.map((m, i) => (
+          <button key={m.id} type="button" className={styles.memberRow} style={{ '--i': i }} disabled={busyWith === m.id} onClick={() => challenge(m.id)}>
             <Avatar name={m.name} color={m.color} size={28} />
             <span>{m.name}</span>
           </button>

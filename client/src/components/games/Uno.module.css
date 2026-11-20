@@ -42,6 +42,21 @@
 }
 
 .discardSlot { width: 74px; height: 108px; }
+.discardPop { display: inline-block; animation: discardPop .32s var(--ease) both; }
+@keyframes discardPop {
+  0%   { transform: scale(.35) rotate(-14deg); opacity: .4; }
+  65%  { transform: scale(1.12) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.winText { animation: unoWinPulse 1.3s ease-in-out infinite; color: var(--success); }
+@keyframes unoWinPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+
+.winHand { animation: unoHandGlow 1.4s ease-in-out infinite; border-radius: var(--r-md); }
+@keyframes unoHandGlow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50%      { filter: drop-shadow(0 0 10px var(--success-soft)); }
+}
 
 .colorPicker {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -117,4 +132,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .drawPile, .cardBtn { transition: none; }
+  .discardPop, .winText, .winHand { animation: none !important; }
 }

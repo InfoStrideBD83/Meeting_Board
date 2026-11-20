@@ -242,13 +242,15 @@ export function SnakesAndLadders() {
 
       <div className={styles.controls}>
         <button type="button" className="btn btn-primary" onClick={doRoll} disabled={!canRollNow}>
-          {roll === null ? 'Roll dice' : `Rolled ${roll}`}
+          {roll === null ? 'Roll dice' : (
+            <>Rolled <span className={`${styles.dieResult} ${rolling ? styles.dieRolling : styles.dieSettled}`}>{roll}</span></>
+          )}
         </button>
       </div>
 
       <div className={styles.sides}>
         {seats.map((s, i) => (
-          <div key={s.key} className={styles.sidePanel}>
+          <div key={s.key} className={`${styles.sidePanel} ${winner && winner.key === s.key ? styles.winnerPanel : ''}`}>
             <span className={styles.sideDot} style={{ background: SEAT_COLORS[i % SEAT_COLORS.length] }} />
             <span className={styles.sideLabel} style={{ color: SEAT_COLORS[i % SEAT_COLORS.length] }}>
               {s.label}{turnIdx === i && !winner ? ' · turn' : ''}

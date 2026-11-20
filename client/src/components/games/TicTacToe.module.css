@@ -18,6 +18,37 @@
   cursor: pointer;
   transition: all .15s var(--ease);
 }
-.cell:hover:not(:disabled) { border-color: var(--accent-line); background: var(--accent-soft); }
+.cell:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.cell:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-sm); }
 .cell:disabled { cursor: default; }
-.winCell { border-color: var(--success); background: var(--success-soft); color: var(--success); }
+
+.mark {
+  display: inline-block;
+  animation: markPop .28s var(--ease) both;
+}
+@keyframes markPop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.winCell {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+  animation: winPulse 1.4s var(--ease) infinite;
+}
+@keyframes winPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--success-soft); }
+  50%      { box-shadow: 0 0 14px 2px var(--success-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell, .mark, .winCell { animation: none !important; transition: none !important; }
+  .cell:hover:not(:disabled) { transform: none; }
+}

@@ -124,9 +124,9 @@ export function Sudoku() {
         ))}
       </div>
 
-      <p className={styles.status}>{solved ? 'Solved! 🎉' : 'Fill every row, column, and 3×3 box with 1–9.'}</p>
+      <p className={`${styles.status} ${solved ? styles.solvedText : ''}`}>{solved ? 'Solved! 🎉' : 'Fill every row, column, and 3×3 box with 1–9.'}</p>
 
-      <div className={styles.board}>
+      <div className={`${styles.board} ${solved ? styles.solvedBoard : ''}`}>
         {grid.map((rowArr, r) => rowArr.map((v, c) => {
           const isGiven = given[r][c] !== 0;
           const isSelected = selected && selected[0] === r && selected[1] === c;
@@ -145,7 +145,7 @@ export function Sudoku() {
               ].filter(Boolean).join(' ')}
               onClick={() => setSelected([r, c])}
             >
-              {v !== 0 ? v : ''}
+              {v !== 0 && <span key={v} className={styles.digit}>{v}</span>}
             </button>
           );
         }))}

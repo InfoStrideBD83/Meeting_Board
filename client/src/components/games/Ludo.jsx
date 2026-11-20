@@ -219,14 +219,14 @@ export function Ludo() {
 
       <div className={styles.controls}>
         <button type="button" className="btn btn-primary" onClick={doRoll} disabled={Boolean(winner) || turn !== 'player1' || roll !== null}>
-          {roll === null ? 'Roll dice' : `Rolled ${roll}`}
+          {roll === null ? 'Roll dice' : <>Rolled <span className={styles.dieResult}>{roll}</span></>}
         </button>
       </div>
 
       <div className={styles.sides}>
         {['player1', 'player2'].map((side) => (
-          <div key={side} className={styles.sidePanel}>
-            <div className={styles.sideHead} style={{ color: LOCAL_META[side].color }}>
+          <div key={side} className={`${styles.sidePanel} ${winner === side ? styles.winnerPanel : ''}`}>
+            <div className={`${styles.sideHead} ${winner === side ? styles.winnerHead : ''}`} style={{ color: LOCAL_META[side].color }}>
               {LOCAL_META[side].label}{turn === side && !winner ? ' · turn' : ''}
             </div>
             <div className={styles.tokenList}>

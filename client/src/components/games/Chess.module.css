@@ -15,20 +15,58 @@
   display: grid; place-items: center;
   cursor: pointer;
   padding: 0;
+  transition: transform .15s var(--ease), box-shadow .15s var(--ease), background .15s var(--ease);
 }
 .light { background: var(--panel-2); }
 .dark { background: var(--panel-3); }
 .selected { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
 
+.square:hover {
+  transform: scale(1.06);
+  box-shadow: var(--shadow);
+  z-index: 1;
+}
+.square:active { transform: scale(1); }
+
 .piece { font-size: 24px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
+
+.piecePop { animation: piecePop .32s var(--ease) both; }
+@keyframes piecePop {
+  0%   { transform: scale(0.35); opacity: .4; }
+  65%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
 
 .moveDot {
   position: absolute; width: 9px; height: 9px; border-radius: 50%;
   background: var(--accent); opacity: .75;
+  animation: dotPop .2s var(--ease) both;
 }
 .captureDot {
   position: absolute; inset: 3px;
   border-radius: 6px;
   border: 3px solid var(--danger);
   opacity: .8;
+  animation: dotPop .2s var(--ease) both;
+}
+@keyframes dotPop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: .8; }
+}
+
+.checkmateKing {
+  animation: checkmatePulse 1.2s ease-in-out infinite;
+  z-index: 1;
+}
+@keyframes checkmatePulse {
+  0%, 100% { box-shadow: inset 0 0 0 2px var(--danger), 0 0 0 0 var(--danger-soft); }
+  50%      { box-shadow: inset 0 0 0 2px var(--danger), 0 0 16px 4px var(--danger-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .square, .piecePop, .moveDot, .captureDot, .checkmateKing {
+    animation: none !important;
+    transition: none !important;
+  }
+  .square:hover { transform: none; }
 }

@@ -209,7 +209,7 @@ export function Uno() {
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.status}>{statusText}</p>
+      <p className={`${styles.status} ${state.winner ? styles.winText : ''}`}>{statusText}</p>
 
       <div className={styles.oppRow}>
         <span className={styles.handCount}>Computer: {state.computerHand.length} cards</span>
@@ -225,7 +225,9 @@ export function Uno() {
           <span className={styles.deckCount}>{state.deck.length}</span>
         </button>
         <div className={styles.discardSlot} title={cardLabel(topCard)}>
-          <CardFace card={{ ...topCard, color: topCard.color || state.currentColor }} size="pile" />
+          <span key={state.discard.length} className={styles.discardPop}>
+            <CardFace card={{ ...topCard, color: topCard.color || state.currentColor }} size="pile" />
+          </span>
         </div>
       </div>
 
@@ -240,7 +242,7 @@ export function Uno() {
         </div>
       )}
 
-      <div className={styles.hand}>
+      <div className={`${styles.hand} ${state.winner === 'player' ? styles.winHand : ''}`}>
         {state.playerHand.map((card, i) => {
           const playable = state.turn === 'player' && !state.winner && state.pendingWild === null && isPlayable(card, topCard, state.currentColor);
           const offset = i - mid;

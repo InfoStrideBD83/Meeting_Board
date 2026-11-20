@@ -9,8 +9,12 @@
   transition: all .15s var(--ease);
 }
 .diffBtn[aria-pressed="true"] { background: var(--panel); color: var(--accent); box-shadow: var(--shadow-sm); }
+.diffBtn:hover { transform: translateY(-1px); }
+.diffBtn:active { transform: translateY(0); }
 
-.status { font-size: 12px; color: var(--text-2); font-weight: 600; min-height: 16px; }
+.status { font-size: 12px; color: var(--text-2); font-weight: 600; min-height: 16px; transition: color .2s var(--ease); }
+.solvedText { color: var(--success); animation: sudokuSolvedPulse 1.2s ease-in-out infinite; }
+@keyframes sudokuSolvedPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 
 .board {
   display: grid;
@@ -20,19 +24,41 @@
   border-radius: var(--r-md);
   overflow: hidden;
 }
+.solvedBoard { animation: sudokuBoardGlow 1.3s ease-in-out infinite; }
+@keyframes sudokuBoardGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--success-soft); }
+  50%      { box-shadow: 0 0 20px 3px var(--success-soft); }
+}
+
 .cell {
+  position: relative;
   border: 1px solid var(--border-soft);
   display: grid; place-items: center;
   font-size: 13px; font-weight: 700;
   cursor: pointer;
   padding: 0;
+  transition: background .15s var(--ease), box-shadow .15s var(--ease);
 }
 .given { background: var(--panel-2); color: var(--text); cursor: default; }
 .editable { background: var(--panel); color: var(--accent); }
+.editable:hover:not(.given) { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-line); }
 .selected { background: var(--accent-soft); }
-.conflict { color: var(--danger); background: var(--danger-soft); }
+.conflict { color: var(--danger); background: var(--danger-soft); animation: sudokuConflictShake .3s var(--ease); }
 .borderRight { border-right: 2px solid var(--border-strong); }
 .borderBottom { border-bottom: 2px solid var(--border-strong); }
+
+@keyframes sudokuConflictShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-2px); }
+  75%      { transform: translateX(2px); }
+}
+
+.digit { display: inline-block; animation: digitPop .22s var(--ease) both; }
+@keyframes digitPop {
+  0%   { transform: scale(0); opacity: 0; }
+  65%  { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); }
+}
 
 .pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 230px; }
 .padBtn {
@@ -45,5 +71,14 @@
   cursor: pointer;
   transition: all .15s var(--ease);
 }
-.padBtn:hover:not(:disabled) { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent); }
+.padBtn:hover:not(:disabled) { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+.padBtn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .padBtn:disabled { opacity: .4; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .solvedText, .solvedBoard, .conflict, .digit, .diffBtn, .padBtn, .cell {
+    animation: none !important;
+    transition: none !important;
+  }
+  .diffBtn:hover, .padBtn:hover:not(:disabled) { transform: none; }
+}

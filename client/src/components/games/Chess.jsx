@@ -168,6 +168,10 @@ export function Chess() {
   // null while the game is ongoing; otherwise 'w' (checkmate, player wins),
   // 'b' (checkmate, computer wins), or 'draw' (stalemate).
   const [winner, setWinner] = useState(null);
+  // Visual-only bookkeeping (no effect on game logic) so the destination
+  // square can get a brief "just moved" pop animation.
+  const [lastMove, setLastMove] = useState(null);
+  const [moveCount, setMoveCount] = useState(0);
 
   function reset() {
     setBoard(initialBoard());
@@ -175,14 +179,18 @@ export function Chess() {
     setSelected(null);
     setLegalTargets([]);
     setWinner(null);
+    setLastMove(null);
+    setMoveCount(0);
   }
 
-  function afterMove(nextBoard, movedColor) {
+  function afterMove(nextBoard, movedColor, to) {
     const nextTurn = movedColor === 'w' ? 'b' : 'w';
     setBoard(nextBoard);
     setTurn(nextTurn);
     setSelected(null);
     setLegalTargets([]);
+    setLastMove(to);
+    setMoveCount((n) => n + 1);
     const nextMoves = allLegalMoves(nextBoard, nextTurn);
     if (nextMoves.length === 0) {
       setWinner(isInCheck(nextBoard, nextTurn) ? movedColor : 'draw');
@@ -194,7 +202,7 @@ export function Chess() {
     if (selected) {
       const isTarget = legalTargets.some(([tr, tc]) => tr === r && tc === c);
       if (isTarget) {
-        afterMove(applyMove(board, selected, [r, c]), 'w');
+        afterMove(applyMove(board, selected, [r, c]), 'w', [r, c]);
         return;
       }
     }
@@ -212,7 +220,7 @@ export function Chess() {
     if (turn !== 'b' || winner) return undefined;
     const t = setTimeout(() => {
       const move = pickComputerMove(board);
-      if (move) afterMove(applyMove(board, move.from, move.to), 'b');
+      if (move) afterMove(applyMove(board, move.from, move.to), 'b', move.to);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, 500);
     return () => clearTimeout(t);
@@ -225,6 +233,9 @@ export function Chess() {
         : turn === 'w' ? (isInCheck(board, 'w') ? 'Check! Your move.' : 'Your move.')
           : (isInCheck(board, 'b') ? 'Check! Computer is thinking…' : 'Computer is thinking…');
 
+  const loserColor = winner === 'w' ? 'b' : winner === 'b' ? 'w' : null;
+  const checkmateKing = loserColor ? findKing(board, loserColor) : null;
+
   return (
     <div className={styles.wrap}>
       <p className={styles.status}>{statusText}</p>
@@ -233,14 +244,24 @@ export function Chess() {
           const isSelected = selected && selected[0] === r && selected[1] === c;
           const isTarget = legalTargets.some(([tr, tc]) => tr === r && tc === c);
           const light = (r + c) % 2 === 0;
+          const justMoved = lastMove && lastMove[0] === r && lastMove[1] === c;
+          const isCheckmateKing = checkmateKing && checkmateKing[0] === r && checkmateKing[1] === c;
           return (
             <button
               key={`${r}-${c}`}
               type="button"
-              className={`${styles.square} ${light ? styles.light : styles.dark} ${isSelected ? styles.selected : ''}`}
+              className={`${styles.square} ${light ? styles.light : styles.dark} ${isSelected ? styles.selected : ''} ${isCheckmateKing ? styles.checkmateKing : ''}`}
               onClick={() => clickSquare(r, c)}
             >
-              {piece && <span className={styles.piece} style={{ color: piece.color === 'w' ? '#f4f6fb' : '#13161f' }}>{CHESS_GLYPH[piece.color][piece.type]}</span>}
+              {piece && (
+                <span
+                  key={justMoved ? `piece-${r}-${c}-${moveCount}` : `piece-${r}-${c}`}
+                  className={`${styles.piece} ${justMoved ? styles.piecePop : ''}`}
+                  style={{ color: piece.color === 'w' ? '#f4f6fb' : '#13161f' }}
+                >
+                  {CHESS_GLYPH[piece.color][piece.type]}
+                </span>
+              )}
               {isTarget && <span className={piece ? styles.captureDot : styles.moveDot} />}
             </button>
           );

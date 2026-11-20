@@ -6,6 +6,11 @@
   color: var(--faint);
 }
 
+@keyframes lobbyEnter {
+  from { opacity: 0; transform: translateY(8px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
 .row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 9px 10px;
@@ -13,6 +18,8 @@
   border: 1px solid var(--border);
   background: var(--panel-2);
   font-size: 12.5px; font-weight: 600; color: var(--text);
+  animation: lobbyEnter .4s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
 }
 .rowActions { display: flex; gap: 6px; flex-shrink: 0; }
 
@@ -27,8 +34,16 @@
   font-size: 12.5px; font-weight: 600;
   cursor: pointer;
   transition: all .15s var(--ease);
+  animation: lobbyEnter .4s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
 }
-.activeRow:hover { border-color: var(--accent-line); background: var(--accent-soft); }
+.activeRow:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: var(--shadow);
+}
+.activeRow:active { transform: translateY(0) scale(1); box-shadow: none; }
 .yourTurn { color: var(--accent); font-weight: 700; }
 .theirTurn { color: var(--faint); }
 
@@ -43,9 +58,23 @@
   font-size: 12.5px; font-weight: 600;
   cursor: pointer;
   transition: all .15s var(--ease);
+  animation: lobbyEnter .4s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
 }
-.memberRow:hover:not(:disabled) { background: var(--panel-2); border-color: var(--border); }
+.memberRow:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: var(--shadow);
+}
+.memberRow:active:not(:disabled) { transform: translateY(0) scale(1); box-shadow: none; }
 .memberRow:disabled { opacity: .5; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .row, .activeRow, .memberRow { animation: none !important; }
+  .activeRow:hover, .memberRow:hover:not(:disabled) { transform: none; }
+  .activeRow, .memberRow { transition: none !important; }
+}
 
 .empty { font-size: 12px; color: var(--muted); padding: 8px 0; }
 

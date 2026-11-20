@@ -113,7 +113,7 @@ export function MemoryMatch() {
       ) : (
         <p className={styles.status}>{turn === 'player' ? 'Your turn — flip two cards.' : 'Computer is thinking…'}</p>
       )}
-      <div className={styles.grid}>
+      <div className={`${styles.grid} ${winner ? styles.boardDone : ''}`}>
         {cards.map((c, i) => {
           const shown = c.matched || flipped.includes(i);
           return (
@@ -125,7 +125,10 @@ export function MemoryMatch() {
               disabled={busy || turn !== 'player' || c.matched}
               aria-label={shown ? c.icon : 'Hidden card'}
             >
-              <span className={styles.cardFace}>{shown ? c.icon : ''}</span>
+              <span className={styles.flipInner}>
+                <span className={styles.cardBack} />
+                <span className={styles.cardFront}>{c.icon}</span>
+              </span>
             </button>
           );
         })}

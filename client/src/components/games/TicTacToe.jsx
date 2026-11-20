@@ -103,7 +103,7 @@ export function TicTacToe() {
             disabled={Boolean(c) || over || turn !== 'player'}
             aria-label={`Cell ${i + 1}${c ? `, ${c}` : ', empty'}`}
           >
-            {c}
+            {c && <span className={styles.mark}>{c}</span>}
           </button>
         ))}
       </div>

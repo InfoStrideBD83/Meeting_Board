@@ -26,9 +26,26 @@
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, .25);
   flex-shrink: 0;
+  animation: tokenPop .3s var(--ease) both;
+}
+@keyframes tokenPop {
+  0%   { transform: scale(0); }
+  65%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
 }
 
 .controls { display: flex; gap: 10px; }
+
+.dieResult {
+  display: inline-block;
+  font-weight: 800;
+  animation: dieSpin .4s var(--ease) both;
+}
+@keyframes dieSpin {
+  0%   { transform: rotate(-110deg) scale(.4); opacity: 0; }
+  70%  { transform: rotate(14deg) scale(1.15); opacity: 1; }
+  100% { transform: rotate(0deg) scale(1); }
+}
 
 .sides {
   display: grid;
@@ -42,8 +59,19 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 8px;
+  transition: box-shadow .2s var(--ease), border-color .2s var(--ease);
+}
+.winnerPanel {
+  border-color: var(--success);
+  animation: winnerGlow 1.4s ease-in-out infinite;
+}
+@keyframes winnerGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--success-soft); }
+  50%      { box-shadow: 0 0 16px 2px var(--success-soft); }
 }
 .sideHead { font-size: 11.5px; font-weight: 750; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+.winnerHead { animation: winnerTextPulse 1.4s ease-in-out infinite; }
+@keyframes winnerTextPulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
 .tokenList { display: flex; flex-direction: column; gap: 4px; }
 .tokenRow {
   display: flex; align-items: center; gap: 7px;
@@ -62,5 +90,15 @@
   border-color: var(--accent-line);
   background: var(--accent-soft);
   color: var(--text);
+  transition: transform .15s var(--ease), box-shadow .15s var(--ease), filter .15s var(--ease);
 }
-.movable:hover { filter: brightness(1.08); }
+.movable:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: var(--shadow); }
+.movable:active { transform: translateY(0); box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .token, .dieResult, .winnerPanel, .winnerHead, .movable {
+    animation: none !important;
+    transition: none !important;
+  }
+  .movable:hover { transform: none; }
+}
