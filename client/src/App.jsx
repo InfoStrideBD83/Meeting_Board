@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { Footer } from './components/Footer.jsx';
 import { MeetingReminders } from './components/MeetingReminders.jsx';
 import { BrandCursor } from './components/BrandCursor.jsx';
+import { GtaThemeFX } from './components/GtaThemeFX.jsx';
 import { usePresenceHeartbeat } from './hooks/usePresenceHeartbeat.js';
 
 // Route-based code splitting — each page ships as its own chunk instead
@@ -82,6 +83,7 @@ export function App() {
       <Footer />
       <MeetingReminders />
       <BrandCursor />
+      <GtaThemeFX />
     </>
   );
 }

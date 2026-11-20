@@ -109,6 +109,66 @@ html[data-theme="light"] {
   color-scheme: light;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   TEMPORARY "GTA 6"-INSPIRED THEME — a time-boxed, self-expiring visual
+   skin (see ThemeContext.jsx's GTA_THEME_START/END). Layered on top of
+   whichever of the two theme blocks above is active via a separate
+   [data-gta] attribute rather than a third data-theme value, so it
+   overrides just the shared color tokens — not the many dark/light-
+   specific selectors elsewhere in this app (games, modals, the US Timer/
+   Map pages) that only know about "light" or "dark" and would otherwise
+   silently break. A sunset palette (coral/pink fading through purple to
+   teal) rather than any depiction of actual game characters/art/logos,
+   which are Rockstar/Take-Two's copyrighted IP.
+   ══════════════════════════════════════════════════════════════ */
+html[data-gta="true"] {
+  --bg:           #1b0f3a;
+  --bg-glow-1:    rgba(255, 95, 126, .22);
+  --bg-glow-2:    rgba(45, 212, 191, .12);
+  --panel:        #2a1550;
+  --panel-2:      #341a63;
+  --panel-3:      #3f2076;
+  --panel-glass:  rgba(42, 21, 80, .82);
+  --border:       #5a2f8f;
+  --border-soft:  #3f2076;
+  --border-strong:#7b3fb8;
+  --text:         #fff4f7;
+  --text-2:       #e9c9e8;
+  --muted:        #b58fc9;
+  --faint:        #8a6aa8;
+  --accent:       #ff5f7e;
+  --accent-2:     #ff8a3d;
+  --accent-soft:  rgba(255, 95, 126, .18);
+  --accent-line:  rgba(255, 95, 126, .45);
+  --success:      #2dd4bf;
+  --success-soft: rgba(45, 212, 191, .16);
+  --warn:         #ffb300;
+  --warn-soft:    rgba(255, 179, 0, .16);
+  --shadow-sm:    0 1px 2px rgba(10, 2, 25, .5);
+  --shadow:       0 8px 24px -6px rgba(10, 2, 25, .6);
+  --shadow-lg:    0 24px 60px -12px rgba(10, 2, 25, .75);
+  --scroll-thumb: #4a2370;
+  --logo-a:       #fff4f7;
+  --logo-b:       #ff5f7e;
+  --danger:       #ff3864;
+  --danger-soft:  rgba(255, 56, 100, .18);
+  --danger-line:  rgba(255, 56, 100, .4);
+  --grid:         #2a1550;
+  --row-hover:    rgba(255, 95, 126, .08);
+  --col-line:     #3f2076;
+  --map-pst:      #ff8a3d;  --map-mst: #ffb300;  --map-cst: #2dd4bf;  --map-est: #ff5f7e;
+  --fx-teal:      rgba(45, 212, 191, .16);
+  --fx-beam:      rgba(255, 255, 255, .14);
+  --fx-rule:      rgba(255, 255, 255, .05);
+  --notif-badge:  #ff3864;
+  --err:          #ff3864;
+  --err-soft:     rgba(255, 56, 100, .18);
+  --err-line:     rgba(255, 56, 100, .4);
+  --ok:           #2dd4bf;
+  --ok-soft:      rgba(45, 212, 191, .16);
+  color-scheme: dark;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root { height: 100%; }
