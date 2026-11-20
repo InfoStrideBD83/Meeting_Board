@@ -31,3 +31,17 @@ services:
         generateValue: true
       - key: FRONTEND_URL
         sync: false
+      # Web Push (background notifications for messages/calls — see
+      # server/src/utils/push.js). The public key is, by design, not a
+      # secret — it's shipped to every browser already — so it's fine
+      # committed here; VITE_VAPID_PUBLIC_KEY is the same value, just also
+      # under the prefix Vite bakes into the client bundle at build time.
+      # The private key signs push payloads, so it stays out of the repo.
+      - key: VAPID_PUBLIC_KEY
+        value: BO5IplMITOcmBreGzTPP7EBTJ_CBHRavdGAUVsbIbrv_ntysP0V-6--a9Y-ZeNA-VbVGZPgEZuqDJvrI9LtyqQA
+      - key: VITE_VAPID_PUBLIC_KEY
+        value: BO5IplMITOcmBreGzTPP7EBTJ_CBHRavdGAUVsbIbrv_ntysP0V-6--a9Y-ZeNA-VbVGZPgEZuqDJvrI9LtyqQA
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_CONTACT_EMAIL
+        value: mailto:admin@example.com

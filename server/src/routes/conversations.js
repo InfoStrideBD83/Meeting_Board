@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../config/supabase.js';
 import { asyncHandler, ApiError } from '../utils/http.js';
 import { requireAuth } from '../middleware/auth.js';
+import { pushToMembers } from '../utils/push.js';
 
 const router = Router();
 
@@ -314,6 +315,25 @@ router.post(
       .eq('member_id', req.user.sub);
 
     res.status(201).json(data);
+
+    // Push notification fan-out happens after the response — it's not
+    // something the sender should have to wait on, and a failure here
+    // (no subscriptions, push service down, etc.) shouldn't affect whether
+    // the message itself was sent.
+    (async () => {
+      const [{ data: convo }, { data: memberRows }] = await Promise.all([
+        supabase.from('conversations').select('is_group, name').eq('id', req.params.id).maybeSingle(),
+        supabase.from('conversation_members').select('member_id').eq('conversation_id', req.params.id),
+      ]);
+      const others = (memberRows || []).map((m) => m.member_id).filter((id) => id !== req.user.sub);
+      await pushToMembers(others, {
+        kind: 'message',
+        title: convo && convo.is_group ? `${req.user.name} in ${convo.name}` : req.user.name,
+        body: body.length > 140 ? `${body.slice(0, 140)}…` : body,
+        tag: `conversation-${req.params.id}`,
+        data: { conversationId: req.params.id },
+      });
+    })().catch(() => { /* best-effort — the message itself already sent fine */ });
   })
 );
 

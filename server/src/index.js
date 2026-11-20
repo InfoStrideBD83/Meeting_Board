@@ -21,6 +21,7 @@ import conversationRoutes from './routes/conversations.js';
 import gameSessionRoutes from './routes/gameSessions.js';
 import presenceRoutes from './routes/presence.js';
 import raceLobbyRoutes from './routes/raceLobbies.js';
+import pushRoutes from './routes/push.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // The client is now a Vite-built React SPA; CLIENT_DIR points at its build
@@ -63,7 +64,8 @@ app.use(helmet({
         'https://geocoding-api.open-meteo.com', // SettingsModal.jsx — city search
         'https://api.bigdatacloud.net', // WeatherWidget.jsx — reverse geocode for place name
         `https://${SUPABASE_HOST}`,
-        `wss://${SUPABASE_HOST}`, // supabaseRealtime.js — live race-car position broadcasts
+        `wss://${SUPABASE_HOST}`, // supabaseRealtime.js — race positions + CallContext.jsx's call signaling
+        'stun:stun.l.google.com:19302', // CallContext.jsx — WebRTC ICE gathering for voice calls
       ],
       objectSrc: ["'none'"],
       frameAncestors: ["'self'"], // matches helmet's own X-Frame-Options: SAMEORIGIN default
@@ -109,6 +111,7 @@ app.use('/api/conversations', conversationRoutes);
 app.use('/api/game-sessions', gameSessionRoutes);
 app.use('/api/presence', presenceRoutes);
 app.use('/api/race-lobbies', raceLobbyRoutes);
+app.use('/api/push', pushRoutes);
 
 // ── Static frontend (serves the built React SPA) ────────────
 app.use(express.static(CLIENT_DIR));

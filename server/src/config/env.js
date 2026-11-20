@@ -33,6 +33,12 @@ export const config = {
   supabaseServiceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
   jwtSecret: required('JWT_SECRET'),
   frontendUrl: process.env.FRONTEND_URL || '',
+  // Optional — Web Push (background notifications for messages/calls) just
+  // stays off (see utils/push.js) rather than failing startup if unset, the
+  // same graceful-degradation the client already does for Supabase Realtime.
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY || '',
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY || '',
+  vapidContactEmail: process.env.VAPID_CONTACT_EMAIL || 'mailto:admin@example.com',
 };
 
 export const isProd = isProdEnv;
