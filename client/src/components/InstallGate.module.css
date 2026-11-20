@@ -1,0 +1,50 @@
+.wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  padding: 24px;
+}
+
+.card {
+  width: min(420px, 100%);
+  padding: 32px 28px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  margin: 0 0 10px;
+}
+
+.body {
+  font-size: 14px;
+  color: var(--text-2);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.instructions {
+  font-size: 13.5px;
+  color: var(--text-2);
+  background: var(--panel-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg, 10px);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.instructions p { margin: 0; }
+
+.waiting {
+  font-size: 13px;
+  color: var(--muted);
+}
