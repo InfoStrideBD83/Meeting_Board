@@ -11,6 +11,8 @@ import { Avatar } from '../components/Avatar.jsx';
 import { AddMemberModal } from '../components/AddMemberModal.jsx';
 import { Logo3D } from '../components/Logo3D.jsx';
 import { MessagingWidget } from '../components/MessagingWidget.jsx';
+import { CallOverlay } from '../components/CallOverlay.jsx';
+import { InstallAppButton } from '../components/InstallAppButton.jsx';
 import { NotepadWidget } from '../components/NotepadWidget.jsx';
 import { GamesWidget } from '../components/GamesWidget.jsx';
 import { PresenceWidget } from '../components/PresenceWidget.jsx';
@@ -587,6 +589,8 @@ export function MasterPage() {
       )}
 
       <MessagingWidget />
+      <CallOverlay />
+      <InstallAppButton />
       <NotepadWidget />
       <GamesWidget />
       <PresenceWidget />
