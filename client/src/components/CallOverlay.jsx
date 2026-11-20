@@ -62,36 +62,57 @@ export function CallOverlay() {
         </div>
       )}
 
-      {activeCall && (
-        <div className={styles.activeBar}>
-          <div className={styles.activeInfo}>
-            <div className={styles.activeStack}>
-              {activeCall.participants.map((p) => (
-                <Avatar key={p.memberId} name={p.name} color={p.color} size={28} className={styles.stackAvatar} />
-              ))}
+      {activeCall && (() => {
+        // "Ringing" = I started this call and nobody else has joined the
+        // channel yet — distinct from actually being connected, so hanging
+        // up here reads as "cancel the call I'm placing" rather than the
+        // confusingly identical mute/timer bar a connected call shows.
+        const ringing = activeCall.isInitiator && !activeCall.participants.some((p) => !p.isSelf);
+        if (ringing) {
+          return (
+            <div className={styles.ringingBar}>
+              <span className={styles.ringingDot} />
+              <div className={styles.activeText}>
+                <span className={styles.activeName}>Calling {activeCall.conversationName}…</span>
+                <span className={styles.ringingSub}>Waiting for an answer</span>
+              </div>
+              <button type="button" className={`${styles.pillBtn} ${styles.leave}`} onClick={leaveCall} aria-label="Cancel call" title="Cancel call">
+                {ico.hangup}
+              </button>
             </div>
-            <div className={styles.activeText}>
-              <span className={styles.activeName}>{activeCall.conversationName}</span>
-              <Timer startedAt={activeCall.startedAt} />
+          );
+        }
+        return (
+          <div className={styles.activeBar}>
+            <div className={styles.activeInfo}>
+              <div className={styles.activeStack}>
+                {activeCall.participants.map((p) => (
+                  <Avatar key={p.memberId} name={p.name} color={p.color} size={28} className={styles.stackAvatar} />
+                ))}
+              </div>
+              <div className={styles.activeText}>
+                <span className={styles.activeName}>{activeCall.conversationName}</span>
+                <Timer startedAt={activeCall.startedAt} />
+              </div>
+            </div>
+            {declineNotice && <div className={styles.declineNotice}>{declineNotice}</div>}
+            <div className={styles.activeActions}>
+              <button
+                type="button"
+                className={`${styles.pillBtn} ${activeCall.mutedSelf ? styles.muted : ''}`}
+                onClick={toggleMute}
+                aria-label={activeCall.mutedSelf ? 'Unmute microphone' : 'Mute microphone'}
+                title={activeCall.mutedSelf ? 'Unmute' : 'Mute'}
+              >
+                {activeCall.mutedSelf ? ico.micOff : ico.mic}
+              </button>
+              <button type="button" className={`${styles.pillBtn} ${styles.leave}`} onClick={leaveCall} aria-label="Leave call" title="Leave call">
+                {ico.hangup}
+              </button>
             </div>
           </div>
-          {declineNotice && <div className={styles.declineNotice}>{declineNotice}</div>}
-          <div className={styles.activeActions}>
-            <button
-              type="button"
-              className={`${styles.pillBtn} ${activeCall.mutedSelf ? styles.muted : ''}`}
-              onClick={toggleMute}
-              aria-label={activeCall.mutedSelf ? 'Unmute microphone' : 'Mute microphone'}
-              title={activeCall.mutedSelf ? 'Unmute' : 'Mute'}
-            >
-              {activeCall.mutedSelf ? ico.micOff : ico.mic}
-            </button>
-            <button type="button" className={`${styles.pillBtn} ${styles.leave}`} onClick={leaveCall} aria-label="Leave call" title="Leave call">
-              {ico.hangup}
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }

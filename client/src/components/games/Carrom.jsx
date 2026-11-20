@@ -33,6 +33,11 @@ const REST_ENT = 0.86;
 const MAX_SPEED = 1.5;
 export const MAX_DRAG = 95; // virtual units; a full pull-back = max power
 const SHOT_CAP = 80;
+// Purely cosmetic — how long a potted coin takes to shrink/fade out once
+// pocketed, instead of vanishing on the spot. Doesn't affect scoring,
+// settling, or any physics/collision math (pocketed entities are already
+// skipped by every physics loop below regardless of this value).
+const POCKET_ANIM_MS = 300;
 
 const POCKETS = [
   [MARGIN, MARGIN], [BOARD - MARGIN, MARGIN],
@@ -48,7 +53,10 @@ const SEAT_BASELINE = {
 const SEAT_AIM_TOWARD = { bottom: { x: CX, y: CY }, top: { x: CX, y: CY }, right: { x: CX, y: CY }, left: { x: CX, y: CY } };
 
 function createEntities() {
-  const entities = [{ id: 'striker', x: SEAT_BASELINE.bottom.x, y: SEAT_BASELINE.bottom.y, vx: 0, vy: 0, r: STRIKER_R, color: 'striker', pocketed: false }];
+  // pocketProgress/pocketAnimX/Y are purely cosmetic bookkeeping for the
+  // shrink-and-fade pocketing animation (see stepCarromPhysics) — never
+  // read by any scoring/rules/physics code.
+  const entities = [{ id: 'striker', x: SEAT_BASELINE.bottom.x, y: SEAT_BASELINE.bottom.y, vx: 0, vy: 0, r: STRIKER_R, color: 'striker', pocketed: false, pocketProgress: 0, pocketAnimX: 0, pocketAnimY: 0 }];
   for (let i = 0; i < 8; i++) {
     const angle = (i * Math.PI) / 4;
     entities.push({
@@ -58,9 +66,10 @@ function createEntities() {
       vx: 0, vy: 0, r: COIN_R,
       color: i % 2 === 0 ? 'light' : 'dark',
       pocketed: false,
+      pocketProgress: 0, pocketAnimX: 0, pocketAnimY: 0,
     });
   }
-  entities.push({ id: 'queen', x: CX, y: CY, vx: 0, vy: 0, r: COIN_R, color: 'queen', pocketed: false });
+  entities.push({ id: 'queen', x: CX, y: CY, vx: 0, vy: 0, r: COIN_R, color: 'queen', pocketed: false, pocketProgress: 0, pocketAnimX: 0, pocketAnimY: 0 });
   return entities;
 }
 
@@ -119,7 +128,14 @@ export function stepCarromPhysics(state, dtMs) {
   for (const e of entities) {
     if (e.pocketed) continue;
     for (const [px, py] of POCKETS) {
-      if (dist(e.x, e.y, px, py) < POCKET_R) { e.pocketed = true; e.vx = 0; e.vy = 0; e.x = -100; e.y = -100; break; }
+      if (dist(e.x, e.y, px, py) < POCKET_R) {
+        e.pocketed = true; e.vx = 0; e.vy = 0;
+        // Remember where it went in, purely so the draw code has a spot to
+        // shrink/fade it out from — the entity itself still moves off-board
+        // below, same as before, so no physics/collision loop ever sees it.
+        e.pocketAnimX = e.x; e.pocketAnimY = e.y; e.pocketProgress = 0;
+        e.x = -100; e.y = -100; break;
+      }
     }
   }
 
@@ -165,6 +181,14 @@ export function stepCarromPhysics(state, dtMs) {
     if (e.pocketed) continue;
     e.vx *= frictionFactor; e.vy *= frictionFactor;
     if (Math.hypot(e.vx, e.vy) < STOP_EPS) { e.vx = 0; e.vy = 0; }
+  }
+
+  // 5) Advance the cosmetic pocketing fade-out. Doesn't affect settling
+  //    (isCarromSettled only looks at `pocketed` + vx/vy) or scoring.
+  for (const e of entities) {
+    if (e.pocketed && e.pocketProgress < 1) {
+      e.pocketProgress = Math.min(1, (e.pocketProgress || 0) + dtMs / POCKET_ANIM_MS);
+    }
   }
 
   return { ...state, entities };
@@ -262,9 +286,21 @@ const SEAT_LABEL = { bottom: 'Bottom', top: 'Top', right: 'Right', left: 'Left' 
 function drawBoard(ctx, state, aim) {
   ctx.clearRect(0, 0, BOARD, BOARD);
 
-  ctx.fillStyle = '#8a5a34';
+  // Wood-grain look: gentle gradients instead of flat fills, each using
+  // closely-related wood tones so it still reads as "the same board", just
+  // less plastic/flat.
+  const frameGrad = ctx.createLinearGradient(0, 0, BOARD, BOARD);
+  frameGrad.addColorStop(0, '#93643c');
+  frameGrad.addColorStop(0.5, '#8a5a34');
+  frameGrad.addColorStop(1, '#7d4e2a');
+  ctx.fillStyle = frameGrad;
   ctx.fillRect(0, 0, BOARD, BOARD);
-  ctx.fillStyle = '#c9985f';
+
+  const surfaceGrad = ctx.createRadialGradient(CX, CY, 10, CX, CY, BOARD * 0.72);
+  surfaceGrad.addColorStop(0, '#d3aa78');
+  surfaceGrad.addColorStop(0.65, '#c9985f');
+  surfaceGrad.addColorStop(1, '#b88a52');
+  ctx.fillStyle = surfaceGrad;
   ctx.fillRect(MARGIN - 6, MARGIN - 6, BOARD - (MARGIN - 6) * 2, BOARD - (MARGIN - 6) * 2);
 
   ctx.strokeStyle = 'rgba(0,0,0,.35)';
@@ -291,15 +327,49 @@ function drawBoard(ctx, state, aim) {
     ctx.stroke();
   }
 
+  // Turn-indicator glow — a soft pulsing ring around the striker while
+  // it's waiting to be aimed, so whoever's turn it is reads at a glance.
+  // Purely cosmetic: just reads state.phase/the striker's position, never
+  // touches whose-turn state.
+  if (state.phase === 'aim') {
+    const s = state.entities.find((e) => e.id === 'striker' && !e.pocketed);
+    if (s) {
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r + 7 + pulse * 3, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 199, 71, ${0.3 + pulse * 0.35})`;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'rgba(255, 199, 71, 0.85)';
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   for (const e of state.entities) {
-    if (e.pocketed) continue;
+    // Once pocketed, keep drawing (shrinking + fading) until the cosmetic
+    // animation finishes, instead of vanishing on the spot.
+    if (e.pocketed && e.pocketProgress >= 1) continue;
+    const progress = e.pocketed ? e.pocketProgress : 0;
+    const drawX = e.pocketed ? e.pocketAnimX : e.x;
+    const drawY = e.pocketed ? e.pocketAnimY : e.y;
+    const scale = e.pocketed ? Math.max(0.05, 1 - progress) : 1;
+
+    ctx.save();
+    ctx.globalAlpha = e.pocketed ? Math.max(0, 1 - progress) : 1;
+    ctx.shadowColor = 'rgba(0,0,0,.4)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
     ctx.beginPath();
-    ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+    ctx.arc(drawX, drawY, e.r * scale, 0, Math.PI * 2);
     ctx.fillStyle = COIN_FILL[e.color];
     ctx.fill();
+    ctx.shadowColor = 'transparent';
     ctx.lineWidth = 1.2;
     ctx.strokeStyle = e.color === 'light' ? 'rgba(0,0,0,.35)' : 'rgba(255,255,255,.3)';
     ctx.stroke();
+    ctx.restore();
   }
 
   if (aim && aim.dragging) {

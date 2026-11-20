@@ -71,11 +71,56 @@ export function SnakeBoard({ tickMs, timeLimitMs = null, onScore, onTime, onOver
     const startedAt = Date.now();
     let ended = false;
 
+    // --- Purely-cosmetic animation state --------------------------------
+    // None of this is read by the game logic (movement/collision/scoring)
+    // below; it only feeds the render loop's visual flourishes.
+    let particles = []; // eat-effect burst dots: { x, y, vx, vy, born }
+    let growAnim = null; // most-recently-grown tail cell: { x, y, at }
+    let colors = readColors();
+
+    function readColors() {
+      return {
+        bg: themeToken('--panel-2', '#1a2130'),
+        bg2: themeToken('--panel', '#151b27'),
+        grid: themeToken('--border-soft', '#1e2532'),
+        snake: themeToken('--accent', '#818cf8'),
+        snake2: themeToken('--accent-2', '#6366f1'),
+        head: themeToken('--accent-2', '#6366f1'),
+        food: themeToken('--danger', '#fb7185'),
+      };
+    }
+
+    function spawnParticles(cx, cy) {
+      const count = 6;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+        const speed = 0.6 + Math.random() * 0.8;
+        particles.push({
+          x: cx * CELL + CELL / 2,
+          y: cy * CELL + CELL / 2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          born: performance.now(),
+        });
+      }
+    }
+
+    function roundedRectPath(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
     function end() {
       if (ended) return;
       ended = true;
       clearInterval(tickId);
       if (timerId) clearInterval(timerId);
+      cancelAnimationFrame(rafId);
       onOverRef.current(scoreRef.current);
     }
 
@@ -90,35 +135,17 @@ export function SnakeBoard({ tickMs, timeLimitMs = null, onScore, onTime, onOver
 
       st.snake.unshift(head);
       if (head.x === st.food.x && head.y === st.food.y) {
+        spawnParticles(head.x, head.y);
         st.food = randomCell(st.snake);
         scoreRef.current += 1;
         if (onScoreRef.current) onScoreRef.current(scoreRef.current);
+        const tailCell = st.snake[st.snake.length - 1];
+        growAnim = { x: tailCell.x, y: tailCell.y, at: performance.now() };
       } else {
         st.snake.pop();
       }
 
-      const bg = themeToken('--panel-2', '#1a2130');
-      const grid = themeToken('--border-soft', '#1e2532');
-      const snakeColor = themeToken('--accent', '#818cf8');
-      const headColor = themeToken('--accent-2', '#6366f1');
-      const foodColor = themeToken('--danger', '#fb7185');
-
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, COLS * CELL, ROWS * CELL);
-      ctx.strokeStyle = grid;
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, ROWS * CELL); ctx.stroke(); }
-      for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(COLS * CELL, y * CELL); ctx.stroke(); }
-
-      ctx.fillStyle = foodColor;
-      ctx.beginPath();
-      ctx.arc(st.food.x * CELL + CELL / 2, st.food.y * CELL + CELL / 2, CELL / 2.6, 0, Math.PI * 2);
-      ctx.fill();
-
-      st.snake.forEach((c, i) => {
-        ctx.fillStyle = i === 0 ? headColor : snakeColor;
-        ctx.fillRect(c.x * CELL + 1, c.y * CELL + 1, CELL - 2, CELL - 2);
-      });
+      colors = readColors();
     }, tickMs);
 
     let timerId = null;
@@ -130,7 +157,109 @@ export function SnakeBoard({ tickMs, timeLimitMs = null, onScore, onTime, onOver
       }, 250);
     }
 
-    return () => { clearInterval(tickId); if (timerId) clearInterval(timerId); };
+    // Render loop, decoupled from the tick loop above: the tick interval
+    // owns all game state (position/collision/food/score), this just
+    // redraws the current state every frame so animations (pulse, pop-in,
+    // particles) can be driven by elapsed time instead of tick count.
+    let rafId;
+    function draw() {
+      const st = stateRef.current;
+      const now = performance.now();
+
+      // Background: flat fill + very low-contrast checkerboard for depth.
+      ctx.fillStyle = colors.bg;
+      ctx.fillRect(0, 0, COLS * CELL, ROWS * CELL);
+      ctx.fillStyle = colors.bg2;
+      ctx.globalAlpha = 0.35;
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if ((x + y) % 2 === 0) ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        }
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = colors.grid;
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x * CELL + 0.5, 0); ctx.lineTo(x * CELL + 0.5, ROWS * CELL); ctx.stroke(); }
+      for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL + 0.5); ctx.lineTo(COLS * CELL, y * CELL + 0.5); ctx.stroke(); }
+
+      // Food: gentle sine pulse + soft glow.
+      const pulse = 1 + Math.sin(now / 220) * 0.12;
+      const fx = st.food.x * CELL + CELL / 2;
+      const fy = st.food.y * CELL + CELL / 2;
+      ctx.save();
+      ctx.shadowColor = colors.food;
+      ctx.shadowBlur = 9;
+      ctx.fillStyle = colors.food;
+      ctx.beginPath();
+      ctx.arc(fx, fy, (CELL / 2.6) * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Snake body: gradient-shaded, rounded segments; head is distinct
+      // (brighter gradient + direction-facing eye dots). A just-grown tail
+      // cell gets a brief scale pop-in instead of appearing instantaneously.
+      const n = st.snake.length;
+      st.snake.forEach((c, i) => {
+        const isHead = i === 0;
+        let scale = 1;
+        if (growAnim && c.x === growAnim.x && c.y === growAnim.y) {
+          const t = (now - growAnim.at) / 220;
+          if (t < 1) scale = 0.5 + 0.5 * Math.max(0, t);
+        }
+        const full = CELL - 2;
+        const size = full * scale;
+        const px = c.x * CELL + 1 + (full - size) / 2;
+        const py = c.y * CELL + 1 + (full - size) / 2;
+        const r = Math.max(2, size * 0.32);
+
+        const grad = ctx.createLinearGradient(px, py, px + size, py + size);
+        if (isHead) {
+          grad.addColorStop(0, colors.head);
+          grad.addColorStop(1, colors.snake2);
+        } else {
+          grad.addColorStop(0, colors.snake);
+          grad.addColorStop(1, colors.snake2);
+          ctx.globalAlpha = 1 - Math.min(0.35, (i / n) * 0.35);
+        }
+        ctx.fillStyle = grad;
+        roundedRectPath(px, py, size, size, r);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        if (isHead) {
+          const dx = st.dir.x, dy = st.dir.y;
+          const cx = px + size / 2, cy = py + size / 2;
+          const eyeOffset = size * 0.22;
+          const eyeR = Math.max(1, size * 0.09);
+          const forwardX = dx * eyeOffset, forwardY = dy * eyeOffset;
+          const sideX = -dy * eyeOffset, sideY = dx * eyeOffset;
+          ctx.fillStyle = '#0b1020';
+          [-1, 1].forEach((s) => {
+            ctx.beginPath();
+            ctx.arc(cx + forwardX + sideX * s, cy + forwardY + sideY * s, eyeR, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      });
+
+      // Eat-effect: small fading dots bursting from the eaten cell.
+      particles = particles.filter((p) => now - p.born < 420);
+      particles.forEach((p) => {
+        const age = now - p.born;
+        const t = age / 420;
+        ctx.globalAlpha = Math.max(0, 1 - t);
+        ctx.fillStyle = colors.food;
+        ctx.beginPath();
+        ctx.arc(p.x + p.vx * age * 0.06, p.y + p.vy * age * 0.06, 2 + (1 - t) * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      rafId = requestAnimationFrame(draw);
+    }
+    rafId = requestAnimationFrame(draw);
+
+    return () => { clearInterval(tickId); if (timerId) clearInterval(timerId); cancelAnimationFrame(rafId); };
     // tickMs/timeLimitMs are fixed for a round's lifetime by callers (both
     // remount this component via a `key` to start a new round) — re-running
     // this effect on their change isn't needed and would restart mid-round.

@@ -267,6 +267,7 @@ export function CallProvider({ children }) {
       startedAt: Date.now(),
       mutedSelf: false,
       participants: [],
+      isInitiator,
     });
     setIncomingCall(null);
 

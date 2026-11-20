@@ -167,6 +167,10 @@ export function freshCar(track) {
     totalProgress: 0, lastIdx: undefined, lap: 0,
     driftScore: 0, driftCombo: 0, skidL: [], skidR: [], smoke: [], smokeTimer: 0, shake: 0,
     penalty: 0, _wallCd: 0, _aiCd: 0,
+    // Purely visual, additive to the physics/lap state above: a brief
+    // checkered-flash pulse + confetti burst fired whenever a lap completes
+    // (see stepCar's justLapped handling) and rendered in drawScene.
+    finishFlash: 0, confetti: [],
   };
 }
 
@@ -282,6 +286,31 @@ export function stepCar(car, input, dt, now, carDef, track) {
   car.lastIdx = near.idx;
   const lapsNow = Math.floor(Math.abs(car.totalProgress));
   if (lapsNow > car.lap) { car.lap = lapsNow; justLapped = true; }
+
+  // Finish-line flourish — purely cosmetic: a checkered flash (drawn in
+  // drawScene, decaying over ~1s) and a confetti puff, fired on every lap
+  // completion (including the final, race-winning one). Doesn't touch lap
+  // counting/scoring above, just reacts to it.
+  if (justLapped) {
+    car.finishFlash = 1;
+    for (let i = 0; i < 22; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 30 + Math.random() * 90;
+      car.confetti.push({
+        x: car.x, y: car.y,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 40,
+        age: 0, life: 0.7 + Math.random() * 0.5,
+        size: 2 + Math.random() * 2.2,
+        spin: (Math.random() - 0.5) * 10,
+        color: ['#fbbf24', '#f87171', '#60a5fa', '#34d399'][i % 4],
+      });
+    }
+  } else {
+    car.finishFlash = Math.max(0, car.finishFlash - dt);
+  }
+  car.confetti.forEach((p) => { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 110 * dt; });
+  car.confetti = car.confetti.filter((p) => p.age < p.life);
+  if (car.confetti.length > 80) car.confetti.splice(0, car.confetti.length - 80);
 
   const slip = Math.abs(car.vl);
   const drifting = slip > DRIFT_THRESHOLD;
@@ -427,12 +456,28 @@ export function drawScene(context, { car, aiList, remoteList, track, carDef, col
   });
   context.globalAlpha = 1;
 
+  // Finish-line confetti (world-space, see stepCar's justLapped handling) —
+  // a brief celebratory puff, independent of the checkered screen flash
+  // drawn at the very end of this function.
+  car.confetti.forEach((p) => {
+    const t = p.age / p.life;
+    context.globalAlpha = Math.max(0, 1 - t);
+    context.fillStyle = p.color;
+    context.save();
+    context.translate(p.x, p.y);
+    context.rotate(p.age * p.spin);
+    context.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    context.restore();
+  });
+  context.globalAlpha = 1;
+
   if (mode === 'race' && aiList && aiList.length) {
     aiList.forEach((ai, i) => {
       const p = pointAtT(track, ai.t, ai.laneOffset);
       context.save();
       context.translate(p.x, p.y);
       context.rotate(p.heading);
+      drawHeadlightCone(context);
       context.fillStyle = i === 0 ? c.ai1 : c.ai2;
       roundRectPath(context, -CAR_LEN / 2, -CAR_W / 2, CAR_LEN, CAR_W, 3);
       context.fill();
@@ -453,6 +498,7 @@ export function drawScene(context, { car, aiList, remoteList, track, carDef, col
       context.save();
       context.translate(r.x, r.y);
       context.rotate(r.heading);
+      drawHeadlightCone(context);
       const grad = context.createLinearGradient(0, -CAR_W / 2, 0, CAR_W / 2);
       grad.addColorStop(0, r.colors.carDark);
       grad.addColorStop(0.5, r.colors.car);
@@ -480,6 +526,7 @@ export function drawScene(context, { car, aiList, remoteList, track, carDef, col
   context.save();
   context.translate(car.x, car.y);
   context.rotate(car.heading);
+  drawHeadlightCone(context);
   const lean = Math.max(0, Math.min(0.16, Math.abs(car.vl) / 500));
   context.scale(1, 1 + lean);
 
@@ -519,6 +566,78 @@ export function drawScene(context, { car, aiList, remoteList, track, carDef, col
   context.globalAlpha = 1;
 
   context.restore();
+  context.restore();
+
+  // Ambient "near top speed" screen vignette — a subtle warm glow at the
+  // viewport edges, screen-space (outside the shaken/translated world
+  // transform above) so it reads as a HUD-level effect, not part of the
+  // scene itself.
+  const topSpeedForCar = MAX_SPEED * ((carDef && carDef.stats && carDef.stats.topSpeed) || 1);
+  const boostRatio = Math.max(0, Math.min(1, (speedNow / topSpeedForCar - 0.82) / 0.18));
+  drawSpeedVignette(context, boostRatio, virtualW, virtualH);
+
+  // Finish-line checkered flash — brief, decays to 0 over ~1s via
+  // car.finishFlash (set in stepCar).
+  if (car.finishFlash > 0) drawFinishFlash(context, car.finishFlash, virtualW, virtualH);
+}
+
+// Headlight glow for any car — called with the canvas already translated to
+// the car's position and rotated to its heading, so the cone always points
+// in the direction of travel without any extra trig here. Purely additive
+// lighting drawn before the car body, so the body still reads crisply on
+// top of it.
+function drawHeadlightCone(context) {
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+  const beamR = 15;
+  [-1, 1].forEach((side) => {
+    context.save();
+    context.translate(CAR_LEN / 2 - 1, side * (CAR_W / 2 - 1.3));
+    context.scale(2.4, 1);
+    const grad = context.createRadialGradient(0, 0, 0, 0, 0, beamR);
+    grad.addColorStop(0, 'rgba(255,241,200,.32)');
+    grad.addColorStop(1, 'rgba(255,241,200,0)');
+    context.fillStyle = grad;
+    context.beginPath();
+    context.arc(0, 0, beamR, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  });
+  context.restore();
+}
+
+// Subtle radial warm-tint vignette at the viewport edges, strongest at near
+// top speed (boostRatio -> 1), invisible otherwise.
+function drawSpeedVignette(context, boostRatio, w, h) {
+  if (boostRatio <= 0.003) return;
+  context.save();
+  const cx = w / 2; const cy = h / 2;
+  const outerR = Math.hypot(cx, cy);
+  const grad = context.createRadialGradient(cx, cy, outerR * 0.55, cx, cy, outerR);
+  grad.addColorStop(0, 'rgba(255,110,60,0)');
+  grad.addColorStop(1, `rgba(255,90,40,${(0.22 * boostRatio).toFixed(3)})`);
+  context.fillStyle = grad;
+  context.globalCompositeOperation = 'lighter';
+  context.fillRect(0, 0, w, h);
+  context.restore();
+}
+
+// Full-viewport checkered-flag flash, screen-space, fading out as
+// car.finishFlash decays from 1 to 0 over ~1s.
+function drawFinishFlash(context, amt, w, h) {
+  const alpha = Math.max(0, Math.min(1, amt)) * 0.4;
+  if (alpha <= 0.004) return;
+  context.save();
+  context.globalAlpha = alpha;
+  const cell = 16;
+  const cols = Math.ceil(w / cell);
+  const rows = Math.ceil(h / cell);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      context.fillStyle = (x + y) % 2 === 0 ? '#f5f5f5' : '#111318';
+      context.fillRect(x * cell, y * cell, cell, cell);
+    }
+  }
   context.restore();
 }
 

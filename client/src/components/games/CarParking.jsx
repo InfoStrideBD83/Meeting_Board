@@ -299,6 +299,11 @@ export function CarParking() {
   const timeLeftRef = useRef(0);
   const hitsRef = useRef(0);
   const parkedForRef = useRef(0);
+  // Purely cosmetic rendering state — a short trail of recent car positions
+  // for the tire-skid marks, and a decaying 0..1 intensity for the
+  // collision-impact flash. Neither feeds back into physics/scoring.
+  const trailRef = useRef([]);
+  const flashRef = useRef(0);
 
   const [screen, setScreen] = useState('select'); // select | countdown | playing | result
   const [levelNum, setLevelNum] = useState(1);
@@ -307,6 +312,9 @@ export function CarParking() {
   const [hud, setHud] = useState({ time: 0, hits: 0 });
   const [result, setResult] = useState(null);
   const [isTouch, setIsTouch] = useState(false);
+  // One-shot confetti burst particles, generated on a successful park and
+  // rendered as CSS-animated overlay elements (see styles.confettiWrap).
+  const [confetti, setConfetti] = useState([]);
 
   useEffect(() => {
     setIsTouch(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
@@ -411,8 +419,11 @@ export function CarParking() {
     timeLeftRef.current = data.timeLimit;
     hitsRef.current = 0;
     parkedForRef.current = 0;
+    trailRef.current = [];
+    flashRef.current = 0;
     setLevelNum(n);
     setResult(null);
+    setConfetti([]);
     setHud({ time: data.timeLimit, hits: 0 });
     draw();
 
@@ -434,6 +445,18 @@ export function CarParking() {
     if (success) {
       const { points, stars } = scoreRun(data.tier, data.timeLimit, timeLeftRef.current, hitsRef.current);
       setResult({ success: true, points, stars, hits: hitsRef.current, timeUsed: data.timeLimit - timeLeftRef.current });
+      // Celebration confetti — purely decorative overlay particles, no
+      // effect on score/progress below.
+      const confettiColors = ['#34d399', '#60a5fa', '#fbbf24', '#fb7185', '#c084fc'];
+      setConfetti(Array.from({ length: 22 }, (_, i) => ({
+        id: i,
+        left: 4 + Math.random() * 92,
+        color: confettiColors[i % confettiColors.length],
+        delay: Math.random() * 0.3,
+        duration: 0.85 + Math.random() * 0.55,
+        drift: Math.round((Math.random() - 0.5) * 70),
+        rotate: Math.round(Math.random() * 300),
+      })));
       setProgress((prev) => {
         const next = { unlocked: Math.max(prev.unlocked, Math.min(TOTAL_LEVELS, levelNum + 1)), results: { ...prev.results } };
         const existing = next.results[levelNum];
@@ -471,7 +494,18 @@ export function CarParking() {
       data.movers.forEach((m) => stepMover(m, dt));
 
       const solids = [...wallsFor(LOT), ...data.obstacles, ...data.movers.map((m) => ({ x: m.x, y: m.y, w: m.w, h: m.h, angle: m.angle }))];
-      if (resolveCollisions(car, solids)) hitsRef.current += 1;
+      const newHit = resolveCollisions(car, solids);
+      if (newHit) { hitsRef.current += 1; flashRef.current = 1; }
+      // Decay the impact-flash intensity every frame (~150ms to fade out),
+      // read by draw() to paint a brief vignette — purely cosmetic.
+      flashRef.current = Math.max(0, flashRef.current - dt / 0.15);
+
+      // Tire-skid trail: remember recent positions, flagging frames where
+      // the car is turning hard at speed (reads the same input/speed
+      // values the physics step already computed, doesn't alter them).
+      const skidding = Math.abs(input.steer) > 0 && Math.abs(car.speed) > 38;
+      trailRef.current.push({ x: car.x, y: car.y, skid: skidding });
+      if (trailRef.current.length > 20) trailRef.current.shift();
 
       if (isParked(car, data.spot)) parkedForRef.current += dt; else parkedForRef.current = 0;
 
@@ -545,21 +579,66 @@ export function CarParking() {
     ctx.stroke();
     ctx.restore();
 
+    // Gentle idle pulse on the target spot — a slow breathing glow + a tiny
+    // bob on the "P" so the goal reads as inviting rather than static.
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 450);
+    ctx.save();
+    ctx.globalAlpha = 0.7 + pulse * 0.3;
     drawRect(ctx, data.spot, 'none', c.spot, 2.4, true);
+    ctx.restore();
     ctx.save();
     ctx.translate(data.spot.x, data.spot.y);
     ctx.rotate(data.spot.angle);
+    ctx.shadowColor = c.spot;
+    ctx.shadowBlur = 5 + pulse * 7;
     ctx.fillStyle = c.spot;
     ctx.font = '700 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.globalAlpha = 0.85;
-    ctx.fillText('P', 0, 0);
+    ctx.globalAlpha = 0.8 + pulse * 0.2;
+    ctx.fillText('P', 0, -pulse * 1.6);
     ctx.restore();
 
     data.obstacles.forEach((o) => drawCar(ctx, o, c.obstacle, c.wall));
     data.movers.forEach((m) => drawCar(ctx, m, c.mover, c.wall));
+
+    drawTireTrail(ctx, trailRef.current);
     drawCar(ctx, carRect(carRef.current), c.car, c.carDark, carRef.current.heading);
+
+    // Brief collision-impact flash — decayed each frame by the step loop,
+    // read here only (no state mutation during drawing).
+    if (flashRef.current > 0) {
+      const car = carRef.current;
+      ctx.save();
+      const g = ctx.createRadialGradient(car.x, car.y, 4, car.x, car.y, 95);
+      g.addColorStop(0, `rgba(251,113,133,${0.5 * flashRef.current})`);
+      g.addColorStop(1, 'rgba(251,113,133,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+      ctx.restore();
+    }
+  }
+
+  /** Fading tire-skid marks — a short polyline through the car's last ~20
+   *  positions, only stroked on frames flagged as "skidding" (hard steer at
+   *  speed), drawn behind the car. */
+  function drawTireTrail(ctx, trail) {
+    if (trail.length < 2) return;
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let i = 1; i < trail.length; i++) {
+      const p1 = trail[i];
+      if (!p1.skid) continue;
+      const p0 = trail[i - 1];
+      const age = i / trail.length; // 0 = oldest, 1 = newest
+      ctx.strokeStyle = `rgba(18,18,22,${0.32 * age})`;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawRect(ctx, r, fill, stroke, lineWidth, dashed) {
@@ -584,7 +663,35 @@ export function CarParking() {
       ctx.fillStyle = dark;
       roundRect(ctx, r.w / 2 - r.w * 0.32, -r.h / 2 + 1.5, r.w * 0.22, r.h - 3, 1.5);
       ctx.fill();
+      drawHeadlightGlow(ctx, r);
     }
+    ctx.restore();
+  }
+
+  /** Soft forward-facing headlight cones for the player car, drawn in the
+   *  same already-rotated/translated local space as the body above (local
+   *  +x is the front, matching the nose-accent stripe) — purely additive,
+   *  doesn't touch r.x/r.y/r.w/r.h (the collision rect). */
+  function drawHeadlightGlow(ctx, r) {
+    const len = CAR_LEN * 2.2;
+    const spread = CAR_WID * 1.1;
+    const originX = r.w / 2;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    [-1, 1].forEach((side) => {
+      const originY = side * r.h * 0.26;
+      const grad = ctx.createRadialGradient(originX, originY, 0.5, originX, originY, len);
+      grad.addColorStop(0, 'rgba(255,248,205,0.4)');
+      grad.addColorStop(0.5, 'rgba(255,248,205,0.14)');
+      grad.addColorStop(1, 'rgba(255,248,205,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(originX, originY);
+      ctx.lineTo(originX + len, originY - spread);
+      ctx.lineTo(originX + len, originY + spread);
+      ctx.closePath();
+      ctx.fill();
+    });
     ctx.restore();
   }
 
@@ -648,6 +755,24 @@ export function CarParking() {
           <div className={styles.overlay}>
             {result.success ? (
               <>
+                {confetti.length > 0 && (
+                  <div className={styles.confettiWrap} aria-hidden="true">
+                    {confetti.map((p) => (
+                      <span
+                        key={p.id}
+                        className={styles.confettiPiece}
+                        style={{
+                          left: `${p.left}%`,
+                          background: p.color,
+                          animationDelay: `${p.delay}s`,
+                          animationDuration: `${p.duration}s`,
+                          '--drift': `${p.drift}px`,
+                          '--rot': `${p.rotate}deg`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
                 <h3 className={styles.resultTitle}>Parked!</h3>
                 <div className={styles.starsRow}>
                   {[1, 2, 3].map((i) => <span key={i} className={i <= result.stars ? styles.starOn : styles.starOff}>★</span>)}

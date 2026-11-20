@@ -63,6 +63,43 @@
   max-width: min(420px, calc(100vw - 24px));
 }
 
+.ringingBar {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 260;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 var(--accent-soft), var(--shadow-lg);
+  max-width: min(420px, calc(100vw - 24px));
+  animation: ringingPulse 1.8s ease-out infinite;
+}
+@keyframes ringingPulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-soft), var(--shadow-lg); }
+  70%  { box-shadow: 0 0 0 10px transparent, var(--shadow-lg); }
+  100% { box-shadow: 0 0 0 0 transparent, var(--shadow-lg); }
+}
+.ringingDot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  animation: ringingDotBlink 1s ease-in-out infinite;
+}
+@keyframes ringingDotBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .25; }
+}
+.ringingSub { font-size: 11.5px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .ringingBar, .ringingDot { animation: none; }
+}
+
 .activeInfo { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .activeStack { display: flex; }
 .stackAvatar { margin-left: -8px; border: 2px solid var(--panel); }

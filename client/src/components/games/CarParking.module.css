@@ -60,6 +60,23 @@ html[data-theme="light"] .overlay { background: rgba(241, 244, 250, .88); color:
 .resultTitle { font-size: 18px; font-weight: 800; margin: 0; }
 .resultBtns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
+.confettiWrap { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.confettiPiece {
+  position: absolute;
+  top: -8%;
+  width: 6px; height: 10px; border-radius: 1px;
+  opacity: 0;
+  animation-name: confettiFall;
+  animation-timing-function: cubic-bezier(.35, .65, .55, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes confettiFall {
+  0% { top: -8%; opacity: 1; transform: translateX(0) rotate(0deg); }
+  85% { opacity: 1; }
+  100% { top: 108%; opacity: 0; transform: translateX(var(--drift, 0px)) rotate(var(--rot, 180deg)); }
+}
+@media (prefers-reduced-motion: reduce) { .confettiPiece { animation: none; opacity: 0; } }
+
 .starsRow { display: flex; gap: 4px; font-size: 26px; }
 .starOn { color: var(--warn); }
 .starOff { color: rgba(255, 255, 255, .22); }
