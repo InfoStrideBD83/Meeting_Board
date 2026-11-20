@@ -26,10 +26,19 @@ function validateColor(color) {
  * ELSE's record (that pair, read off this same list, is all it takes to
  * hijack an account). Admins already manage it directly and need to see it;
  * everyone else only gets their own.
+ *
+ * inbox_token is the private channel name CallContext.jsx subscribes to for
+ * incoming voice-call rings — unlike a member's id (visible to every other
+ * member right here), it must stay unguessable to anyone who isn't an
+ * actual conversation co-member, or ringing/snooping becomes trivial for
+ * any signed-in coworker. conversations.js deliberately hands it out
+ * instead, scoped to actual shared-conversation members only — this
+ * general member list is not that scope.
  */
 function scopeMember(m, viewer) {
   const pub = publicMember(m);
   if (!viewer.is_admin && pub.id !== viewer.sub) delete pub.employee_id;
+  if (pub.id !== viewer.sub) delete pub.inbox_token;
   return pub;
 }
 

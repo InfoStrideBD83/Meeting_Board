@@ -43,7 +43,11 @@ router.post(
   asyncHandler(async (req, res) => {
     const { endpoint } = req.body || {};
     if (!endpoint) throw new ApiError(400, 'endpoint is required');
-    const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint)
+      .eq('member_id', req.user.sub);
     if (error) throw error;
     res.status(204).end();
   })

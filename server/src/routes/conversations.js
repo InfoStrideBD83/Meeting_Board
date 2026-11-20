@@ -61,9 +61,13 @@ router.get(
     // Cross-reference member ids against the full member list in JS,
     // rather than a PostgREST embedded-select join — matches how every
     // other route in this app resolves member info.
+    // inbox_token travels with each member here deliberately — this is the
+    // one scoped, membership-gated place it's meant to be handed out
+    // (CallContext.jsx uses it to ring a conversation co-member's private
+    // channel); members.js's general list strips it for anyone but self.
     const { data: allMembers, error: allMemErr } = await supabase
       .from('members')
-      .select('id, name, color');
+      .select('id, name, color, inbox_token');
     if (allMemErr) throw allMemErr;
     const memberById = Object.fromEntries(allMembers.map((m) => [m.id, m]));
 
@@ -222,7 +226,8 @@ router.get(
       .eq('conversation_id', req.params.id);
     if (mErr) throw mErr;
 
-    const { data: allMembers, error: amErr } = await supabase.from('members').select('id, name, color');
+    // inbox_token included deliberately — see the GET / route above for why.
+    const { data: allMembers, error: amErr } = await supabase.from('members').select('id, name, color, inbox_token');
     if (amErr) throw amErr;
     const memberById = Object.fromEntries(allMembers.map((m) => [m.id, m]));
 

@@ -75,10 +75,13 @@ function notifyIncomingCall(payload) {
  *  no database table, nothing persisted beyond a single "call started"
  *  chat message). Two layers:
  *
- *  1. A personal "inbox" channel per member (`member-inbox-{id}`), always
- *     subscribed while signed in, used only to deliver a ring (and its
- *     cancellation) — this is how a call reaches someone before they've
- *     joined anything call-specific.
+ *  1. A personal "inbox" channel per member (`member-inbox-{inbox_token}`),
+ *     always subscribed while signed in, used only to deliver a ring (and
+ *     its cancellation) — this is how a call reaches someone before they've
+ *     joined anything call-specific. Keyed by inbox_token rather than the
+ *     member's id specifically so the channel name itself isn't guessable
+ *     from data every other member can already see (see the inbox effect
+ *     below for the full reasoning).
  *  2. A per-call channel (`call-{callId}`) that everyone who starts or
  *     accepts the call joins, using Realtime Presence as the roster and
  *     Broadcast as the WebRTC signaling transport (offer/answer/ICE). Audio
@@ -121,12 +124,12 @@ export function CallProvider({ children }) {
   const peersRef = useRef(new Map()); // memberId -> { pc, audioEl, pending }
   const localStreamRef = useRef(null);
   const ringTimeoutRef = useRef(null);
-  const ringTargetsRef = useRef([]); // who's still being rung for the call I started, if anyone
+  const ringTargetsRef = useRef([]); // inbox_tokens still being rung for the call I started, if anyone
 
-  function cancelRing(callId, targets) {
+  function cancelRing(callId, targetTokens) {
     if (!supabaseRealtime) return;
-    targets.forEach((id) => {
-      const inbox = supabaseRealtime.channel(`member-inbox-${id}`, { config: { broadcast: { self: false } } });
+    targetTokens.forEach((token) => {
+      const inbox = supabaseRealtime.channel(`member-inbox-${token}`, { config: { broadcast: { self: false } } });
       inbox.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           inbox.send({ type: 'broadcast', event: 'cancel', payload: { callId } });
@@ -292,10 +295,15 @@ export function CallProvider({ children }) {
     if (!supabaseRealtime) { alert("Calling isn't set up on this deployment yet."); return; }
     if (activeCallRef.current || incomingCallRef.current) { alert("You're already on a call."); return; }
 
-    const otherIds = convo.is_group
-      ? (convo.members || []).filter((m) => m.id !== memberRef.current.id).map((m) => m.id)
-      : (convo.other_member ? [convo.other_member.id] : []);
-    if (otherIds.length === 0) return;
+    const others = convo.is_group
+      ? (convo.members || []).filter((m) => m.id !== memberRef.current.id)
+      : (convo.other_member ? [convo.other_member] : []);
+    // inbox_token comes from conversations.js (scoped to real co-members —
+    // see CallContext's own module comment) — anyone missing it can't be
+    // rung over Realtime, though they'll still get the server-side push
+    // below if they're subscribed to that.
+    const otherTokens = others.map((m) => m.inbox_token).filter(Boolean);
+    if (others.length === 0) return;
 
     let stream;
     try {
@@ -307,7 +315,7 @@ export function CallProvider({ children }) {
     localStreamRef.current = stream;
 
     const callId = uid();
-    ringTargetsRef.current = otherIds;
+    ringTargetsRef.current = otherTokens;
     const ringPayload = {
       callId,
       conversationId: convo.id,
@@ -316,8 +324,8 @@ export function CallProvider({ children }) {
       fromId: memberRef.current.id,
       fromName: memberRef.current.name,
     };
-    otherIds.forEach((id) => {
-      const inbox = supabaseRealtime.channel(`member-inbox-${id}`, { config: { broadcast: { self: false } } });
+    otherTokens.forEach((token) => {
+      const inbox = supabaseRealtime.channel(`member-inbox-${token}`, { config: { broadcast: { self: false } } });
       inbox.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           inbox.send({ type: 'broadcast', event: 'ring', payload: ringPayload });
@@ -382,10 +390,15 @@ export function CallProvider({ children }) {
   }, []);
 
   // Always-on personal inbox — lets a ring reach this member regardless of
-  // what they're currently looking at in the app.
+  // what they're currently looking at in the app. Keyed by inbox_token, NOT
+  // member.id — a member's id is visible to every other signed-in coworker
+  // (it's right there in the members list), so using it directly here would
+  // let anyone subscribe to anyone else's ring channel. inbox_token is only
+  // ever handed out by conversations.js, scoped to actual conversation
+  // co-members — see members.js's scopeMember for the other half of that.
   useEffect(() => {
-    if (!supabaseRealtime || !member) return undefined;
-    const ch = supabaseRealtime.channel(`member-inbox-${member.id}`, { config: { broadcast: { self: false } } });
+    if (!supabaseRealtime || !member || !member.inbox_token) return undefined;
+    const ch = supabaseRealtime.channel(`member-inbox-${member.inbox_token}`, { config: { broadcast: { self: false } } });
     ch.on('broadcast', { event: 'ring' }, ({ payload }) => {
       if (activeCallRef.current || incomingCallRef.current) return; // already busy — drop silently
       setIncomingCall(payload);
@@ -404,7 +417,7 @@ export function CallProvider({ children }) {
     ch.subscribe();
     inboxChannelRef.current = ch;
     return () => { supabaseRealtime.removeChannel(ch); inboxChannelRef.current = null; };
-  }, [member && member.id]);
+  }, [member && member.id, member && member.inbox_token]);
 
   // Full cleanup if the whole app unmounts mid-call (tab close is caught by
   // the browser tearing the connection down on its own either way).
