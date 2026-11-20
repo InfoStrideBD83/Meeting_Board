@@ -343,9 +343,11 @@ export function CallProvider({ children }) {
     // already-open tab), also push a real notification through the
     // server — this is what reaches someone whose browser is closed or
     // backgrounded, same as a missed-message push.
+    // The server looks up the conversation's real name/is_group itself
+    // rather than trusting these from the client — see push.js's /ring.
     apiFetch('/push/ring', {
       method: 'POST',
-      body: { conversationId: convo.id, callId, conversationName: convo.name, isGroup: Boolean(convo.is_group) },
+      body: { conversationId: convo.id, callId },
     }).catch(() => {});
 
     joinCallChannel(callId, convo, true);

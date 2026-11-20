@@ -3,7 +3,7 @@ import { supabase } from '../config/supabase.js';
 import { asyncHandler, ApiError } from '../utils/http.js';
 import { requireAuth } from '../middleware/auth.js';
 import { config } from '../config/env.js';
-import { pushToMembers, pushEnabled } from '../utils/push.js';
+import { pushToMembers, pushEnabled, isAllowedPushEndpoint } from '../utils/push.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -24,6 +24,9 @@ router.post(
     const { endpoint, keys } = req.body || {};
     if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
       throw new ApiError(400, 'A valid push subscription (endpoint + keys) is required');
+    }
+    if (!isAllowedPushEndpoint(endpoint)) {
+      throw new ApiError(400, 'Unrecognized push service endpoint');
     }
     const { error } = await supabase
       .from('push_subscriptions')
@@ -61,13 +64,18 @@ router.post(
 router.post(
   '/ring',
   asyncHandler(async (req, res) => {
-    const { conversationId, callId, conversationName, isGroup } = req.body || {};
+    const { conversationId, callId } = req.body || {};
     if (!conversationId || !callId) throw new ApiError(400, 'conversationId and callId are required');
 
-    const { data: memberRows, error } = await supabase
-      .from('conversation_members')
-      .select('member_id')
-      .eq('conversation_id', conversationId);
+    // conversationName/isGroup come from the DB, never the request body —
+    // otherwise any conversation member could put arbitrary attacker-chosen
+    // text into a push notification that looks like it came from this
+    // legitimate call-ring feature (same reasoning as conversations.js's own
+    // message-push code, which also never trusts the client for this).
+    const [{ data: memberRows, error }, { data: convo }] = await Promise.all([
+      supabase.from('conversation_members').select('member_id').eq('conversation_id', conversationId),
+      supabase.from('conversations').select('is_group, name').eq('id', conversationId).maybeSingle(),
+    ]);
     if (error) throw error;
     if (!memberRows.some((m) => m.member_id === req.user.sub)) {
       throw new ApiError(403, 'Not a member of this conversation');
@@ -79,7 +87,7 @@ router.post(
     await pushToMembers(others, {
       kind: 'call',
       title: `Incoming call — ${me ? me.name : 'Someone'}`,
-      body: isGroup ? `Voice call · ${conversationName}` : 'Voice call',
+      body: convo && convo.is_group ? `Voice call · ${convo.name}` : 'Voice call',
       tag: `call-${callId}`,
       data: { conversationId, callId },
     });

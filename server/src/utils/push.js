@@ -7,6 +7,29 @@ if (enabled) {
   webpush.setVapidDetails(config.vapidContactEmail, config.vapidPublicKey, config.vapidPrivateKey);
 }
 
+// The only hosts a real browser's PushManager.subscribe() ever hands back as
+// a subscription endpoint. Without this allowlist, routes/push.js's
+// /subscribe would store whatever URL a signed-in member submits, and
+// pushToMembers below would later make the server itself issue an
+// authenticated HTTPS POST to it — a textbook SSRF primitive, since nothing
+// about p256dh/auth requires a real browser or real push service, just
+// valid-format EC key material anyone can generate offline.
+const ALLOWED_PUSH_HOSTS = [
+  'fcm.googleapis.com',
+  'android.googleapis.com',
+  'updates.push.services.mozilla.com',
+  'web.push.apple.com',
+];
+export function isAllowedPushEndpoint(endpoint) {
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== 'https:') return false;
+    return ALLOWED_PUSH_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
+
 /** Sends a Web Push notification to every subscription on file for the
  *  given members — this is what actually reaches someone whose browser is
  *  closed or backgrounded, unlike the in-app Realtime banner (CallContext)
